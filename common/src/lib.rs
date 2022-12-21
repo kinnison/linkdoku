@@ -1,14 +1,22 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+//! Linkdoku common types (API types primarily)
+//!
+//! This crate exists primarily to model the API
+//! which exists between Linkdoku backend and frontend.
+//!
+//! The API is split into two parts, a "public" API which
+//! is intended to be stable and provided to other users of
+//! linkdoku.  The "private" API is public in the sense that
+//! linkdoku is free software, but it is only intended to be
+//! used by the frontend and makes no stability guarantees.
+
+use serde::{Deserialize, Serialize};
+
+pub mod internal;
+pub mod public;
+
+#[derive(Serialize, Deserialize)]
+pub enum APIError {
+    Generic(String),
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub type APIResult<T> = std::result::Result<T, APIError>;
