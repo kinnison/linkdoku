@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "database",
+    "common",
+    "backend",
+]
