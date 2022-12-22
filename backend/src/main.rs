@@ -15,6 +15,7 @@ use crate::state::BackendState;
 mod api;
 mod config;
 mod login;
+mod spa;
 mod state;
 
 #[tokio::main]
@@ -46,7 +47,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
                         .level(Level::INFO)
                         .latency_unit(LatencyUnit::Millis),
                 ),
-        );
+        )
+        .fallback(spa::spa_handler);
 
     // and provide all the state to it
     let port = config.port;

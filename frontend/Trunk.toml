@@ -1,0 +1,4 @@
+[build]
+public_url = "/assets/"
+filehash = true
+release = false

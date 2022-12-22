@@ -3,4 +3,5 @@ members = [
     "database",
     "common",
     "backend",
+    "frontend",
 ]
