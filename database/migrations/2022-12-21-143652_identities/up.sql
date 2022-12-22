@@ -8,3 +8,11 @@ CREATE TABLE identity (
     gravatar_hash VARCHAR NOT NULL
 );
 
+CREATE TABLE role (
+    id SERIAL PRIMARY KEY,
+    owner INTEGER NOT NULL REFERENCES identity (id),
+    display_name VARCHAR NOT NULL,
+    description TEXT NOT NULL
+);
+
+CREATE INDEX role_by_owner ON role(owner);

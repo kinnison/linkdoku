@@ -4,15 +4,15 @@
 
 use serde::{Deserialize, Serialize};
 
-pub const URI: &str = "userinfo";
+pub const URI: &str = "/userinfo";
 
 #[derive(Serialize, Deserialize)]
 pub struct UserInfo {
-    display_name: String,
-    gravatar_hash: String,
+    pub display_name: String,
+    pub gravatar_hash: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Response {
-    info: Option<UserInfo>,
+    pub info: Option<UserInfo>,
 }

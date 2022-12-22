@@ -5,12 +5,12 @@
 pub mod providers {
     use serde::{Deserialize, Serialize};
 
-    pub const URI: &str = "login/providers";
+    pub const URI: &str = "/login/providers";
 
     #[derive(Serialize, Deserialize)]
     pub struct Provider {
-        name: String,
-        icon: String,
+        pub name: String,
+        pub icon: String,
     }
 
     pub type Response = Vec<Provider>;
@@ -19,15 +19,32 @@ pub mod providers {
 pub mod begin {
     use serde::{Deserialize, Serialize};
 
-    pub const URI: &str = "login/begin";
+    pub const URI: &str = "/login/begin";
 
     #[derive(Serialize, Deserialize)]
     pub struct Request {
-        provider: String,
+        pub provider: String,
     }
 
     #[derive(Serialize, Deserialize)]
-    pub struct Response {
-        redirect_to: String,
+    pub enum Response {
+        LoggedIn,
+        Continue(String),
     }
+}
+
+pub mod complete {
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/login/complete";
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Request {
+        pub state: Option<String>,
+        pub code: Option<String>,
+        pub error: Option<String>,
+    }
+
+    // Either we succeed, in which case the cookie is the side-effect, or we return an error
+    pub type Response = ();
 }

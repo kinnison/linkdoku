@@ -16,7 +16,24 @@ pub mod public;
 
 #[derive(Serialize, Deserialize)]
 pub enum APIError {
+    /// Generic problem, rarely returned
     Generic(String),
+    /// Generic database error, should not be returned
+    DatabaseError(String),
+    /// Unknown login provider (could be raised at any point in the login process)
+    UnknownLoginProvider(String),
+    /// Bad login state token
+    BadLoginStateToken,
+    /// Code exchange failure
+    LoginCodeExchangeFailed,
+    /// Login flow got an error from the OIDP
+    LoginFlowError(String),
+    /// Login flow failed to get identity token
+    NoIdentityToken,
+    /// Login flow produced a bad identity token
+    BadIdentityToken,
 }
 
+// Every API call possible will return APIResult<Response>
+// where the response is the response type
 pub type APIResult<T> = std::result::Result<T, APIError>;

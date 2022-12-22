@@ -8,3 +8,19 @@ diesel::table! {
         gravatar_hash -> Varchar,
     }
 }
+
+diesel::table! {
+    role (id) {
+        id -> Int4,
+        owner -> Int4,
+        display_name -> Varchar,
+        description -> Text,
+    }
+}
+
+diesel::joinable!(role -> identity (owner));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    identity,
+    role,
+);
