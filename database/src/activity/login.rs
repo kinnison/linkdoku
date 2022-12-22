@@ -32,14 +32,15 @@ pub async fn login_upsert(
                     vec![
                         models::Role::create(
                             conn,
-                            identity.id,
+                            &identity.default_role_uuid(),
+                            &identity.uuid,
                             &format!("{} (Role)", display_name),
                             &format!("# Initial role for {}", display_name),
                         )
                         .await?,
                     ]
                 } else {
-                    models::Role::by_owner(conn, identity.id).await?
+                    models::Role::by_owner(conn, &identity.uuid).await?
                 };
                 Ok((identity, roles))
             })

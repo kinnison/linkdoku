@@ -1,8 +1,8 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    identity (id) {
-        id -> Int4,
+    identity (uuid) {
+        uuid -> Varchar,
         oidc_handle -> Varchar,
         display_name -> Varchar,
         gravatar_hash -> Varchar,
@@ -10,9 +10,9 @@ diesel::table! {
 }
 
 diesel::table! {
-    role (id) {
-        id -> Int4,
-        owner -> Int4,
+    role (uuid) {
+        uuid -> Varchar,
+        owner -> Varchar,
         display_name -> Varchar,
         description -> Text,
     }

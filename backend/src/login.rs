@@ -373,13 +373,10 @@ async fn handle_login_continue(
                         }
                     };
                     // Prepare the flow
-                    let default_role = format!("role-{}", roles[0].id);
+                    let default_role = roles[0].uuid.clone();
                     flow.user = Some(LoginFlowUserData {
                         identity,
-                        cached_roles: roles
-                            .into_iter()
-                            .map(|role| format!("role-{}", role.id))
-                            .collect(),
+                        cached_roles: roles.into_iter().map(|role| role.uuid).collect(),
                         active_role: default_role,
                     });
                     Json::from(Ok(()))

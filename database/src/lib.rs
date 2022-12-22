@@ -22,6 +22,8 @@ pub fn apply_migrations_sync(db_url: &str) -> diesel::migration::Result<()> {
     Ok(())
 }
 
+pub(crate) mod utils;
+
 pub mod activity;
 pub mod models;
 pub mod schema;
