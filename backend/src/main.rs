@@ -39,6 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     let app = Router::new()
         .nest("/api", api::router())
         .layer(CookieManagerLayer::new())
+        .fallback(spa::spa_handler)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
@@ -47,8 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
                         .level(Level::INFO)
                         .latency_unit(LatencyUnit::Millis),
                 ),
-        )
-        .fallback(spa::spa_handler);
+        );
 
     // and provide all the state to it
     let port = config.port;

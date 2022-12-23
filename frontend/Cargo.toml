@@ -10,6 +10,7 @@ required-features = ["hydration"]
 
 [dependencies]
 yew = "0.20"
+yew-router = "0.17.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-logger = "0.2"

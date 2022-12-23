@@ -19,6 +19,7 @@ pub struct Configuration {
     pub resources: PathBuf,
     pub port: u16,
     pub database_url: Url,
+    pub base_url: Url,
     pub redirect_url: String,
     pub cookie_secret: String,
     pub openid: HashMap<String, OpenIDProvider>,

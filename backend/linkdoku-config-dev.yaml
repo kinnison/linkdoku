@@ -12,6 +12,9 @@ resources: "../frontend/dist"
 # to be able to read/change.
 cookie_secret: "01234567890123456789012345678901"
 
+# Base URL (automatically inserted into every rendered page)
+base_url: "http://localhost:3000/"
+
 # Redirect URL for *all* OIDP setups is always the same:
 redirect_url: "http://localhost:3000/-/complete-login"
 

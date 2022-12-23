@@ -4,13 +4,16 @@
 use std::{collections::HashMap, ffi::OsStr};
 
 use axum::{
-    extract::Query,
+    extract::{Query, State},
     http::{StatusCode, Uri},
     response::{IntoResponse, Response},
 };
 
 use include_dir::{include_dir, Dir};
 use tracing::info;
+use url::Url;
+
+use crate::config::ConfigState;
 
 static SPA_FILES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../frontend/dist");
 
@@ -46,7 +49,7 @@ async fn serve_file(filename: &str) -> Response {
     }
 }
 
-async fn ssr_render(uri: Uri, query: HashMap<String, String>) -> Response {
+async fn ssr_render(uri: Uri, query: HashMap<String, String>, base: &Url) -> Response {
     // Acquire index.html
     let all_html = SPA_FILES
         .get_file("index.html")
@@ -56,9 +59,28 @@ async fn ssr_render(uri: Uri, query: HashMap<String, String>) -> Response {
     let (pre_head, rest) = all_html.split_once("</head>").unwrap();
     let (pre_body, rest) = rest.split_once("</body>").unwrap();
 
-    let yew_body = yew::ServerRenderer::<frontend::App>::new().render().await;
+    use frontend::ssr::*;
 
-    let full_body = format!("{pre_head}</head>{pre_body}{yew_body}</body>{rest}");
+    info!("Performing SSR of {}", uri.to_string());
+
+    let mut full_body = pre_head.to_string();
+    full_body.push_str("\n    <base href=\"");
+    full_body.push_str(base.as_str());
+    full_body.push_str("\" />\n");
+    full_body.push_str("    <!-- Page rendered due to request for ");
+    full_body.push_str(&uri.to_string());
+    full_body.push_str(" -->\n</head>");
+    full_body.push_str(pre_body);
+
+    yew::ServerRenderer::<ServerApp>::with_props(move || ServerAppProps {
+        uri: uri.to_string(),
+        query,
+    })
+    .render_to_string(&mut full_body)
+    .await;
+    full_body.push_str("</body>");
+    full_body.push_str(rest);
+
     (
         Response::builder()
             .header("Content-Type", "text/html")
@@ -71,13 +93,17 @@ async fn ssr_render(uri: Uri, query: HashMap<String, String>) -> Response {
         .into_response()
 }
 
-pub async fn spa_handler(uri: Uri, Query(query): Query<HashMap<String, String>>) -> Response {
+pub async fn spa_handler(
+    uri: Uri,
+    Query(query): Query<HashMap<String, String>>,
+    State(config): State<ConfigState>,
+) -> Response {
     // Basically the rule is, if the uri starts /assets/ then we serve content from SPA_FILES
     // Otherwise we're trying to SSR the index.html
 
     if let Some(filename) = uri.path().strip_prefix("/assets/") {
         serve_file(filename).await
     } else {
-        ssr_render(uri, query).await
+        ssr_render(uri, query, &config.base_url).await
     }
 }
