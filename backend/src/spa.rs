@@ -63,9 +63,11 @@ async fn ssr_render(uri: Uri, query: HashMap<String, String>, base: &Url) -> Res
 
     info!("Performing SSR of {}", uri.to_string());
 
+    let base = base.to_string();
+
     let mut full_body = pre_head.to_string();
     full_body.push_str("\n    <base href=\"");
-    full_body.push_str(base.as_str());
+    full_body.push_str(&base);
     full_body.push_str("\" />\n");
     full_body.push_str("    <!-- Page rendered due to request for ");
     full_body.push_str(&uri.to_string());
@@ -75,6 +77,7 @@ async fn ssr_render(uri: Uri, query: HashMap<String, String>, base: &Url) -> Res
     yew::ServerRenderer::<ServerApp>::with_props(move || ServerAppProps {
         uri: uri.to_string(),
         query,
+        base: base.into(),
     })
     .render_to_string(&mut full_body)
     .await;

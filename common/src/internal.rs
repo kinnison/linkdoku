@@ -4,3 +4,5 @@
 
 pub mod login;
 pub mod logout;
+
+pub const INTERNAL_SEGMENT: &str = "/internal";

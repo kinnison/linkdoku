@@ -4,4 +4,6 @@ members = [
     "common",
     "backend",
     "frontend",
+    "apiprovider",
+    "frontend-core",
 ]

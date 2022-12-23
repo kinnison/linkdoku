@@ -3,3 +3,5 @@
 //! amount of version numbering behind it.
 
 pub mod userinfo;
+
+pub const PUBLIC_SEGMENT: &str = "/public";

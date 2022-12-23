@@ -16,6 +16,8 @@ pub mod public;
 
 #[derive(Serialize, Deserialize)]
 pub enum APIError {
+    /// Client problem, only generated client-side, never returned from the server
+    ClientIssue(String),
     /// Generic problem, rarely returned
     Generic(String),
     /// Generic database error, should not be returned

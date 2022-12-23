@@ -2,6 +2,7 @@
 //!
 
 use axum::Router;
+use common::{internal::INTERNAL_SEGMENT, public::PUBLIC_SEGMENT};
 
 use crate::state::BackendState;
 
@@ -10,6 +11,6 @@ pub fn router() -> Router<BackendState> {
     let public = Router::new().merge(crate::login::public_router());
 
     Router::new()
-        .nest("/internal", internal)
-        .nest("/public", public)
+        .nest(INTERNAL_SEGMENT, internal)
+        .nest(PUBLIC_SEGMENT, public)
 }

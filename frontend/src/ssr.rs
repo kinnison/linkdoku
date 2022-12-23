@@ -6,18 +6,20 @@
 
 use std::collections::HashMap;
 
+use frontend_core::BaseURIProvider;
 use yew::prelude::*;
 use yew_router::{
     history::{AnyHistory, History, MemoryHistory},
     Router,
 };
 
-use crate::routes::RouteSwitcher;
+use crate::Root;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct ServerAppProps {
     pub uri: String,
     pub query: HashMap<String, String>,
+    pub base: AttrValue,
 }
 
 #[function_component(ServerApp)]
@@ -28,7 +30,9 @@ pub fn server_app(props: &ServerAppProps) -> Html {
     } else {
         html! {
             <Router history={history}>
-                <RouteSwitcher />
+                <BaseURIProvider uri={props.base.clone()}>
+                    <Root />
+                </BaseURIProvider>
             </Router>
         }
     }
