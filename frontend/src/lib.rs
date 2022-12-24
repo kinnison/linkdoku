@@ -10,6 +10,7 @@ use yew_toastrack::ToastContainer;
 
 use crate::routes::RouteSwitcher;
 
+pub(crate) mod pages;
 pub mod routes;
 
 #[cfg(feature = "ssr")]

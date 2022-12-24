@@ -10,11 +10,19 @@ use crate::{Toast, ToastLevel};
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+enum ToastState {
+    Nascent,
+    Visible,
+    Fading,
+}
+
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 struct ToastListEntry {
     nr: usize,
     toast: Toast,
     age: usize,
+    state: ToastState,
 }
 
 #[derive(PartialEq, Serialize, Deserialize)]
@@ -68,7 +76,9 @@ impl ToastList {
 enum ToastListAction {
     NewToast(Toast),
     TimerTick,
+    Ready(usize),
     Close(usize),
+    Closed(usize),
     Pause,
     Unpause,
 }
@@ -94,17 +104,13 @@ impl Reducible for ToastList {
                 } else {
                     let mut ret = self.toasts.clone();
                     for entry in &mut ret {
-                        if entry.toast.lifetime().is_some() {
+                        if let Some(lifetime) = entry.toast.lifetime() {
                             entry.age += Self::TICK_TIME_MILLIS;
+                            if entry.age >= lifetime {
+                                entry.state = ToastState::Fading;
+                            }
                         }
                     }
-                    ret.retain(|entry| {
-                        if let Some(lifetime) = entry.toast.lifetime() {
-                            entry.age <= lifetime
-                        } else {
-                            true
-                        }
-                    });
 
                     Self::store_to_storage(&ret);
                     Rc::new(Self {
@@ -121,6 +127,7 @@ impl Reducible for ToastList {
                     nr: self.nr,
                     toast,
                     age: 0,
+                    state: ToastState::Nascent,
                 });
 
                 Self::store_to_storage(&ret);
@@ -131,7 +138,47 @@ impl Reducible for ToastList {
                     toasts: ret,
                 })
             }
-            ToastListAction::Close(nr) => {
+            ToastListAction::Ready(toast) => {
+                let ret = self
+                    .toasts
+                    .iter()
+                    .cloned()
+                    .map(|mut t| {
+                        if t.nr == toast {
+                            t.state = ToastState::Visible;
+                        }
+                        t
+                    })
+                    .collect::<Vec<_>>();
+                Self::store_to_storage(&ret);
+                Rc::new(Self {
+                    loaded: true,
+                    nr: self.nr,
+                    paused: self.paused,
+                    toasts: ret,
+                })
+            }
+            ToastListAction::Close(toast) => {
+                let ret = self
+                    .toasts
+                    .iter()
+                    .cloned()
+                    .map(|mut t| {
+                        if t.nr == toast {
+                            t.state = ToastState::Fading;
+                        }
+                        t
+                    })
+                    .collect::<Vec<_>>();
+                Self::store_to_storage(&ret);
+                Rc::new(Self {
+                    loaded: true,
+                    nr: self.nr,
+                    paused: self.paused,
+                    toasts: ret,
+                })
+            }
+            ToastListAction::Closed(nr) => {
                 let mut ret = self.toasts.clone();
                 ret.retain(|v| v.nr != nr);
 
@@ -176,6 +223,28 @@ impl ToastLocation {
             Self::BottomRight => style!("bottom: 0px; right: 0px;"),
         }
         .unwrap()
+    }
+
+    fn enter_class(self) -> &'static str {
+        match self {
+            Self::TopLeft | Self::BottomLeft => {
+                "animate__animated animate__faster animate__slideInLeft"
+            }
+            Self::TopRight | Self::BottomRight => {
+                "animate__animated animate__faster animate__slideInRight"
+            }
+        }
+    }
+
+    fn leave_class(self) -> &'static str {
+        match self {
+            Self::TopLeft | Self::BottomLeft => {
+                "animate__animated animate__faster animate__slideOutLeft"
+            }
+            Self::TopRight | Self::BottomRight => {
+                "animate__animated animate__faster animate__slideOutRight"
+            }
+        }
     }
 
     fn reverse(self) -> bool {
@@ -238,6 +307,16 @@ pub fn toast_container(props: &ToastContainerProps) -> Html {
             .into(),
     ];
 
+    let onmadeready = Callback::from({
+        let toasts = toasts.dispatcher();
+        move |nr| toasts.dispatch(ToastListAction::Ready(nr))
+    });
+
+    let onclosed = Callback::from({
+        let toasts = toasts.dispatcher();
+        move |nr| toasts.dispatch(ToastListAction::Closed(nr))
+    });
+
     let onclose = Callback::from({
         let toasts = toasts.dispatcher();
         move |nr| toasts.dispatch(ToastListAction::Close(nr))
@@ -266,11 +345,15 @@ pub fn toast_container(props: &ToastContainerProps) -> Html {
                                     nr={entry.nr}
                                     message={entry.toast.message().to_string()}
                                     level={entry.toast.level()}
+                                    state={entry.state}
+                                    onmadeready={onmadeready.clone()}
+                                    onclosed={onclosed.clone()}
                                     onclose={onclose.clone()}
                                     age={entry.age}
                                     lifetime={entry.toast.lifetime()}
                                     onenter={pause_cb.clone()}
                                     onleave={unpause_cb.clone()}
+                                    location={location}
                                 />
                             }
                         );
@@ -298,11 +381,15 @@ struct ToastProps {
     message: String,
     level: ToastLevel,
     nr: usize,
+    state: ToastState,
+    onmadeready: Callback<usize>,
     onclose: Callback<usize>,
+    onclosed: Callback<usize>,
     age: usize,
     lifetime: Option<usize>,
     onenter: Callback<MouseEvent>,
     onleave: Callback<MouseEvent>,
+    location: ToastLocation,
 }
 
 #[function_component(ToastElement)]
@@ -310,10 +397,25 @@ fn toast(props: &ToastProps) -> Html {
     let classes = vec![
         Classes::from("notification"),
         props.level.classname().into(),
+        match props.state {
+            ToastState::Nascent => Classes::from(props.location.enter_class()),
+            ToastState::Visible => Classes::new(),
+            ToastState::Fading => Classes::from(props.location.leave_class()),
+        },
     ];
 
     let onclick = Callback::from({
         let cb = props.onclose.clone();
+        let nr = props.nr;
+        move |_| cb.emit(nr)
+    });
+
+    let onanimationend = Callback::from({
+        let cb = if props.state == ToastState::Nascent {
+            props.onmadeready.clone()
+        } else {
+            props.onclosed.clone()
+        };
         let nr = props.nr;
         move |_| cb.emit(nr)
     });
@@ -337,7 +439,13 @@ fn toast(props: &ToastProps) -> Html {
     };
 
     html! {
-        <div class={classes} key={format!("toast-{}", props.nr)} onmouseenter={props.onenter.clone()} onmouseleave={props.onleave.clone()} onmouseover={props.onenter.clone()}>
+        <div class={classes}
+             key={format!("toast-{}", props.nr)}
+             onmouseenter={props.onenter.clone()}
+             onmouseleave={props.onleave.clone()}
+             onmouseover={props.onenter.clone()}
+             onanimationend={onanimationend}
+        >
             <button class="delete" onclick={onclick}></button>
             {props.message.clone()}
             {progress}

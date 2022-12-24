@@ -9,6 +9,8 @@ use yew_router::prelude::*;
 use frontend_core::Route;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
+use crate::pages::home::HomePage;
+
 #[function_component(RouteSwitcher)]
 pub fn route_switcher() -> Html {
     html! {
@@ -20,11 +22,7 @@ fn route_switch(route: Route) -> Html {
     let page_html = match route {
         Route::Home => {
             html! {
-                <>
-                { "Welcome home" }
-                <br />
-                <Link<Route> to={Route::NotFound}>{"404 me"}</Link<Route>>
-                </>
+                <HomePage />
             }
         }
         Route::NotFound => {
