@@ -6,6 +6,7 @@ use frontend_core::{
 };
 use yew::prelude::*;
 use yew_router::prelude::*;
+use yew_toastrack::ToastContainer;
 
 use crate::routes::RouteSwitcher;
 
@@ -34,11 +35,13 @@ pub(crate) fn root_element() -> Html {
     html! {
         <ClientProvider>
             <UserProvider>
-                <Navbar>
-                    <UserMenuNavbarItem />
-                </Navbar>
-                <RouteSwitcher />
-                <Footer />
+                <ToastContainer>
+                    <Navbar>
+                        <UserMenuNavbarItem />
+                    </Navbar>
+                    <RouteSwitcher />
+                    <Footer />
+                </ToastContainer>
             </UserProvider>
         </ClientProvider>
     }

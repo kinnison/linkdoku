@@ -7,4 +7,5 @@ members = [
     "apiprovider",
     "frontend-core",
     "components",
+    "yew-toastrack",
 ]

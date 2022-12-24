@@ -7,6 +7,7 @@ use yew::{html::PhantomComponent, platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
 
 use frontend_core::Route;
+use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
 #[function_component(RouteSwitcher)]
 pub fn route_switcher() -> Html {
@@ -66,6 +67,7 @@ fn login_flow() -> Html {
     let login_status = use_context::<LoginStatus>().unwrap();
     let login_status_dispatch = use_context::<LoginStatusDispatcher>().unwrap();
     let api = use_apiprovider();
+    let toaster = use_toaster();
 
     let query: FlowContinuation = match location.query() {
         Ok(q) => q,
@@ -100,10 +102,16 @@ fn login_flow() -> Html {
                                 roles: response.roles,
                                 default_role: response.default_role,
                             });
+                            toaster.toast(Toast::new("You are now logged in").with_lifetime(2000));
                             nav.replace(&Route::Home);
                         }
                         Err(e) => {
                             // TODO: Toast this?
+                            toaster.toast(
+                                Toast::new(format!("Error logging in: {e:?}"))
+                                    .with_level(ToastLevel::Danger)
+                                    .with_lifetime(2000),
+                            );
                             nav.replace(&Route::Home);
                         }
                     }
