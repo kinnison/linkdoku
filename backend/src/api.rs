@@ -6,9 +6,13 @@ use common::{internal::INTERNAL_SEGMENT, public::PUBLIC_SEGMENT};
 
 use crate::state::BackendState;
 
+mod objects;
+
 pub fn router() -> Router<BackendState> {
     let internal = Router::new().merge(crate::login::internal_router());
-    let public = Router::new().merge(crate::login::public_router());
+    let public = Router::new()
+        .merge(crate::login::public_router())
+        .merge(objects::public_router());
 
     Router::new()
         .nest(INTERNAL_SEGMENT, internal)

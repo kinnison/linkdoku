@@ -13,3 +13,4 @@ apiprovider = { path = "../apiprovider" }
 common = { path = "../common" }
 log = "0.4.17"
 gloo = "0.8.0"
+stylist = { version = "0.11", features = ["yew_integration"] }

@@ -8,7 +8,7 @@ use common::{
     public::{userinfo, PUBLIC_SEGMENT},
     APIError, APIResult,
 };
-use reqwest::{Client, Url};
+use reqwest::{Client, StatusCode, Url};
 use serde::{de::DeserializeOwned, Serialize};
 use yew::prelude::*;
 
@@ -44,6 +44,17 @@ impl APIProvider {
         Url::parse(&combined).expect("Unable to construct API URL?")
     }
 
+    fn compute_basic_uri(&self, kind: &str, uuid: &str) -> Url {
+        let combined = format!(
+            "{}api{}/{}/{}",
+            self.base.as_str(),
+            PUBLIC_SEGMENT,
+            kind,
+            uuid
+        );
+        Url::parse(&combined).expect("Unable to construct API url?")
+    }
+
     async fn make_api_call<IN, OUT>(
         &self,
         mut api: Url,
@@ -68,10 +79,13 @@ impl APIProvider {
             .client
             .execute(request)
             .await
-            .map_err(|e| APIError::ClientIssue(e.to_string()))?
-            .error_for_status()
             .map_err(|e| APIError::ClientIssue(e.to_string()))?;
+        if response.status() == StatusCode::NOT_FOUND {
+            return Err(APIError::ObjectNotFound);
+        }
         response
+            .error_for_status()
+            .map_err(|e| APIError::ClientIssue(e.to_string()))?
             .json()
             .await
             .map_err(|e| APIError::ClientIssue(e.to_string()))?
@@ -114,5 +128,14 @@ impl APIProvider {
     pub async fn logout(&self) -> APIResult<logout::Response> {
         let uri = self.compute_uri(INTERNAL_SEGMENT, logout::URI);
         self.make_api_call(uri, None, EMPTY_BODY).await
+    }
+
+    pub(crate) async fn get_generic_obj<T: DeserializeOwned>(
+        &self,
+        kind: &str,
+        uuid: &str,
+    ) -> APIResult<T> {
+        let uri = self.compute_basic_uri(kind, uuid);
+        self.make_api_call(uri, None, NO_BODY).await
     }
 }

@@ -7,6 +7,8 @@ use frontend_core::{component::user::Avatar, Route};
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
 
+use crate::role::Role;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LoginStatus {
     Unknown,
@@ -244,10 +246,10 @@ pub fn user_menu_button() -> Html {
                 .map(|this_role| {
                     let emitter = login_status_dispatch.clone();
                     let role_uuid = this_role.clone();
-                    //let onclick = Callback::from(move |_| emitter.dispatch(LoginStatusAction::ChosenRole(role_uuid.clone())));
+                    let onclick = Callback::from(move |_| emitter.dispatch(LoginStatusAction::ChosenRole(role_uuid.clone())));
                     html! {
                         <div class={"navbar-item"}>
-                            {"<Role active={role == this_role} uuid={this_role.clone()} onclick={onclick} />"}
+                            <Role active={role == this_role} uuid={this_role.clone()} onclick={onclick} />
                         </div>
                     }
                 })

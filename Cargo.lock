@@ -322,6 +322,7 @@ dependencies = [
  "frontend-core",
  "gloo",
  "log",
+ "stylist",
  "yew",
  "yew-router",
 ]

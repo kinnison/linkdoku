@@ -12,14 +12,17 @@
 use serde::{Deserialize, Serialize};
 
 pub mod internal;
+pub mod objects;
 pub mod public;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum APIError {
     /// Client problem, only generated client-side, never returned from the server
     ClientIssue(String),
     /// Generic problem, rarely returned
     Generic(String),
+    /// Whatever was asked for was not found (we locally transform this from a 404 in the client)
+    ObjectNotFound,
     /// Generic database error, should not be returned
     DatabaseError(String),
     /// Unknown login provider (could be raised at any point in the login process)
