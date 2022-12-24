@@ -110,14 +110,6 @@ struct LoginFlowSetup {
 #[derive(Serialize, Deserialize)]
 pub struct LoginFlowUserData {
     identity: models::Identity,
-    cached_roles: Vec<String>,
-    active_role: String,
-}
-
-impl LoginFlowUserData {
-    pub fn has_role(&self, role: &str) -> bool {
-        self.cached_roles.iter().any(|r| r == role)
-    }
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -190,16 +182,24 @@ async fn set_login_flow_status(cookies: &PrivateCookies, login: &LoginFlowStatus
 
 // ------------ routes ------------------
 
-async fn handle_userinfo(cookies: PrivateCookies) -> Json<APIResult<userinfo::Response>> {
+async fn handle_userinfo(
+    cookies: PrivateCookies,
+    mut db: database::Connection,
+) -> Json<APIResult<userinfo::Response>> {
     let flow = login_flow_status(&cookies).await;
 
     match flow.user() {
-        Some(user) => Json::from(Ok(userinfo::Response {
-            info: Some(userinfo::UserInfo {
-                display_name: user.identity.display_name.clone(),
-                gravatar_hash: user.identity.gravatar_hash.clone(),
-            }),
-        })),
+        Some(user) => match user.identity.roles(&mut db).await {
+            Ok(roles) => Json::from(Ok(userinfo::Response {
+                info: Some(userinfo::UserInfo {
+                    display_name: user.identity.display_name.clone(),
+                    gravatar_hash: user.identity.gravatar_hash.clone(),
+                    roles: roles.into_iter().map(|role| role.uuid).collect(),
+                    default_role: user.identity.default_role_uuid(),
+                }),
+            })),
+            Err(e) => Json::from(Err(APIError::DatabaseError(e.to_string()))),
+        },
         None => Json::from(Ok(userinfo::Response { info: None })),
     }
 }
@@ -293,12 +293,24 @@ async fn handle_login_continue(
 ) -> Json<APIResult<complete::Response>> {
     let mut flow = login_flow_status(&cookies).await;
     // First up, if we're already logged in, just redirect the user to the root of the app
-    if flow.user.is_some() {
-        return Json::from(Ok(()));
+    if let Some(user) = &flow.user {
+        let roles = match user.identity.roles(&mut db).await {
+            Ok(roles) => roles,
+            Err(e) => {
+                return Json::from(Err(APIError::DatabaseError(e.to_string())));
+            }
+        };
+
+        return Json::from(Ok(userinfo::UserInfo {
+            display_name: user.identity.display_name.clone(),
+            gravatar_hash: user.identity.gravatar_hash.clone(),
+            roles: roles.into_iter().map(|role| role.uuid).collect(),
+            default_role: user.identity.default_role_uuid(),
+        }));
     }
     if let Some(setup) = flow.flow.as_ref() {
         // Flow is in progress, so let's check the state first
-        if params.state.as_ref() != Some(setup.csrf_token.secret()) {
+        if params.state.as_str() != setup.csrf_token.secret() {
             // State value is bad, so clean up and BAD_REQUEST
             flow.flow = None;
             set_login_flow_status(&cookies, &flow).await;
@@ -373,13 +385,15 @@ async fn handle_login_continue(
                         }
                     };
                     // Prepare the flow
-                    let default_role = roles[0].uuid.clone();
-                    flow.user = Some(LoginFlowUserData {
-                        identity,
-                        cached_roles: roles.into_iter().map(|role| role.uuid).collect(),
-                        active_role: default_role,
-                    });
-                    Json::from(Ok(()))
+                    let ret = userinfo::UserInfo {
+                        display_name: identity.display_name.clone(),
+                        gravatar_hash,
+                        roles: roles.into_iter().map(|role| role.uuid).collect(),
+                        default_role: identity.default_role_uuid(),
+                    };
+                    flow.user = Some(LoginFlowUserData { identity });
+                    set_login_flow_status(&cookies, &flow).await;
+                    Json::from(Ok(ret))
                 }
                 Err(e) => {
                     // Failed to exchange the token, return something
@@ -397,7 +411,7 @@ async fn handle_login_continue(
         }
     } else {
         // No login in progress, redirect user to root
-        Json::from(Ok(()))
+        Json::from(Err(APIError::LoginFlowError("No login in progess".into())))
     }
 }
 
@@ -407,7 +421,7 @@ pub fn internal_router() -> Router<BackendState> {
         .route(logout::URI, post(handle_logout))
         .route(providers::URI, get(handle_providers))
         .route(begin::URI, post(handle_start_auth))
-        .route("/login/continue", get(handle_login_continue))
+        .route(complete::URI, post(handle_login_continue))
 }
 
 pub fn public_router() -> Router<BackendState> {

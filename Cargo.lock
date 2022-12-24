@@ -314,6 +314,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "components"
+version = "0.1.0"
+dependencies = [
+ "apiprovider",
+ "common",
+ "frontend-core",
+ "gloo",
+ "log",
+ "yew",
+ "yew-router",
+]
+
+[[package]]
 name = "config"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -595,8 +608,10 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "apiprovider",
+ "components",
  "frontend-core",
  "log",
+ "serde",
  "tracing",
  "wasm-logger",
  "yew",
@@ -608,8 +623,12 @@ name = "frontend-core"
 version = "0.1.0"
 dependencies = [
  "gloo",
+ "js-sys",
  "url",
+ "wasm-bindgen",
+ "web-sys",
  "yew",
+ "yew-router",
 ]
 
 [[package]]

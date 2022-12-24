@@ -10,8 +10,8 @@ use crate::utils;
 pub struct Identity {
     pub uuid: String,
     pub oidc_handle: String,
-    pub gravatar_hash: String,
     pub display_name: String,
+    pub gravatar_hash: String,
 }
 
 #[derive(Insertable)]
@@ -19,8 +19,8 @@ pub struct Identity {
 pub struct NewIdentity<'a> {
     pub uuid: &'a str,
     pub oidc_handle: &'a str,
-    pub gravatar_hash: &'a str,
     pub display_name: &'a str,
+    pub gravatar_hash: &'a str,
 }
 
 impl Identity {
@@ -82,6 +82,11 @@ impl Identity {
             .values(&new)
             .get_result(conn)
             .await
+    }
+
+    /// Retrieve the roles for this identity
+    pub async fn roles(&self, conn: &mut AsyncPgConnection) -> QueryResult<Vec<Role>> {
+        Role::by_owner(conn, &self.uuid).await
     }
 }
 

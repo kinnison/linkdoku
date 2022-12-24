@@ -7,8 +7,12 @@ edition = "2021"
 
 [dependencies]
 gloo = "0.8.0"
+js-sys = "0.3.60"
 url = "2.3.1"
+wasm-bindgen = "0.2.83"
+web-sys = { version = "0.3.60", features = ["HtmlLinkElement"] }
 yew = "0.20.0"
+yew-router = "0.17.0"
 
 [features]
 ssr = ["yew/ssr"]

@@ -10,6 +10,8 @@ pub const URI: &str = "/userinfo";
 pub struct UserInfo {
     pub display_name: String,
     pub gravatar_hash: String,
+    pub roles: Vec<String>,
+    pub default_role: String,
 }
 
 #[derive(Serialize, Deserialize)]

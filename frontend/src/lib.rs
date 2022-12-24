@@ -1,5 +1,9 @@
 use apiprovider::ClientProvider;
-use frontend_core::BaseURIProvider;
+use components::user::{UserMenuNavbarItem, UserProvider};
+use frontend_core::{
+    component::core::{Footer, Navbar},
+    BaseURIProvider,
+};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -29,7 +33,13 @@ pub fn App() -> Html {
 pub(crate) fn root_element() -> Html {
     html! {
         <ClientProvider>
-            <RouteSwitcher />
+            <UserProvider>
+                <Navbar>
+                    <UserMenuNavbarItem />
+                </Navbar>
+                <RouteSwitcher />
+                <Footer />
+            </UserProvider>
         </ClientProvider>
     }
 }

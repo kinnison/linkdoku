@@ -40,11 +40,11 @@ pub mod complete {
 
     #[derive(Serialize, Deserialize)]
     pub struct Request {
-        pub state: Option<String>,
+        pub state: String,
         pub code: Option<String>,
         pub error: Option<String>,
     }
 
     // Either we succeed, in which case the cookie is the side-effect, or we return an error
-    pub type Response = ();
+    pub type Response = crate::public::userinfo::UserInfo;
 }

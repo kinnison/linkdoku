@@ -6,4 +6,5 @@ members = [
     "frontend",
     "apiprovider",
     "frontend-core",
+    "components",
 ]

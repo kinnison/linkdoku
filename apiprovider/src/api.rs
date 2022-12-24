@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use common::{
-    internal::{login, INTERNAL_SEGMENT},
+    internal::{login, logout, INTERNAL_SEGMENT},
     public::{userinfo, PUBLIC_SEGMENT},
     APIError, APIResult,
 };
@@ -36,6 +36,7 @@ pub fn use_apiprovider() -> APIProvider {
 }
 
 const NO_BODY: Option<()> = None;
+const EMPTY_BODY: Option<Vec<String>> = Some(Vec::new());
 
 impl APIProvider {
     fn compute_uri(&self, base: &str, func: &str) -> Url {
@@ -92,12 +93,12 @@ impl APIProvider {
 
     pub async fn complete_login(
         &self,
+        state: &str,
         code: Option<&str>,
-        state: Option<&str>,
         error: Option<&str>,
     ) -> APIResult<login::complete::Response> {
         let body = login::complete::Request {
-            state: state.map(String::from),
+            state: state.to_string(),
             code: code.map(String::from),
             error: error.map(String::from),
         };
@@ -108,5 +109,10 @@ impl APIProvider {
     pub async fn get_userinfo(&self) -> APIResult<userinfo::Response> {
         let uri = self.compute_uri(PUBLIC_SEGMENT, userinfo::URI);
         self.make_api_call(uri, None, NO_BODY).await
+    }
+
+    pub async fn logout(&self) -> APIResult<logout::Response> {
+        let uri = self.compute_uri(INTERNAL_SEGMENT, logout::URI);
+        self.make_api_call(uri, None, EMPTY_BODY).await
     }
 }

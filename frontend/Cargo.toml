@@ -11,8 +11,10 @@ required-features = ["hydration"]
 [dependencies]
 frontend-core = { path = "../frontend-core" }
 apiprovider = { path = "../apiprovider" }
+components = { path = "../components" }
 yew = "0.20"
 yew-router = "0.17.0"
+serde = { version = "1.0.151", features = ["derive"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-logger = "0.2"

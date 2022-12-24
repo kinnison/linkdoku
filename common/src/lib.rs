@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 pub mod internal;
 pub mod public;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum APIError {
     /// Client problem, only generated client-side, never returned from the server
     ClientIssue(String),

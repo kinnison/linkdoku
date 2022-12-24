@@ -75,7 +75,7 @@ async fn ssr_render(uri: Uri, query: HashMap<String, String>, base: &Url) -> Res
     full_body.push_str(pre_body);
 
     yew::ServerRenderer::<ServerApp>::with_props(move || ServerAppProps {
-        uri: uri.to_string(),
+        uri: uri.path().to_string(),
         query,
         base: base.into(),
     })
