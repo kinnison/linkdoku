@@ -1,9 +1,11 @@
 //! Routes which are supported by the linkdoku frontend
 
 use apiprovider::use_apiprovider;
-use components::user::{LoginStatus, LoginStatusAction, LoginStatusDispatcher};
+use components::user::{LoginStatusAction, LoginStatusDispatcher};
 use serde::Deserialize;
-use yew::{html::PhantomComponent, platform::spawn_local, prelude::*};
+#[cfg(feature = "ssr")]
+use yew::html::PhantomComponent;
+use yew::{platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
 
 use frontend_core::Route;
@@ -62,53 +64,55 @@ struct FlowContinuation {
 fn login_flow() -> Html {
     let nav = use_navigator().unwrap();
     let location = use_location().unwrap();
-    let login_status = use_context::<LoginStatus>().unwrap();
     let login_status_dispatch = use_context::<LoginStatusDispatcher>().unwrap();
     let api = use_apiprovider();
     let toaster = use_toaster();
 
-    let query: FlowContinuation = match location.query() {
-        Ok(q) => q,
-        Err(e) => {
-            // Something bad happened, probably want to toast
-            return html! {
-                <Redirect<Route> to={Route::Home} />
-            };
-        }
-    };
+    let query: Result<FlowContinuation, _> = location.query();
 
     use_effect_with_deps(
         {
             // Stuff
-            move |status: &FlowContinuation| {
+            move |status: &Result<FlowContinuation, String>| {
                 let api = api.clone();
                 let status = status.clone();
                 spawn_local(async move {
-                    match api
-                        .complete_login(
-                            status.state.as_str(),
-                            status.code.as_deref(),
-                            status.error.as_deref(),
-                        )
-                        .await
-                    {
-                        Ok(response) => {
-                            // Hurrah, logged in OK, so let's report that
-                            login_status_dispatch.dispatch(LoginStatusAction::LoggedIn {
-                                display_name: response.display_name,
-                                gravatar_hash: response.gravatar_hash,
-                                roles: response.roles,
-                                default_role: response.default_role,
-                            });
-                            toaster.toast(Toast::new("You are now logged in").with_lifetime(2000));
-                            nav.replace(&Route::Home);
-                        }
+                    match status {
+                        Ok(status) => match api
+                            .complete_login(
+                                status.state.as_str(),
+                                status.code.as_deref(),
+                                status.error.as_deref(),
+                            )
+                            .await
+                        {
+                            Ok(response) => {
+                                // Hurrah, logged in OK, so let's report that
+                                login_status_dispatch.dispatch(LoginStatusAction::LoggedIn {
+                                    display_name: response.display_name,
+                                    gravatar_hash: response.gravatar_hash,
+                                    roles: response.roles,
+                                    default_role: response.default_role,
+                                });
+                                toaster
+                                    .toast(Toast::new("You are now logged in").with_lifetime(2000));
+                                nav.replace(&Route::Home);
+                            }
+                            Err(e) => {
+                                // TODO: Toast this?
+                                toaster.toast(
+                                    Toast::new(format!("Error logging in: {e:?}"))
+                                        .with_level(ToastLevel::Danger)
+                                        .with_lifetime(5000),
+                                );
+                                nav.replace(&Route::Home);
+                            }
+                        },
                         Err(e) => {
-                            // TODO: Toast this?
                             toaster.toast(
-                                Toast::new(format!("Error logging in: {e:?}"))
+                                Toast::new(format!("Error with login params: {e}"))
                                     .with_level(ToastLevel::Danger)
-                                    .with_lifetime(2000),
+                                    .with_lifetime(5000),
                             );
                             nav.replace(&Route::Home);
                         }
@@ -117,7 +121,7 @@ fn login_flow() -> Html {
                 || ()
             }
         },
-        query,
+        query.map_err(|e| format!("{e:?}")),
     );
 
     html! {

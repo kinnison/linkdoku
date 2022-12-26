@@ -235,7 +235,6 @@ pub fn user_menu_button() -> Html {
             </div>
         },
         LoginStatus::LoggedIn {
-            display_name,
             gravatar_hash,
             roles,
             role,
