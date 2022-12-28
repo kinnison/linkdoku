@@ -17,20 +17,20 @@ use crate::backend::ReqwestClient;
 use frontend_core::LinkdokuBase;
 
 #[derive(Clone)]
-pub struct APIProvider {
+pub struct LinkdokuAPI {
     client: Arc<Client>,
     base: AttrValue,
     login: Option<AttrValue>,
 }
 
 #[hook]
-pub fn use_apiprovider() -> APIProvider {
+pub fn use_apiprovider() -> LinkdokuAPI {
     let base = use_context::<LinkdokuBase>()
         .expect("Invoked use_apiprovider() when not within a BaseURIProvider");
     let client = use_context::<ReqwestClient>()
         .expect("Invoked use_apiprovider() when not within a ClientProvider");
 
-    APIProvider {
+    LinkdokuAPI {
         client: client.client,
         base: (*base.uri).clone(),
         login: base.login.as_ref().map(|v| (**v).clone()),
@@ -40,7 +40,7 @@ pub fn use_apiprovider() -> APIProvider {
 const NO_BODY: Option<()> = None;
 const EMPTY_BODY: Option<Vec<String>> = Some(Vec::new());
 
-impl APIProvider {
+impl LinkdokuAPI {
     fn compute_uri(&self, base: &str, func: &str) -> Url {
         let combined = format!("{}api{}{}", self.base.as_str(), base, func);
         Url::parse(&combined).expect("Unable to construct API URL?")

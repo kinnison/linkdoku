@@ -10,6 +10,6 @@ mod api;
 mod backend;
 mod cache;
 
-pub use api::{use_apiprovider, APIProvider};
+pub use api::{use_apiprovider, LinkdokuAPI};
 pub use backend::{ClientProvider, ClientProviderProps};
 pub use cache::*;
