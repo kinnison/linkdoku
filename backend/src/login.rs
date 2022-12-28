@@ -128,6 +128,10 @@ impl LoginFlowStatus {
     pub fn user(&self) -> Option<&LoginFlowUserData> {
         self.user.as_ref()
     }
+
+    pub fn user_uuid(&self) -> Option<&str> {
+        self.user.as_ref().map(|u| u.identity().uuid.as_str())
+    }
 }
 
 // ---- Private cookies stuff ----
@@ -159,6 +163,10 @@ where
 impl PrivateCookies {
     fn get(&self) -> tower_cookies::PrivateCookies<'_> {
         self.cookies.private(&self.key)
+    }
+
+    pub async fn get_login_flow_status(&self) -> LoginFlowStatus {
+        login_flow_status(self).await
     }
 }
 

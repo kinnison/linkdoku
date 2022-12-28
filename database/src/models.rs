@@ -146,4 +146,30 @@ impl Role {
             .get_result(conn)
             .await
     }
+
+    /// Are we permitted to edit this role?
+    ///
+    pub async fn can_modify(
+        &self,
+        _conn: &mut AsyncPgConnection,
+        actor: &str,
+    ) -> QueryResult<bool> {
+        // TODO: When we add role permissions check them here, for now owner can edit
+        Ok(self.owner == actor)
+    }
+
+    /// Save this role
+    pub async fn save(&self, conn: &mut AsyncPgConnection) -> QueryResult<()> {
+        use crate::schema::role;
+        diesel::update(role::table)
+            .filter(role::uuid.eq(&self.uuid))
+            .set((
+                role::owner.eq(&self.owner),
+                role::display_name.eq(&self.display_name),
+                role::description.eq(&self.description),
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
 }

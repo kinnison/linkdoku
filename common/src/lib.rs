@@ -23,6 +23,10 @@ pub enum APIError {
     Generic(String),
     /// Whatever was asked for was not found (we locally transform this from a 404 in the client)
     ObjectNotFound,
+    /// Whatever you asked to do, you're not permitted to
+    PermissionDenied,
+    /// You tried to do something, but the input was malformed
+    BadInput,
     /// Generic database error, should not be returned
     DatabaseError(String),
     /// Unknown login provider (could be raised at any point in the login process)
