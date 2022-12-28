@@ -4,6 +4,12 @@ use yew_router::prelude::*;
 pub enum Route {
     #[at("/")]
     Home,
+    #[at("/role/:role")]
+    ViewRole { role: String },
+    #[at("/role/:role/edit")]
+    EditRole { role: String },
+
+    // The remaining routes are "internal"
     #[at("/-/complete-login")]
     CompleteLogin,
     #[not_found]

@@ -11,7 +11,10 @@ use yew_router::prelude::*;
 use frontend_core::Route;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
-use crate::pages::home::HomePage;
+use crate::pages::{
+    home::HomePage,
+    role::{RoleEditPage, RolePage},
+};
 
 #[function_component(RouteSwitcher)]
 pub fn route_switcher() -> Html {
@@ -27,6 +30,19 @@ fn route_switch(route: Route) -> Html {
                 <HomePage />
             }
         }
+
+        Route::ViewRole { role } => {
+            html! {
+                <RolePage role={role} />
+            }
+        }
+        Route::EditRole { role } => {
+            html! {
+                <RoleEditPage role={role} />
+            }
+        }
+
+        // Internal routes
         Route::NotFound => {
             html! {
                 <Redirect<Route> to={Route::Home} />
