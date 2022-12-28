@@ -14,6 +14,7 @@ pub enum LoginStatus {
     Unknown,
     LoggedOut,
     LoggedIn {
+        uuid: String,
         display_name: String,
         gravatar_hash: String,
         roles: Vec<String>,
@@ -27,11 +28,13 @@ impl LoginStatus {
             Self::Unknown => Self::Unknown,
             Self::LoggedOut => Self::LoggedOut,
             Self::LoggedIn {
+                uuid,
                 display_name,
                 gravatar_hash,
                 roles,
                 ..
             } => Self::LoggedIn {
+                uuid: uuid.clone(),
                 display_name: display_name.clone(),
                 gravatar_hash: gravatar_hash.clone(),
                 roles: roles.clone(),
@@ -66,6 +69,7 @@ impl LoginStatus {
 pub enum LoginStatusAction {
     LoggedOut,
     LoggedIn {
+        uuid: String,
         display_name: String,
         gravatar_hash: String,
         roles: Vec<String>,
@@ -82,11 +86,13 @@ impl Reducible for LoginStatus {
         match action {
             LoginStatusAction::LoggedOut => LoginStatus::LoggedOut,
             LoginStatusAction::LoggedIn {
+                uuid,
                 display_name,
                 gravatar_hash,
                 roles,
                 default_role,
             } => LoginStatus::LoggedIn {
+                uuid,
                 display_name,
                 gravatar_hash,
                 roles,
@@ -121,6 +127,7 @@ pub fn login_user_provider(props: &UserProviderProps) -> Html {
                         Ok(status) => {
                             if let Some(info) = status.info {
                                 dispatcher.dispatch(LoginStatusAction::LoggedIn {
+                                    uuid: info.uuid,
                                     display_name: info.display_name,
                                     gravatar_hash: info.gravatar_hash,
                                     roles: info.roles,

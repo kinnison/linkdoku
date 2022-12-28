@@ -8,6 +8,7 @@ pub const URI: &str = "/userinfo";
 
 #[derive(Serialize, Deserialize)]
 pub struct UserInfo {
+    pub uuid: String,
     pub display_name: String,
     pub gravatar_hash: String,
     pub roles: Vec<String>,

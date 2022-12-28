@@ -105,6 +105,7 @@ fn login_flow() -> Html {
                             Ok(response) => {
                                 // Hurrah, logged in OK, so let's report that
                                 login_status_dispatch.dispatch(LoginStatusAction::LoggedIn {
+                                    uuid: response.uuid,
                                     display_name: response.display_name,
                                     gravatar_hash: response.gravatar_hash,
                                     roles: response.roles,

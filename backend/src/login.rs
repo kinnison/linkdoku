@@ -192,6 +192,7 @@ async fn handle_userinfo(
         Some(user) => match user.identity.roles(&mut db).await {
             Ok(roles) => Json::from(Ok(userinfo::Response {
                 info: Some(userinfo::UserInfo {
+                    uuid: user.identity.uuid.clone(),
                     display_name: user.identity.display_name.clone(),
                     gravatar_hash: user.identity.gravatar_hash.clone(),
                     roles: roles.into_iter().map(|role| role.uuid).collect(),
@@ -302,6 +303,7 @@ async fn handle_login_continue(
         };
 
         return Json::from(Ok(userinfo::UserInfo {
+            uuid: user.identity.uuid.clone(),
             display_name: user.identity.display_name.clone(),
             gravatar_hash: user.identity.gravatar_hash.clone(),
             roles: roles.into_iter().map(|role| role.uuid).collect(),
@@ -386,6 +388,7 @@ async fn handle_login_continue(
                     };
                     // Prepare the flow
                     let ret = userinfo::UserInfo {
+                        uuid: identity.uuid.clone(),
                         display_name: identity.display_name.clone(),
                         gravatar_hash,
                         roles: roles.into_iter().map(|role| role.uuid).collect(),
