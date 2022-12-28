@@ -6,24 +6,24 @@ use reqwest::Client;
 use yew::prelude::*;
 
 #[derive(Debug, Clone)]
-pub struct ReqwestClient {
+pub(crate) struct APIContents {
     pub(crate) client: Arc<Client>,
 }
 
-impl PartialEq for ReqwestClient {
+impl PartialEq for APIContents {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.client, &other.client)
     }
 }
 
 #[derive(Clone, Properties, PartialEq)]
-pub struct ClientProviderProps {
+pub struct APIProviderProps {
     pub children: Children,
 }
 
-#[function_component(ClientProvider)]
-pub fn core_client_provider(props: &ClientProviderProps) -> Html {
-    let client = use_state(|| ReqwestClient {
+#[function_component(LinkdokuAPIProvider)]
+pub fn core_client_provider(props: &APIProviderProps) -> Html {
+    let client = use_state(|| APIContents {
         client: Arc::new(
             Client::builder()
                 .build()
@@ -32,8 +32,8 @@ pub fn core_client_provider(props: &ClientProviderProps) -> Html {
     });
 
     html! {
-        <ContextProvider<ReqwestClient> context={(*client).clone()}>
+        <ContextProvider<APIContents> context={(*client).clone()}>
             { for props.children.iter() }
-        </ContextProvider<ReqwestClient>>
+        </ContextProvider<APIContents>>
     }
 }

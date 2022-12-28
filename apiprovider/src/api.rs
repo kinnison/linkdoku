@@ -12,7 +12,7 @@ use reqwest::{header::COOKIE, Client, StatusCode, Url};
 use serde::{de::DeserializeOwned, Serialize};
 use yew::prelude::*;
 
-use crate::backend::ReqwestClient;
+use crate::backend::APIContents;
 
 use frontend_core::LinkdokuBase;
 
@@ -27,7 +27,7 @@ pub struct LinkdokuAPI {
 pub fn use_apiprovider() -> LinkdokuAPI {
     let base = use_context::<LinkdokuBase>()
         .expect("Invoked use_apiprovider() when not within a BaseURIProvider");
-    let client = use_context::<ReqwestClient>()
+    let client = use_context::<APIContents>()
         .expect("Invoked use_apiprovider() when not within a ClientProvider");
 
     LinkdokuAPI {

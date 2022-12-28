@@ -11,5 +11,5 @@ mod backend;
 mod cache;
 
 pub use api::{use_apiprovider, LinkdokuAPI};
-pub use backend::{ClientProvider, ClientProviderProps};
+pub use backend::{APIProviderProps, LinkdokuAPIProvider};
 pub use cache::*;

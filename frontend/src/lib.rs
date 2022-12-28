@@ -1,4 +1,4 @@
-use apiprovider::ClientProvider;
+use apiprovider::LinkdokuAPIProvider;
 use components::user::{UserMenuNavbarItem, UserProvider};
 use frontend_core::{
     component::core::{Footer, Navbar},
@@ -34,7 +34,7 @@ pub fn App() -> Html {
 #[function_component(Root)]
 pub(crate) fn root_element() -> Html {
     html! {
-        <ClientProvider>
+        <LinkdokuAPIProvider>
             <UserProvider>
                 <ToastContainer>
                     <Navbar>
@@ -44,6 +44,6 @@ pub(crate) fn root_element() -> Html {
                     <Footer />
                 </ToastContainer>
             </UserProvider>
-        </ClientProvider>
+        </LinkdokuAPIProvider>
     }
 }
