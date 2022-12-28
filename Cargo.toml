@@ -8,4 +8,6 @@ members = [
     "frontend-core",
     "components",
     "yew-toastrack",
+    "yew-bulma-tabs",
+    "yew-markdown",
 ]
