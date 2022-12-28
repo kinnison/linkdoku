@@ -9,10 +9,12 @@ name = "linkdoku_frontend"
 required-features = ["hydration"]
 
 [dependencies]
+common = { path = "../common" }
 frontend-core = { path = "../frontend-core" }
 apiprovider = { path = "../apiprovider" }
 components = { path = "../components" }
 yew-toastrack = { path = "../yew-toastrack" }
+yew-markdown = { path = "../yew-markdown" }
 yew = "0.20"
 yew-router = "0.17.0"
 serde = { version = "1.0.151", features = ["derive"] }

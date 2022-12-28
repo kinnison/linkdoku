@@ -1,3 +1,4 @@
+use components::layout::MainPageLayout;
 use yew::prelude::*;
 use yew_toastrack::{use_toaster, Toast};
 
@@ -10,8 +11,10 @@ pub fn render_home() -> Html {
     });
 
     html! {
-        <button onclick={onclick}>
-          { "Click me" }
-        </button>
+        <MainPageLayout>
+            <button onclick={onclick}>
+              { "Click me" }
+            </button>
+        </MainPageLayout>
     }
 }

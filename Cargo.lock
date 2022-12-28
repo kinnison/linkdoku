@@ -609,6 +609,7 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "apiprovider",
+ "common",
  "components",
  "frontend-core",
  "log",
@@ -616,6 +617,7 @@ dependencies = [
  "tracing",
  "wasm-logger",
  "yew",
+ "yew-markdown",
  "yew-router",
  "yew-toastrack",
 ]
