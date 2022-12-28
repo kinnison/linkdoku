@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use common::{
     internal::{login, logout, INTERNAL_SEGMENT},
-    public::{userinfo, PUBLIC_SEGMENT},
+    public::{self, userinfo, PUBLIC_SEGMENT},
     APIError, APIResult,
 };
 use reqwest::{header::COOKIE, Client, StatusCode, Url};
@@ -14,7 +14,7 @@ use yew::prelude::*;
 
 use crate::backend::ReqwestClient;
 
-use frontend_core::BaseURI;
+use frontend_core::LinkdokuBase;
 
 #[derive(Clone)]
 pub struct APIProvider {
@@ -25,7 +25,7 @@ pub struct APIProvider {
 
 #[hook]
 pub fn use_apiprovider() -> APIProvider {
-    let base = use_context::<BaseURI>()
+    let base = use_context::<LinkdokuBase>()
         .expect("Invoked use_apiprovider() when not within a BaseURIProvider");
     let client = use_context::<ReqwestClient>()
         .expect("Invoked use_apiprovider() when not within a ClientProvider");
@@ -147,5 +147,24 @@ impl APIProvider {
     ) -> APIResult<T> {
         let uri = self.compute_basic_uri(kind, uuid);
         self.make_api_call(uri, None, NO_BODY).await
+    }
+
+    pub async fn update_role(
+        &self,
+        uuid: impl Into<String>,
+        display_name: impl Into<String>,
+        description: impl Into<String>,
+    ) -> APIResult<public::role::update::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::role::update::URI);
+        self.make_api_call(
+            uri,
+            None,
+            Some(public::role::update::Request {
+                uuid: uuid.into(),
+                display_name: display_name.into(),
+                description: description.into(),
+            }),
+        )
+        .await
     }
 }

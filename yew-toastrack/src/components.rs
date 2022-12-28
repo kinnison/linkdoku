@@ -278,9 +278,13 @@ pub struct ToastContainerProps {
 pub fn toast_container(props: &ToastContainerProps) -> Html {
     let toasts = use_reducer_eq(ToastList::new);
 
+    #[cfg(not(feature = "ssr"))]
     let toaster = Toaster {
         sender: Some(toasts.dispatcher()),
     };
+
+    #[cfg(feature = "ssr")]
+    let toaster = Toaster { sender: None };
 
     use_effect_with_deps(
         |(active, emitter)| {

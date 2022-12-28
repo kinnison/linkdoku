@@ -11,3 +11,6 @@ gloo = "0.8"
 stylist = { version = "0.11", features = ["yew_integration"] }
 serde = { version = "1", features = ["derive"] }
 log = "0.4"
+
+[features]
+ssr = []

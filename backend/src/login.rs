@@ -112,6 +112,12 @@ pub struct LoginFlowUserData {
     identity: models::Identity,
 }
 
+impl LoginFlowUserData {
+    pub fn identity(&self) -> &models::Identity {
+        &self.identity
+    }
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct LoginFlowStatus {
     flow: Option<LoginFlowSetup>,

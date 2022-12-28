@@ -6,7 +6,8 @@
 
 use std::collections::HashMap;
 
-use frontend_core::BaseURIProvider;
+use common::public::userinfo::UserInfo;
+use frontend_core::BaseProvider;
 use yew::prelude::*;
 use yew_router::{
     history::{AnyHistory, History, MemoryHistory},
@@ -21,6 +22,7 @@ pub struct ServerAppProps {
     pub query: HashMap<String, String>,
     pub base: AttrValue,
     pub login: Option<String>,
+    pub userinfo: Option<UserInfo>,
 }
 
 #[function_component(ServerApp)]
@@ -31,9 +33,9 @@ pub fn server_app(props: &ServerAppProps) -> Html {
     } else {
         html! {
             <Router history={history}>
-                <BaseURIProvider uri={props.base.clone()} login={props.login.clone()}>
+                <BaseProvider uri={props.base.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()}>
                     <Root />
-                </BaseURIProvider>
+                </BaseProvider>
             </Router>
         }
     }

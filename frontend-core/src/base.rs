@@ -1,23 +1,26 @@
 use std::rc::Rc;
 
+use common::public::userinfo::UserInfo;
 use url::Url;
 use yew::prelude::*;
 
 #[derive(Clone, PartialEq)]
-pub struct BaseURI {
+pub struct LinkdokuBase {
     pub uri: Rc<AttrValue>,
     pub login: Option<Rc<AttrValue>>,
+    pub userinfo: Option<UserInfo>,
 }
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct BaseURIProviderProps {
     pub uri: Option<AttrValue>,
     pub login: Option<AttrValue>,
+    pub userinfo: Option<UserInfo>,
     pub children: Children,
 }
 
-#[function_component(BaseURIProvider)]
-pub fn core_base_uri_provider(props: &BaseURIProviderProps) -> Html {
+#[function_component(BaseProvider)]
+pub fn core_base_provider(props: &BaseURIProviderProps) -> Html {
     let uri = use_memo(
         |uri| match uri {
             Some(uri) => uri.clone(),
@@ -36,14 +39,15 @@ pub fn core_base_uri_provider(props: &BaseURIProviderProps) -> Html {
         props.uri.clone(),
     );
 
-    let context = BaseURI {
+    let context = LinkdokuBase {
         uri,
         login: props.login.clone().map(Rc::new),
+        userinfo: props.userinfo.clone(),
     };
 
     html! {
-        <ContextProvider<BaseURI> context={context}>
+        <ContextProvider<LinkdokuBase> context={context}>
             { for props.children.iter() }
-        </ContextProvider<BaseURI>>
+        </ContextProvider<LinkdokuBase>>
     }
 }

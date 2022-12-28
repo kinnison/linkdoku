@@ -616,6 +616,7 @@ dependencies = [
  "serde",
  "tracing",
  "wasm-logger",
+ "web-sys",
  "yew",
  "yew-markdown",
  "yew-router",
@@ -626,6 +627,7 @@ dependencies = [
 name = "frontend-core"
 version = "0.1.0"
 dependencies = [
+ "common",
  "gloo",
  "js-sys",
  "url",

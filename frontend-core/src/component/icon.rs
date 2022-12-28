@@ -7,6 +7,8 @@ pub enum IconType {
     RoleIcon,
     CurrentRoleIcon,
     RoleEditIcon,
+    SubmitFormIcon,
+    SpinnerIcon,
 }
 
 pub use IconType::*;
@@ -19,6 +21,8 @@ impl IconType {
             RoleIcon => "mdi-account-circle-outline",
             CurrentRoleIcon => "mdi-account-circle",
             RoleEditIcon => "mdi-account-edit-outline",
+            SubmitFormIcon => "mdi-content-save",
+            SpinnerIcon => "mdi-loading mdi-spin",
         }
     }
 }

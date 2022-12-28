@@ -2,7 +2,7 @@ use apiprovider::ClientProvider;
 use components::user::{UserMenuNavbarItem, UserProvider};
 use frontend_core::{
     component::core::{Footer, Navbar},
-    BaseURIProvider,
+    BaseProvider,
 };
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -24,9 +24,9 @@ pub fn App() -> Html {
     // with in the Root element instead
     html! {
         <BrowserRouter>
-            <BaseURIProvider>
+            <BaseProvider>
                 <Root />
-            </BaseURIProvider>
+            </BaseProvider>
         </BrowserRouter>
     }
 }

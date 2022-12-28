@@ -9,12 +9,17 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+use common::public::userinfo::UserInfo;
+use database::Connection;
 use include_dir::{include_dir, Dir};
 use tower_cookies::Cookies;
-use tracing::info;
+use tracing::{info, warn};
 use url::Url;
 
-use crate::config::ConfigState;
+use crate::{
+    config::ConfigState,
+    login::{login_flow_status, PrivateCookies},
+};
 
 static SPA_FILES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../frontend/dist");
 
@@ -55,6 +60,7 @@ async fn ssr_render(
     query: HashMap<String, String>,
     base: &Url,
     login: Option<&str>,
+    userinfo: Option<UserInfo>,
 ) -> Response {
     // Acquire index.html
     let all_html = SPA_FILES
@@ -87,6 +93,7 @@ async fn ssr_render(
         query,
         base: base.into(),
         login,
+        userinfo,
     })
     .render_to_string(&mut full_body)
     .await;
@@ -110,6 +117,8 @@ pub async fn spa_handler(
     Query(query): Query<HashMap<String, String>>,
     State(config): State<ConfigState>,
     cookies: Cookies,
+    privatecookies: PrivateCookies,
+    mut db: Connection,
 ) -> Response {
     // Basically the rule is, if the uri starts /assets/ then we serve content from SPA_FILES
     // Otherwise we're trying to SSR the index.html
@@ -118,11 +127,29 @@ pub async fn spa_handler(
         serve_file(filename).await
     } else {
         let login_cookie = cookies.get("login");
+        let flow = login_flow_status(&privatecookies).await;
+        let userinfo = match flow.user() {
+            None => None,
+            Some(user) => match user.identity().roles(&mut db).await {
+                Ok(roles) => Some(UserInfo {
+                    uuid: user.identity().uuid.clone(),
+                    display_name: user.identity().display_name.clone(),
+                    gravatar_hash: user.identity().gravatar_hash.clone(),
+                    roles: roles.into_iter().map(|r| r.uuid).collect(),
+                    default_role: user.identity().default_role_uuid(),
+                }),
+                Err(e) => {
+                    warn!("Unable to read role data during SSR: {e:?}");
+                    None
+                }
+            },
+        };
         ssr_render(
             uri,
             query,
             &config.base_url,
             login_cookie.as_ref().map(|cookie| cookie.value()),
+            userinfo,
         )
         .await
     }

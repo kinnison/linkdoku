@@ -1,8 +1,8 @@
 //! Core linkdoku frontend components
 
-mod baseuri;
+mod base;
 pub mod component;
 mod route;
 
-pub use baseuri::*;
+pub use base::*;
 pub use route::*;
