@@ -12,3 +12,13 @@ pub struct Role {
     pub display_name: String,
     pub description: String,
 }
+
+impl Role {
+    pub fn can_edit(&self, identity: &str) -> bool {
+        self.owner == identity
+    }
+
+    pub fn can_add_puzzles(&self, identity: &str) -> bool {
+        self.owner == identity
+    }
+}

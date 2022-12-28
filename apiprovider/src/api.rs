@@ -8,7 +8,7 @@ use common::{
     public::{userinfo, PUBLIC_SEGMENT},
     APIError, APIResult,
 };
-use reqwest::{Client, StatusCode, Url};
+use reqwest::{header::COOKIE, Client, StatusCode, Url};
 use serde::{de::DeserializeOwned, Serialize};
 use yew::prelude::*;
 
@@ -20,6 +20,7 @@ use frontend_core::BaseURI;
 pub struct APIProvider {
     client: Arc<Client>,
     base: AttrValue,
+    login: Option<AttrValue>,
 }
 
 #[hook]
@@ -32,6 +33,7 @@ pub fn use_apiprovider() -> APIProvider {
     APIProvider {
         client: client.client,
         base: (*base.uri).clone(),
+        login: base.login.as_ref().map(|v| (**v).clone()),
     }
 }
 
@@ -69,12 +71,20 @@ impl APIProvider {
             .clear()
             .extend_pairs(query_params)
             .finish();
-        let request = if let Some(body) = body {
-            self.client.post(api).json(&body).build()
+        let requestbuilder = if let Some(body) = body {
+            self.client.post(api).json(&body)
         } else {
-            self.client.get(api).build()
+            self.client.get(api)
+        };
+
+        let request = if let Some(login) = &self.login {
+            requestbuilder.header(COOKIE, format!("login={}", login))
+        } else {
+            requestbuilder
         }
+        .build()
         .map_err(|e| APIError::ClientIssue(e.to_string()))?;
+
         let response = self
             .client
             .execute(request)

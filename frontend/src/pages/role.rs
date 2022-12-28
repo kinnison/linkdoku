@@ -5,7 +5,7 @@
 use apiprovider::{use_cached_value, CachedValue};
 use common::objects;
 use components::{layout::MainPageLayout, user::LoginStatus};
-use frontend_core::Route;
+use frontend_core::{component::icon::*, Route};
 use yew::prelude::*;
 use yew_markdown::render::MarkdownRender;
 use yew_router::prelude::*;
@@ -31,6 +31,7 @@ pub fn pages_role_render(props: &RolePageProps) -> Html {
 
 #[function_component(RolePageInner)]
 fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
+    let user_info = use_context::<LoginStatus>().unwrap();
     let raw_role = use_cached_value::<objects::Role>(props.role.clone())?;
     let toaster = use_toaster();
 
@@ -55,9 +56,24 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
         }
     };
 
+    let can_edit = match &user_info {
+        LoginStatus::LoggedIn { uuid, .. } => raw_role.can_edit(&uuid),
+        _ => false,
+    };
+
+    let edit_link = if can_edit {
+        html! {
+            <Link<Route> to={Route::EditRole{role: props.role.to_string()}}>
+                <Icon icon={RoleEditIcon} size={IconSize::Medium} />
+            </Link<Route>>
+        }
+    } else {
+        html! {}
+    };
+
     Ok(html! {
         <>
-            <h1 class={"title"}>{raw_role.display_name.clone()}</h1>
+            <h1 class={"title"}>{raw_role.display_name.clone()}{edit_link}</h1>
             <hr width={"40%"} />
             <MarkdownRender markdown={raw_role.description} />
         </>

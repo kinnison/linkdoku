@@ -38,8 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     // Build the app router
     let app = Router::new()
         .nest("/api", api::router())
-        .layer(CookieManagerLayer::new())
         .fallback(spa::spa_handler)
+        .layer(CookieManagerLayer::new())
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

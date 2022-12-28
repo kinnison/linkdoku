@@ -6,6 +6,7 @@ pub enum IconType {
     ExternalLinkIcon,
     RoleIcon,
     CurrentRoleIcon,
+    RoleEditIcon,
 }
 
 pub use IconType::*;
@@ -17,6 +18,36 @@ impl IconType {
             ExternalLinkIcon => "mdi-arrow-u-left-top",
             RoleIcon => "mdi-account-circle-outline",
             CurrentRoleIcon => "mdi-account-circle",
+            RoleEditIcon => "mdi-account-edit-outline",
+        }
+    }
+}
+
+#[derive(Default, Clone, Copy, PartialEq)]
+pub enum IconSize {
+    Small,
+    #[default]
+    Normal,
+    Medium,
+    Large,
+}
+
+impl IconSize {
+    fn size_class(self) -> Option<&'static str> {
+        match self {
+            Self::Small => Some("is-small"),
+            Self::Normal => None,
+            Self::Medium => Some("is-medium"),
+            Self::Large => Some("is-large"),
+        }
+    }
+
+    fn icon_class(self) -> Option<&'static str> {
+        match self {
+            Self::Small => None,
+            Self::Normal => Some("mdi-24px"),
+            Self::Medium => Some("mdi-36px"),
+            Self::Large => Some("mdi-48px"),
         }
     }
 }
@@ -25,6 +56,8 @@ impl IconType {
 pub struct IconProps {
     pub class: Option<AttrValue>,
     pub icon: IconType,
+    #[prop_or_default]
+    pub size: IconSize,
 }
 
 #[function_component(Icon)]
@@ -35,10 +68,12 @@ pub fn icon_render(props: &IconProps) -> Html {
         .unwrap_or_else(|| "icon".into())
         .to_string();
 
-    let icon_class = classes!["mdi", props.icon.icon_class(),];
+    let icon_class = classes!["mdi", props.icon.icon_class(), props.size.icon_class()];
+
+    let span_class = classes![class, props.size.size_class()];
 
     html! {
-        <span class={class}>
+        <span class={span_class}>
             <i class={icon_class} aria-hidden={"true"}/>
         </span>
     }

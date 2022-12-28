@@ -20,6 +20,7 @@ pub struct ServerAppProps {
     pub uri: String,
     pub query: HashMap<String, String>,
     pub base: AttrValue,
+    pub login: Option<String>,
 }
 
 #[function_component(ServerApp)]
@@ -30,7 +31,7 @@ pub fn server_app(props: &ServerAppProps) -> Html {
     } else {
         html! {
             <Router history={history}>
-                <BaseURIProvider uri={props.base.clone()}>
+                <BaseURIProvider uri={props.base.clone()} login={props.login.clone()}>
                     <Root />
                 </BaseURIProvider>
             </Router>

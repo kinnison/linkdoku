@@ -6,11 +6,13 @@ use yew::prelude::*;
 #[derive(Clone, PartialEq)]
 pub struct BaseURI {
     pub uri: Rc<AttrValue>,
+    pub login: Option<Rc<AttrValue>>,
 }
 
 #[derive(Clone, Properties, PartialEq)]
 pub struct BaseURIProviderProps {
     pub uri: Option<AttrValue>,
+    pub login: Option<AttrValue>,
     pub children: Children,
 }
 
@@ -34,7 +36,10 @@ pub fn core_base_uri_provider(props: &BaseURIProviderProps) -> Html {
         props.uri.clone(),
     );
 
-    let context = BaseURI { uri };
+    let context = BaseURI {
+        uri,
+        login: props.login.clone().map(Rc::new),
+    };
 
     html! {
         <ContextProvider<BaseURI> context={context}>

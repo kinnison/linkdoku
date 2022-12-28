@@ -10,6 +10,7 @@ use axum::{
 };
 
 use include_dir::{include_dir, Dir};
+use tower_cookies::Cookies;
 use tracing::info;
 use url::Url;
 
@@ -49,7 +50,12 @@ async fn serve_file(filename: &str) -> Response {
     }
 }
 
-async fn ssr_render(uri: Uri, query: HashMap<String, String>, base: &Url) -> Response {
+async fn ssr_render(
+    uri: Uri,
+    query: HashMap<String, String>,
+    base: &Url,
+    login: Option<&str>,
+) -> Response {
     // Acquire index.html
     let all_html = SPA_FILES
         .get_file("index.html")
@@ -74,10 +80,13 @@ async fn ssr_render(uri: Uri, query: HashMap<String, String>, base: &Url) -> Res
     full_body.push_str(" -->\n</head>");
     full_body.push_str(pre_body);
 
+    let login = login.map(str::to_string);
+
     yew::ServerRenderer::<ServerApp>::with_props(move || ServerAppProps {
         uri: uri.path().to_string(),
         query,
         base: base.into(),
+        login,
     })
     .render_to_string(&mut full_body)
     .await;
@@ -100,6 +109,7 @@ pub async fn spa_handler(
     uri: Uri,
     Query(query): Query<HashMap<String, String>>,
     State(config): State<ConfigState>,
+    cookies: Cookies,
 ) -> Response {
     // Basically the rule is, if the uri starts /assets/ then we serve content from SPA_FILES
     // Otherwise we're trying to SSR the index.html
@@ -107,6 +117,13 @@ pub async fn spa_handler(
     if let Some(filename) = uri.path().strip_prefix("/assets/") {
         serve_file(filename).await
     } else {
-        ssr_render(uri, query, &config.base_url).await
+        let login_cookie = cookies.get("login");
+        ssr_render(
+            uri,
+            query,
+            &config.base_url,
+            login_cookie.as_ref().map(|cookie| cookie.value()),
+        )
+        .await
     }
 }
