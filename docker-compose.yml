@@ -3,6 +3,7 @@ services:
   db:
     image: postgres
     restart: always
+    command: ["postgres", "-c", "log_statement=all", "-c", "log_destination=stderr"]
     environment:
       POSTGRES_DB: linkdoku
       POSTGRES_USER: linkdoku
