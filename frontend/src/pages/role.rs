@@ -12,6 +12,8 @@ use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
+use crate::util_components::Title;
+
 #[derive(Properties, PartialEq, Clone)]
 pub struct RolePageProps {
     pub role: AttrValue,
@@ -74,6 +76,7 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
 
     Ok(html! {
         <>
+            <Title value={format!("Role - {}", raw_role.display_name)} />
             <h1 class={"title"}>{raw_role.display_name.clone()}{edit_link}</h1>
             <hr width={"40%"} />
             <MarkdownRender markdown={raw_role.description} />
@@ -211,6 +214,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
 
     Ok(html! {
         <>
+            <Title value={format!("Edit Role - {}", raw_role.display_name)} />
             <div class={"field"}>
                 <label class={"label"}>
                     {"Display name"}

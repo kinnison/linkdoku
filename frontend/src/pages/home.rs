@@ -2,6 +2,8 @@ use components::layout::MainPageLayout;
 use yew::prelude::*;
 use yew_toastrack::{use_toaster, Toast};
 
+use crate::util_components::Title;
+
 #[function_component(HomePage)]
 pub fn render_home() -> Html {
     let toaster = use_toaster();
@@ -12,6 +14,7 @@ pub fn render_home() -> Html {
 
     html! {
         <MainPageLayout>
+            <Title value="Home" />
             <button onclick={onclick}>
               { "Click me" }
             </button>

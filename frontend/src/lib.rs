@@ -1,8 +1,12 @@
 use apiprovider::LinkdokuAPIProvider;
+use bounce::{
+    helmet::{Helmet, HelmetBridge},
+    BounceRoot,
+};
 use components::user::{UserMenuNavbarItem, UserProvider};
 use frontend_core::{
     component::core::{Footer, Navbar},
-    BaseProvider,
+    make_title, BaseProvider,
 };
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -12,6 +16,8 @@ use crate::routes::RouteSwitcher;
 
 pub(crate) mod pages;
 pub mod routes;
+
+pub(crate) mod util_components;
 
 #[cfg(feature = "ssr")]
 pub mod ssr;
@@ -23,11 +29,14 @@ pub fn App() -> Html {
     // in [ssr::ServerApp].  Where providers don't have to be different, they'll be dealt
     // with in the Root element instead
     html! {
-        <BrowserRouter>
-            <BaseProvider>
-                <Root />
-            </BaseProvider>
-        </BrowserRouter>
+        <BounceRoot>
+            <HelmetBridge default_title={make_title("A Sudoku puzzle site")} />
+            <BrowserRouter>
+                <BaseProvider>
+                    <Root />
+                </BaseProvider>
+            </BrowserRouter>
+        </BounceRoot>
     }
 }
 
@@ -37,6 +46,9 @@ pub(crate) fn root_element() -> Html {
         <LinkdokuAPIProvider>
             <UserProvider>
                 <ToastContainer>
+                    <Helmet>
+                        <meta charset="utf-8" />
+                    </Helmet>
                     <Navbar>
                         <UserMenuNavbarItem />
                     </Navbar>

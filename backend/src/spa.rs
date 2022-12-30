@@ -9,6 +9,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+use bounce::helmet::render_static;
 use common::public::userinfo::UserInfo;
 use database::Connection;
 use include_dir::{include_dir, Dir};
@@ -77,26 +78,39 @@ async fn ssr_render(
 
     let base = base.to_string();
 
+    let login = login.map(str::to_string);
+
+    let (header_renderer, header_writer) = render_static();
+
+    let body = yew::ServerRenderer::<ServerApp>::with_props({
+        let uri = uri.path().to_string();
+        let base = base.clone();
+        move || ServerAppProps {
+            uri,
+            query,
+            base: base.into(),
+            login,
+            userinfo,
+            header_writer,
+        }
+    })
+    .render()
+    .await;
+
+    let rendered_header = header_renderer.render().await;
+
     let mut full_body = pre_head.to_string();
     full_body.push_str("\n    <base href=\"");
     full_body.push_str(&base);
     full_body.push_str("\" />\n");
+    for t in rendered_header {
+        t.write_static(&mut full_body).unwrap();
+    }
     full_body.push_str("    <!-- Page rendered due to request for ");
     full_body.push_str(&uri.to_string());
     full_body.push_str(" -->\n</head>");
     full_body.push_str(pre_body);
-
-    let login = login.map(str::to_string);
-
-    yew::ServerRenderer::<ServerApp>::with_props(move || ServerAppProps {
-        uri: uri.path().to_string(),
-        query,
-        base: base.into(),
-        login,
-        userinfo,
-    })
-    .render_to_string(&mut full_body)
-    .await;
+    full_body.push_str(&body);
     full_body.push_str("</body>");
     full_body.push_str(rest);
 

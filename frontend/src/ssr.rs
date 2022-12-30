@@ -6,8 +6,12 @@
 
 use std::collections::HashMap;
 
+use bounce::{
+    helmet::{HelmetBridge, StaticWriter},
+    BounceRoot,
+};
 use common::public::userinfo::UserInfo;
-use frontend_core::BaseProvider;
+use frontend_core::{make_title, BaseProvider};
 use yew::prelude::*;
 use yew_router::{
     history::{AnyHistory, History, MemoryHistory},
@@ -23,6 +27,7 @@ pub struct ServerAppProps {
     pub base: AttrValue,
     pub login: Option<String>,
     pub userinfo: Option<UserInfo>,
+    pub header_writer: StaticWriter,
 }
 
 #[function_component(ServerApp)]
@@ -32,11 +37,14 @@ pub fn server_app(props: &ServerAppProps) -> Html {
         html! {}
     } else {
         html! {
-            <Router history={history}>
-                <BaseProvider uri={props.base.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()}>
-                    <Root />
-                </BaseProvider>
-            </Router>
+            <BounceRoot>
+                <HelmetBridge default_title={make_title("A Sudoku puzzle site")} writer={props.header_writer.clone()} />
+                <Router history={history}>
+                    <BaseProvider uri={props.base.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()}>
+                        <Root />
+                    </BaseProvider>
+                </Router>
+            </BounceRoot>
         }
     }
 }

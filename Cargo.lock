@@ -161,6 +161,7 @@ name = "backend"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "bounce",
  "common",
  "config",
  "cookie",
@@ -241,6 +242,37 @@ name = "boolinator"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfa8873f51c92e232f9bac4065cddef41b714152812bfc5f7672ba16d6ef8cd9"
+
+[[package]]
+name = "bounce"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db8f1c644faff6ae15d83c21b2ffd45bd1e7a3781ccb0d2b6f9488475a52bc0a"
+dependencies = [
+ "anymap2",
+ "bounce-macros",
+ "futures",
+ "gloo",
+ "html-escape",
+ "once_cell",
+ "serde",
+ "tracing",
+ "wasm-bindgen",
+ "web-sys",
+ "yew",
+]
+
+[[package]]
+name = "bounce-macros"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abc7b6337ade1643f014bf6e49a8ca27c020c17933953e172b9ffbbad8410e57"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "bumpalo"
@@ -610,6 +642,7 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "apiprovider",
+ "bounce",
  "common",
  "components",
  "frontend-core",
