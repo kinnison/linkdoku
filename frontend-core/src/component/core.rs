@@ -1,10 +1,11 @@
 //! Properly core components such as the footer, or navbar
 
+use bounce::helmet::Helmet;
 use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::Route;
+use crate::{use_asset_url, use_page_url, Route};
 
 #[function_component(Footer)]
 pub fn core_page_footer() -> Html {
@@ -81,5 +82,46 @@ pub fn core_page_navbar(props: &NavbarProps) -> Html {
                 </div>
             </div>
         </nav>
+    }
+}
+
+#[derive(Properties, PartialEq, Clone)]
+pub struct OpenGraphMetaProps {
+    pub title: Option<AttrValue>,
+    pub ogtype: Option<AttrValue>,
+    pub image: Option<AttrValue>,
+    pub url: Option<AttrValue>,
+    pub description: AttrValue,
+}
+
+#[function_component(OpenGraphMeta)]
+pub fn opengraph_meta_render(props: &OpenGraphMetaProps) -> Html {
+    let title = props
+        .title
+        .clone()
+        .unwrap_or_else(|| AttrValue::from("Linkdoku"));
+    let ogtype = props
+        .ogtype
+        .clone()
+        .unwrap_or_else(|| AttrValue::from("website"));
+    let favicon = use_asset_url("linkdoku.svg");
+    let image = props
+        .ogtype
+        .clone()
+        .unwrap_or_else(|| AttrValue::from(favicon));
+    let this_uri = use_page_url();
+    let url = props
+        .url
+        .clone()
+        .unwrap_or_else(|| AttrValue::from(this_uri));
+    let description = props.description.clone();
+    html! {
+        <Helmet>
+            <meta property="og:title" value={title} />
+            <meta property="og:type" value={ogtype} />
+            <meta property="og:image" value={image} />
+            <meta property="og:url" value={url} />
+            <meta property="og:description" value={description} />
+        </Helmet>
     }
 }

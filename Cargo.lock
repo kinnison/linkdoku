@@ -665,6 +665,7 @@ dependencies = [
 name = "frontend-core"
 version = "0.1.0"
 dependencies = [
+ "bounce",
  "common",
  "gloo",
  "js-sys",

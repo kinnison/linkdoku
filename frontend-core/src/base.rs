@@ -3,6 +3,7 @@ use std::rc::Rc;
 use common::public::userinfo::UserInfo;
 use url::Url;
 use yew::prelude::*;
+use yew_router::prelude::use_location;
 
 #[derive(Clone, PartialEq)]
 pub struct LinkdokuBase {
@@ -49,5 +50,22 @@ pub fn core_base_provider(props: &BaseURIProviderProps) -> Html {
         <ContextProvider<LinkdokuBase> context={context}>
             { for props.children.iter() }
         </ContextProvider<LinkdokuBase>>
+    }
+}
+
+#[hook]
+pub fn use_asset_url<S: AsRef<str>>(asset: S) -> String {
+    let base = use_context::<LinkdokuBase>().unwrap();
+    format!("{}assets/{}", base.uri, asset.as_ref())
+}
+
+#[hook]
+pub fn use_page_url() -> String {
+    let base = use_context::<LinkdokuBase>().unwrap();
+    let loc = use_location().unwrap();
+    if let Some(rest) = loc.path().strip_prefix('/') {
+        format!("{}{}", base.uri, rest)
+    } else {
+        format!("{}{}", base.uri, loc.path())
     }
 }

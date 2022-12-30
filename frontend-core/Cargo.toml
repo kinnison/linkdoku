@@ -14,6 +14,7 @@ web-sys = { version = "0.3.60", features = ["HtmlLinkElement"] }
 yew = "0.20.0"
 yew-router = "0.17.0"
 common = { path = "../common" }
+bounce = { version = "0.6", features = ["helmet"] }
 
 [features]
 ssr = ["yew/ssr"]

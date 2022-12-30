@@ -105,6 +105,7 @@ async fn ssr_render(
     full_body.push_str("\" />\n");
     for t in rendered_header {
         t.write_static(&mut full_body).unwrap();
+        full_body.push_str("\n");
     }
     full_body.push_str("    <!-- Page rendered due to request for ");
     full_body.push_str(&uri.to_string());

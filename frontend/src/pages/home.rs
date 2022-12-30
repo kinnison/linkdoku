@@ -1,4 +1,5 @@
 use components::layout::MainPageLayout;
+use frontend_core::component::core::OpenGraphMeta;
 use yew::prelude::*;
 use yew_toastrack::{use_toaster, Toast};
 
@@ -15,6 +16,9 @@ pub fn render_home() -> Html {
     html! {
         <MainPageLayout>
             <Title value="Home" />
+            <OpenGraphMeta
+                description="A sudoku puzzle website"
+            />
             <button onclick={onclick}>
               { "Click me" }
             </button>
