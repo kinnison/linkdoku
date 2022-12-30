@@ -67,6 +67,8 @@ checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
 name = "apiprovider"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "bounce",
  "common",
  "frontend-core",
  "gloo",
@@ -250,6 +252,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db8f1c644faff6ae15d83c21b2ffd45bd1e7a3781ccb0d2b6f9488475a52bc0a"
 dependencies = [
  "anymap2",
+ "async-trait",
  "bounce-macros",
  "futures",
  "gloo",
@@ -343,6 +346,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]

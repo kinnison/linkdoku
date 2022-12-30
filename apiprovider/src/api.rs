@@ -1,7 +1,7 @@
 //! This is the structural API object which is
 //! acquired when you use_apiprovider()
 
-use std::sync::Arc;
+use std::{hash::Hash, sync::Arc};
 
 use common::{
     internal::{login, logout, INTERNAL_SEGMENT},
@@ -21,6 +21,24 @@ pub struct LinkdokuAPI {
     client: Arc<Client>,
     base: AttrValue,
     login: Option<AttrValue>,
+}
+
+impl PartialEq for LinkdokuAPI {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.client, &other.client)
+            && self.base == other.base
+            && self.login == other.login
+    }
+}
+
+impl Eq for LinkdokuAPI {}
+
+impl Hash for LinkdokuAPI {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // self.client.hash(state); // The actual client doesn't matter
+        self.base.hash(state);
+        self.login.hash(state);
+    }
 }
 
 #[hook]

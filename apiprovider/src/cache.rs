@@ -1,34 +1,24 @@
-use common::APIError;
+use std::{convert::Infallible, ops::Deref, rc::Rc};
+
+use async_trait::async_trait;
+use bounce::{
+    query::{use_query, Query, QueryResult},
+    BounceStates,
+};
+use common::{APIError, APIResult};
 use serde::de::DeserializeOwned;
 use yew::{
     prelude::*,
     suspense::{use_future, SuspensionResult},
 };
 
-use crate::use_apiprovider;
-
-#[derive(Clone)]
-pub enum CachedValue<T: Clone> {
-    Missing,
-    Error(APIError),
-    Value(T),
-}
-
-impl<T: Clone> CachedValue<T> {
-    pub fn unwrap(self) -> T {
-        match self {
-            Self::Missing => panic!("Attempt to unwrap a missing cached value"),
-            Self::Error(e) => panic!("Attempt to unwrap an errored cached value: {e:?}"),
-            Self::Value(v) => v,
-        }
-    }
-}
+use crate::{use_apiprovider, LinkdokuAPI};
 
 mod seal {
     pub trait Sealed {}
 }
 
-pub trait Cacheable: DeserializeOwned + Clone + seal::Sealed {
+pub trait Cacheable: DeserializeOwned + Clone + PartialEq + seal::Sealed {
     fn api_name() -> &'static str;
 }
 
@@ -45,18 +35,66 @@ macro_rules! cacheable {
 
 cacheable!(Role, "role");
 
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct CacheQueryInput {
+    uuid: AttrValue,
+    api: LinkdokuAPI,
+}
+
+#[derive(Clone, PartialEq)]
+pub struct QueryCachedValue<T> {
+    value: Option<T>,
+}
+
+pub type CachedValue<T> = Rc<QueryCachedValue<T>>;
+
+impl<T> Deref for QueryCachedValue<T> {
+    type Target = Option<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl<T> QueryCachedValue<T> {
+    pub fn get(&self) -> Option<&T> {
+        self.value.as_ref()
+    }
+}
+
+#[async_trait(?Send)]
+impl<T> Query for QueryCachedValue<T>
+where
+    T: Cacheable,
+{
+    type Input = CacheQueryInput;
+    type Error = APIError;
+
+    async fn query(_states: &BounceStates, input: Rc<CacheQueryInput>) -> QueryResult<Self> {
+        match input
+            .api
+            .get_generic_obj::<T>(T::api_name(), &input.uuid)
+            .await
+        {
+            Ok(value) => Ok(QueryCachedValue { value: Some(value) }.into()),
+            Err(APIError::ObjectNotFound) => Ok(QueryCachedValue { value: None }.into()),
+            Err(e) => Err(e),
+        }
+    }
+}
+
 #[hook]
 pub fn use_cached_value<T: Cacheable + 'static>(
     uuid: AttrValue,
-) -> SuspensionResult<CachedValue<T>> {
+) -> SuspensionResult<APIResult<CachedValue<T>>> {
     let api = use_apiprovider();
-    let fetched = use_future(|| async move {
-        match api.get_generic_obj::<T>(T::api_name(), &uuid).await {
-            Ok(obj) => CachedValue::Value(obj),
-            Err(APIError::ObjectNotFound) => CachedValue::Missing,
-            Err(e) => CachedValue::Error(e),
-        }
-    })?;
-
-    Ok((*fetched).clone())
+    let query_input = use_memo(
+        |(api, uuid)| CacheQueryInput {
+            api: api.clone(),
+            uuid: uuid.clone(),
+        },
+        (api, uuid),
+    );
+    let query = use_query::<QueryCachedValue<T>>(query_input)?;
+    Ok(query.as_ref().cloned().map_err(APIError::clone))
 }

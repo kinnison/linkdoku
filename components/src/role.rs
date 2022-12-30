@@ -30,17 +30,23 @@ fn role_widget_inner(props: &RoleProps) -> HtmlResult {
     "#
     );
     let nowrap = use_style!("flex-wrap: nowrap !important;");
-    let role: CachedValue<objects::Role> = use_cached_value(props.uuid.clone())?;
+    let role = use_cached_value::<objects::Role>(props.uuid.clone())?;
 
     let role_body = match role {
-        CachedValue::Missing | CachedValue::Error(_) => {
+        Err(e) => {
+            html! {
+                <span class="is-danger">{e.to_string()}</span>
+            }
+        }
+        Ok(v) if v.is_none() => {
             html! {
                 <span>{props.uuid.clone()}</span>
             }
         }
-        CachedValue::Value(role) => {
+        Ok(role) => {
+            let role = (*role).as_ref().unwrap();
             html! {
-                <span>{role.display_name}</span>
+                <span>{role.display_name.clone()}</span>
             }
         }
     };

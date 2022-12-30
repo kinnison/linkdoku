@@ -38,9 +38,8 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
     let raw_role = use_cached_value::<objects::Role>(props.role.clone())?;
     let toaster = use_toaster();
 
-    let raw_role = match raw_role {
-        CachedValue::Value(v) => v,
-        CachedValue::Error(e) => {
+    let raw_role = match &raw_role {
+        Err(e) => {
             toaster.toast(
                 Toast::new(format!("Failure viewing role: {e:?}")).with_level(ToastLevel::Danger),
             );
@@ -48,14 +47,18 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
                 <Redirect<Route> to={Route::Home} />
             });
         }
-        CachedValue::Missing => {
-            toaster.toast(
-                Toast::new(format!("Role not found: {}", props.role))
-                    .with_level(ToastLevel::Warning),
-            );
-            return Ok(html! {
-                <Redirect<Route> to={Route::Home} />
-            });
+        Ok(role) => {
+            if let Some(role) = role.get() {
+                role
+            } else {
+                toaster.toast(
+                    Toast::new(format!("Role not found: {}", props.role))
+                        .with_level(ToastLevel::Warning),
+                );
+                return Ok(html! {
+                    <Redirect<Route> to={Route::Home} />
+                });
+            }
         }
     };
 
@@ -79,7 +82,7 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
             <Title value={format!("Role - {}", raw_role.display_name)} />
             <h1 class={"title"}>{raw_role.display_name.clone()}{edit_link}</h1>
             <hr width={"40%"} />
-            <MarkdownRender markdown={raw_role.description} />
+            <MarkdownRender markdown={raw_role.description.clone()} />
         </>
     })
 }
@@ -105,24 +108,27 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
     let display_name_ref = use_node_ref();
     let api = use_apiprovider();
 
-    let raw_role = match raw_role {
-        CachedValue::Value(v) => v,
-        CachedValue::Error(e) => {
+    let raw_role = match &raw_role {
+        Err(e) => {
             toaster.toast(
-                Toast::new(format!("Failure viewing role: {e:?}")).with_level(ToastLevel::Danger),
+                Toast::new(format!("Failure editing role: {e:?}")).with_level(ToastLevel::Danger),
             );
             return Ok(html! {
                 <Redirect<Route> to={Route::Home} />
             });
         }
-        CachedValue::Missing => {
-            toaster.toast(
-                Toast::new(format!("Role not found: {}", props.role))
-                    .with_level(ToastLevel::Warning),
-            );
-            return Ok(html! {
-                <Redirect<Route> to={Route::Home} />
-            });
+        Ok(role) => {
+            if let Some(role) = role.get() {
+                role
+            } else {
+                toaster.toast(
+                    Toast::new(format!("Role not found: {}", props.role))
+                        .with_level(ToastLevel::Warning),
+                );
+                return Ok(html! {
+                    <Redirect<Route> to={Route::Home} />
+                });
+            }
         }
     };
 
