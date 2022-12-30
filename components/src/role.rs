@@ -1,4 +1,4 @@
-use apiprovider::{use_cached_value, CachedValue};
+use apiprovider::use_cached_value;
 use common::objects;
 use stylist::yew::{styled_component, use_style};
 use yew::prelude::*;
@@ -32,7 +32,7 @@ fn role_widget_inner(props: &RoleProps) -> HtmlResult {
     let nowrap = use_style!("flex-wrap: nowrap !important;");
     let role = use_cached_value::<objects::Role>(props.uuid.clone())?;
 
-    let role_body = match role {
+    let role_body = match role.as_ref() {
         Err(e) => {
             html! {
                 <span class="is-danger">{e.to_string()}</span>
@@ -44,7 +44,7 @@ fn role_widget_inner(props: &RoleProps) -> HtmlResult {
             }
         }
         Ok(role) => {
-            let role = (*role).as_ref().unwrap();
+            let role = role.as_ref().as_ref().unwrap();
             html! {
                 <span>{role.display_name.clone()}</span>
             }

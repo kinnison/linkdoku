@@ -2,7 +2,7 @@
 //!
 //! Currently there are two main pages here, the RolePage and the RoleEditPage
 
-use apiprovider::{use_apiprovider, use_cached_value, CachedValue};
+use apiprovider::{use_apiprovider, use_cached_value};
 use common::objects;
 use components::{layout::MainPageLayout, user::LoginStatus};
 use frontend_core::{component::icon::*, Route};
@@ -38,7 +38,7 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
     let raw_role = use_cached_value::<objects::Role>(props.role.clone())?;
     let toaster = use_toaster();
 
-    let raw_role = match &raw_role {
+    let raw_role = match raw_role.as_ref() {
         Err(e) => {
             toaster.toast(
                 Toast::new(format!("Failure viewing role: {e:?}")).with_level(ToastLevel::Danger),
@@ -103,12 +103,12 @@ pub fn pages_role_edit(props: &RolePageProps) -> Html {
 #[function_component(RoleEditPageInner)]
 fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
     let user_info = use_context::<LoginStatus>().unwrap();
-    let raw_role = use_cached_value::<objects::Role>(props.role.clone())?;
+    let cached_role = use_cached_value::<objects::Role>(props.role.clone())?;
     let toaster = use_toaster();
     let display_name_ref = use_node_ref();
     let api = use_apiprovider();
 
-    let raw_role = match &raw_role {
+    let raw_role = match cached_role.as_ref() {
         Err(e) => {
             toaster.toast(
                 Toast::new(format!("Failure editing role: {e:?}")).with_level(ToastLevel::Danger),
@@ -185,6 +185,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
         let display_name = display_name.clone();
         let button_setter = button_enabled.setter();
         let uuid = raw_role.uuid.clone();
+        let cached_role = cached_role.clone();
         //let toaster = toaster.clone();
         move |_| {
             // Disable the button and begin the save operation
@@ -195,6 +196,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
             let uuid = uuid.clone();
             let toaster = toaster.clone();
             let button_setter = button_setter.clone();
+            let cached_role = cached_role.clone();
             spawn_local(async move {
                 match api.update_role(uuid, display_name, description).await {
                     Ok(_) => {
@@ -213,6 +215,13 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                         );
                     }
                 };
+                if let Err(e) = cached_role.refresh().await {
+                    toaster.toast(
+                        Toast::new(format!("Unable to refresh role cache: {e}"))
+                            .with_level(ToastLevel::Warning)
+                            .with_lifetime(5000),
+                    );
+                }
                 button_setter.set(true);
             });
         }

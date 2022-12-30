@@ -1,16 +1,13 @@
-use std::{convert::Infallible, ops::Deref, rc::Rc};
+use std::{ops::Deref, rc::Rc};
 
 use async_trait::async_trait;
 use bounce::{
-    query::{use_query, Query, QueryResult},
+    query::{use_query, Query, QueryResult, UseQueryHandle},
     BounceStates,
 };
-use common::{APIError, APIResult};
+use common::APIError;
 use serde::de::DeserializeOwned;
-use yew::{
-    prelude::*,
-    suspense::{use_future, SuspensionResult},
-};
+use yew::{prelude::*, suspense::SuspensionResult};
 
 use crate::{use_apiprovider, LinkdokuAPI};
 
@@ -83,10 +80,12 @@ where
     }
 }
 
+pub type CacheQueryOutput<T> = UseQueryHandle<QueryCachedValue<T>>;
+
 #[hook]
 pub fn use_cached_value<T: Cacheable + 'static>(
     uuid: AttrValue,
-) -> SuspensionResult<APIResult<CachedValue<T>>> {
+) -> SuspensionResult<CacheQueryOutput<T>> {
     let api = use_apiprovider();
     let query_input = use_memo(
         |(api, uuid)| CacheQueryInput {
@@ -95,6 +94,5 @@ pub fn use_cached_value<T: Cacheable + 'static>(
         },
         (api, uuid),
     );
-    let query = use_query::<QueryCachedValue<T>>(query_input)?;
-    Ok(query.as_ref().cloned().map_err(APIError::clone))
+    use_query::<QueryCachedValue<T>>(query_input)
 }
