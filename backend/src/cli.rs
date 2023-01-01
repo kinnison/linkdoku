@@ -16,4 +16,8 @@ pub struct Cli {
         default_value = "linkdoku-config.yaml"
     )]
     pub config: PathBuf,
+
+    /// Port override
+    #[arg(short, long, value_name = "PORT")]
+    pub port: Option<u16>,
 }

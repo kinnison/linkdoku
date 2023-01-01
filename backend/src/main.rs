@@ -26,6 +26,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     let cli = cli::Cli::parse();
     info!("{cli:#?}");
 
+    if let Ok(port) = std::env::var("PORT") {
+        info!("Overriding port from environment with {port}");
+        std::env::set_var("LINKDOKU__PORT", port);
+    }
+
+    if let Some(port) = cli.port.as_ref() {
+        info!("Overriding port from CLI with {port}");
+        std::env::set_var("LINKDOKU__PORT", format!("{port}"));
+    }
+
     let config = config::load_configuration(&cli).expect("Unable to load configuration");
     info!("{:#?}", &*config);
 
