@@ -26,3 +26,4 @@ tracing-subscriber = "0.3.16"
 url = "2.3.1"
 yew = { version = "0.20.0", features = ["ssr"] }
 bounce = { version = "0.6", features = ["helmet", "ssr"] }
+clap = { version = "4.0.32", features = ["derive"] }

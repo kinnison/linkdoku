@@ -4,21 +4,23 @@
 use axum::extract::FromRef;
 use database::Pool;
 
-use crate::{config::ConfigState, login::Providers};
+use crate::{cli::Cli, config::ConfigState, login::Providers};
 
 #[derive(Clone, FromRef)]
 pub struct BackendState {
     config: ConfigState,
     pool: Pool,
     providers: Providers,
+    cli: Cli,
 }
 
 impl BackendState {
-    pub fn new(config: ConfigState, pool: Pool, providers: Providers) -> Self {
+    pub fn new(cli: Cli, config: ConfigState, pool: Pool, providers: Providers) -> Self {
         Self {
             config,
             pool,
             providers,
+            cli,
         }
     }
 }

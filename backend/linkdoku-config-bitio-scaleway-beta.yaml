@@ -1,0 +1,33 @@
+# Beta Linkdoku configuration
+# Note, some of the values in this file are "secret" and as such the values
+# in the YAML simply will not function if you try and use them.  They are overridden
+# in the deployment process, the values for which are not in this repository.
+# If you want to develop stuff, look to linkdoku-config-dev.yaml instead.
+
+# This configuration is intended for use inside Scaleway's serverless function
+# system, 
+
+port: 3000
+
+# The Cookie secret is used to AEAD the cookies which the client is not supposed
+# to be able to read/change.
+cookie_secret: "ENVOVERRIDE"
+
+# Base URL (automatically inserted into every rendered page)
+base_url: "https://beta.linkdoku.net/"
+
+# Redirect URL for *all* OIDP setups is always the same:
+redirect_url: "https://beta.linkdoku.net/-/complete-login"
+
+# Database URL for bit-io's beta database
+database_url: "posgres://linkdoku-beta"
+
+openid:
+  google:
+    client_id: "739049102074-s5rick1s2efek896ummpib53n6jo7ro1.apps.googleusercontent.com"
+    client_secret: "ENVOVERRIDE"
+    # the OpenIDConnect crate automatically adds the .well-known/...
+    discovery_doc: "https://accounts.google.com"
+    scopes:
+      - profile
+      - email

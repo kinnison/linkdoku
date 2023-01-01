@@ -3,6 +3,7 @@
 //!
 
 use axum::Router;
+use clap::Parser;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
@@ -13,6 +14,7 @@ use tracing::{info, Level};
 use crate::state::BackendState;
 
 mod api;
+mod cli;
 mod config;
 mod login;
 mod spa;
@@ -20,8 +22,11 @@ mod state;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-    let config = config::load_configuration().expect("Unable to load configuration");
     tracing_subscriber::fmt::init();
+    let cli = cli::Cli::parse();
+    info!("{cli:#?}");
+
+    let config = config::load_configuration(&cli).expect("Unable to load configuration");
     info!("{:#?}", &*config);
 
     // Request migrations
@@ -52,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
 
     // and provide all the state to it
     let port = config.port;
-    let app = app.with_state(BackendState::new(config, pool, providers));
+    let app = app.with_state(BackendState::new(cli, config, pool, providers));
 
     info!("Launching server on port {port}");
     axum::Server::bind(&format!("0.0.0.0:{}", port).parse().unwrap())
