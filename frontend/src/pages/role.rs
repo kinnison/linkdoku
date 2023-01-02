@@ -4,7 +4,7 @@
 
 use apiprovider::{use_apiprovider, use_cached_value};
 use common::objects;
-use components::{layout::MainPageLayout, user::LoginStatus};
+use components::{layout::MainPageLayout, puzzle::PuzzleList, user::LoginStatus};
 use frontend_core::{component::icon::*, Route};
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
@@ -83,6 +83,8 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
             <h1 class={"title"}>{raw_role.display_name.clone()}{edit_link}</h1>
             <hr width={"40%"} />
             <MarkdownRender markdown={raw_role.description.clone()} />
+            <hr width={"40%"} />
+            <PuzzleList role={raw_role.uuid.clone()} />
         </>
     })
 }

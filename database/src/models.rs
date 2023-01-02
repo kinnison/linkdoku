@@ -1,8 +1,14 @@
 /// Models for linkdoku databases
 /// equivalent schema available in [crate::schema]
+///
+pub mod sql_types;
+
+pub use self::sql_types::Visibility;
+
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
 
 use crate::utils;
 
@@ -171,5 +177,157 @@ impl Role {
             .execute(conn)
             .await
             .map(|_| ())
+    }
+
+    /// Retrieve the puzzles which are published to this role
+    pub async fn published_puzzles(
+        &self,
+        conn: &mut AsyncPgConnection,
+    ) -> QueryResult<Vec<Puzzle>> {
+        use crate::schema::puzzle::dsl::*;
+        puzzle
+            .filter(owner.eq(&self.uuid))
+            .filter(visibility.eq(Visibility::Published))
+            .order_by(created_at.desc())
+            .load(conn)
+            .await
+    }
+}
+
+#[derive(Debug, Queryable)]
+pub struct Puzzle {
+    pub uuid: String,
+    pub owner: String,
+    pub display_name: String,
+    pub short_name: String,
+    pub visibility: Visibility,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::puzzle)]
+pub struct NewPuzzle<'a> {
+    pub uuid: &'a str,
+    pub owner: &'a str,
+    pub display_name: &'a str,
+    pub short_name: &'a str,
+    pub visibility: Visibility,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
+}
+
+impl Puzzle {
+    pub async fn by_uuid(
+        conn: &mut AsyncPgConnection,
+        puzzle_uuid: &str,
+    ) -> QueryResult<Option<Self>> {
+        use crate::schema::puzzle::dsl::*;
+        puzzle
+            .filter(uuid.eq(puzzle_uuid))
+            .first(conn)
+            .await
+            .optional()
+    }
+
+    pub async fn create(
+        conn: &mut AsyncPgConnection,
+        uuid: &str,
+        owner: &str,
+        display_name: &str,
+        short_name: &str,
+        visibility: Visibility,
+    ) -> QueryResult<Self> {
+        use crate::schema::puzzle;
+        let new = NewPuzzle {
+            uuid,
+            owner,
+            display_name,
+            short_name,
+            visibility,
+            created_at: OffsetDateTime::now_utc(),
+            updated_at: OffsetDateTime::now_utc(),
+        };
+        diesel::insert_into(puzzle::table)
+            .values(&new)
+            .get_result(conn)
+            .await
+    }
+
+    pub async fn can_be_seen(
+        &self,
+        _conn: &mut AsyncPgConnection,
+        user: Option<&str>,
+    ) -> QueryResult<bool> {
+        match self.visibility {
+            Visibility::Restricted => Ok(user.map(|u| u == self.owner).unwrap_or(false)),
+            _ => Ok(true),
+        }
+    }
+}
+
+#[derive(Queryable)]
+pub struct PuzzleState {
+    pub id: i32,
+    pub puzzle: String,
+    pub description: String,
+    pub visibility: Visibility,
+    pub updated_at: OffsetDateTime,
+    pub data: String,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::puzzle_state)]
+pub struct NewPuzzleState<'a> {
+    pub puzzle: &'a str,
+    pub description: &'a str,
+    pub visibility: Visibility,
+    pub updated_at: OffsetDateTime,
+    pub data: String,
+}
+
+impl Puzzle {
+    pub async fn all_states(&self, conn: &mut AsyncPgConnection) -> QueryResult<Vec<PuzzleState>> {
+        use crate::schema::puzzle_state::dsl::*;
+        puzzle_state
+            .filter(puzzle.eq(&self.uuid))
+            .order_by(id.asc())
+            .load(conn)
+            .await
+    }
+
+    pub async fn add_state(
+        &self,
+        conn: &mut AsyncPgConnection,
+        description: &str,
+        visibility: Visibility,
+        data: String,
+    ) -> QueryResult<PuzzleState> {
+        use crate::schema::puzzle_state;
+        let new = NewPuzzleState {
+            puzzle: &self.uuid,
+            description,
+            visibility,
+            data,
+            updated_at: OffsetDateTime::now_utc(),
+        };
+        diesel::insert_into(puzzle_state::table)
+            .values(&new)
+            .get_result(conn)
+            .await
+    }
+}
+
+impl PuzzleState {
+    pub async fn can_be_seen(
+        &self,
+        _conn: &mut AsyncPgConnection,
+        puzzle: &Puzzle,
+        user: Option<&str>,
+    ) -> QueryResult<bool> {
+        match self.visibility {
+            Visibility::Restricted => Ok(user.map(|u| u == puzzle.owner).unwrap_or(false)),
+            _ => Ok(true),
+        }
     }
 }

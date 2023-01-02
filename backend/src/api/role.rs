@@ -36,6 +36,24 @@ async fn update_role(
         .into()
 }
 
+async fn role_puzzles(
+    mut db: Connection,
+    Json(req): Json<public::role::puzzles::Request>,
+) -> Json<APIResult<public::role::puzzles::Response>> {
+    let role = match models::Role::by_uuid(&mut db, &req.uuid).await {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json::from(Err(APIError::ObjectNotFound)),
+        Err(e) => return Json::from(Err(APIError::DatabaseError(e.to_string()))),
+    };
+    role.published_puzzles(&mut db)
+        .await
+        .map_err(|e| APIError::DatabaseError(e.to_string()))
+        .map(|v| v.into_iter().map(|p| p.uuid).collect())
+        .into()
+}
+
 pub fn public_router() -> Router<BackendState> {
-    Router::new().route(public::role::update::URI, post(update_role))
+    Router::new()
+        .route(public::role::update::URI, post(update_role))
+        .route(public::role::puzzles::URI, post(role_puzzles))
 }

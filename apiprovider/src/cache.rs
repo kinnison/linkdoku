@@ -31,6 +31,7 @@ macro_rules! cacheable {
 }
 
 cacheable!(Role, "role");
+cacheable!(Puzzle, "puzzle");
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct CacheQueryInput {

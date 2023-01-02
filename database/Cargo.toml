@@ -8,9 +8,10 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.60"
 axum = { version = "0.6.1", default-features = false }
-diesel = { version = "2.0.2", features = ["postgres"] }
+diesel = { version = "2.0.2", features = ["postgres", "time"] }
 diesel-async = { version = "0.2.0", features = ["postgres", "bb8"] }
 diesel_migrations = { version = "2.0.0", features = ["postgres"] }
 md5 = "0.7.0"
 serde = { version = "1.0.151", features = ["derive"] }
 common = { path = "../common" }
+time = "0.3"

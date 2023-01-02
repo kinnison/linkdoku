@@ -185,4 +185,15 @@ impl LinkdokuAPI {
         )
         .await
     }
+
+    pub async fn published_puzzle_list(
+        &self,
+        role_uuid: impl Into<String>,
+    ) -> APIResult<public::role::puzzles::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::role::puzzles::URI);
+        let req = public::role::puzzles::Request {
+            uuid: role_uuid.into(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
 }

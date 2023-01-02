@@ -16,3 +16,16 @@ pub mod update {
 
     pub type Response = ();
 }
+
+pub mod puzzles {
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/role/puzzles";
+
+    #[derive(Serialize, Deserialize)]
+    pub struct Request {
+        pub uuid: String,
+    }
+
+    pub type Response = Vec<String>;
+}
