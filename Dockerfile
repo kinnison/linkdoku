@@ -18,7 +18,7 @@ RUN (cd /build/backend; cargo build --release)
 FROM debian:bullseye-slim as runner
 
 RUN apt update
-RUN apt install -y libssl1.1 libpq5
+RUN apt install -y libssl1.1 libpq5 ca-certificates
 
 COPY --from=builder /build/target/release/backend /linkdoku
 COPY --from=builder /build/backend/linkdoku-config-bitio-scaleway-beta.yaml /linkdoku-config.yaml
