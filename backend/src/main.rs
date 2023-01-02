@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     }
 
     let config = config::load_configuration(&cli).expect("Unable to load configuration");
-    info!("{:#?}", &*config);
+    config.show();
 
     // Request migrations
     info!("Applying pending database migrations...");

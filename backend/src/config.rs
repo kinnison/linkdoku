@@ -3,7 +3,9 @@
 use std::{collections::HashMap, sync::Arc};
 
 use config::{Config, ConfigError, Environment, File};
+use itertools::Itertools;
 use serde::Deserialize;
+use tracing::{info, instrument};
 use url::Url;
 
 use crate::cli::Cli;
@@ -24,6 +26,58 @@ pub struct Configuration {
     pub redirect_url: String,
     pub cookie_secret: String,
     pub openid: HashMap<String, OpenIDProvider>,
+}
+
+#[allow(unstable_name_collisions)]
+impl OpenIDProvider {
+    fn show(&self) {
+        info!("  Client ID: {}", self.client_id);
+        info!(
+            "  Client Secret: {}",
+            if self.client_secret.is_empty() {
+                "MISSING"
+            } else {
+                "*****"
+            }
+        );
+        info!("  Discovery document: {}", self.discovery_doc);
+        info!(
+            "  Scopes to request: {}",
+            self.scopes
+                .iter()
+                .map(String::as_str)
+                .intersperse(", ")
+                .collect::<String>()
+        );
+    }
+}
+
+impl Configuration {
+    #[instrument(skip(self))]
+    pub fn show(&self) {
+        info!("Listen on {}", self.port);
+        info!("Base URL is {}", self.base_url);
+        info!("Connect to database on {}", self.safe_database_url());
+        info!("OpenID connect return url: {}", self.redirect_url);
+        info!(
+            "Cookie secret key: {}",
+            if self.cookie_secret.is_empty() {
+                "MISSING"
+            } else {
+                "*****"
+            }
+        );
+        for (name, prov) in &self.openid {
+            info!("OpenID provider: {name}");
+            prov.show();
+        }
+    }
+
+    fn safe_database_url(&self) -> Url {
+        let mut ret = self.database_url.clone();
+        ret.set_password(Some("****")).unwrap();
+        ret
+    }
 }
 
 #[derive(Clone)]

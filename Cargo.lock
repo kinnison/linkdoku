@@ -171,6 +171,7 @@ dependencies = [
  "database",
  "frontend",
  "include_dir",
+ "itertools",
  "lazy_static",
  "md5",
  "openidconnect",
