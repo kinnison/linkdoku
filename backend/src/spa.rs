@@ -47,6 +47,7 @@ async fn serve_file(filename: &str) -> Response {
         let response = Response::builder()
             .header("Content-Type", content_type)
             .header("Content-Length", format!("{}", file.contents().len()))
+            .header("Cache-Control", "public, max-age=2592000, immutable")
             .status(StatusCode::OK)
             .body(())
             .unwrap();
@@ -119,6 +120,7 @@ async fn ssr_render(
         Response::builder()
             .header("Content-Type", "text/html")
             .header("Content-Length", format!("{}", full_body.len()))
+            .header("Cache-Control", "no-store")
             .status(StatusCode::OK)
             .body(())
             .unwrap(),
