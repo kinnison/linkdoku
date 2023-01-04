@@ -7,6 +7,9 @@
 //! However, for migrations, we *MUST* run sync currently since we do
 //! not get an async implementation of migration running :(
 
+use std::{fmt::Display, time::Duration};
+
+use ::bb8::ErrorSink;
 use diesel::{ConnectionError, ConnectionResult};
 use diesel_async::{
     pooled_connection::{bb8, AsyncDieselConnectionManager, PoolError},
@@ -52,12 +55,33 @@ fn establish_connection(url: &str) -> BoxFuture<ConnectionResult<AsyncPgConnecti
     .boxed()
 }
 
+#[derive(Debug)]
+struct MyErrorSink;
+
+impl<E> ErrorSink<E> for MyErrorSink
+where
+    E: Display,
+{
+    fn sink(&self, err: E) {
+        error!("BB8 pool error: {err}");
+    }
+
+    fn boxed_clone(&self) -> Box<dyn ErrorSink<E>> {
+        Box::new(MyErrorSink)
+    }
+}
+
 pub async fn create_pool(db_url: &str) -> Result<Pool, PoolError> {
     let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_setup(
         db_url,
         establish_connection,
     );
-    bb8::Pool::builder().build(config).await
+    bb8::Pool::builder()
+        .idle_timeout(Duration::from_secs(30).into())
+        .connection_timeout(Duration::from_secs(10))
+        .error_sink(Box::new(MyErrorSink))
+        .build(config)
+        .await
 }
 
 pub mod axum_link {
@@ -114,3 +138,4 @@ pub use axum_link::Connection;
 use futures::{future::BoxFuture, FutureExt};
 use openssl::ssl::{SslConnector, SslMethod};
 use postgres_openssl::MakeTlsConnector;
+use tracing::error;
