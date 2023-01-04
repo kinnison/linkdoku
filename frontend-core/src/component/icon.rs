@@ -82,3 +82,30 @@ pub fn icon_render(props: &IconProps) -> Html {
         </span>
     }
 }
+
+#[derive(Properties, PartialEq, Clone)]
+pub struct GenericIconProps {
+    pub class: Option<AttrValue>,
+    pub icon: AttrValue,
+    #[prop_or_default]
+    pub size: IconSize,
+}
+
+#[function_component(GenericIcon)]
+pub fn icon_render(props: &GenericIconProps) -> Html {
+    let class = props
+        .class
+        .clone()
+        .unwrap_or_else(|| "icon".into())
+        .to_string();
+
+    let icon_class = classes!["mdi", props.icon.to_string(), props.size.icon_class()];
+
+    let span_class = classes![class, props.size.size_class()];
+
+    html! {
+        <span class={span_class}>
+            <i class={icon_class} aria-hidden={"true"}/>
+        </span>
+    }
+}
