@@ -7,6 +7,7 @@
 //! However, for migrations, we *MUST* run sync currently since we do
 //! not get an async implementation of migration running :(
 
+use diesel::{ConnectionError, ConnectionResult};
 use diesel_async::{
     pooled_connection::{bb8, AsyncDieselConnectionManager, PoolError},
     AsyncPgConnection,
@@ -32,8 +33,30 @@ pub mod schema;
 
 pub type Pool = bb8::Pool<AsyncPgConnection>;
 
+fn establish_connection(url: &str) -> BoxFuture<ConnectionResult<AsyncPgConnection>> {
+    (async {
+        let builder = SslConnector::builder(SslMethod::tls())
+            .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
+        // builder.set_ca_file("/etc/ssl/certs/ca-certificates.crt");
+        let connector = MakeTlsConnector::new(builder.build());
+        let (client, connection) = tokio_postgres::connect(url, connector)
+            .await
+            .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                eprintln!("connection error: {}", e);
+            }
+        });
+        AsyncPgConnection::try_from(client).await
+    })
+    .boxed()
+}
+
 pub async fn create_pool(db_url: &str) -> Result<Pool, PoolError> {
-    let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(db_url);
+    let config = AsyncDieselConnectionManager::<AsyncPgConnection>::new_with_setup(
+        db_url,
+        establish_connection,
+    );
     bb8::Pool::builder().build(config).await
 }
 
@@ -88,3 +111,6 @@ pub mod axum_link {
 }
 
 pub use axum_link::Connection;
+use futures::{future::BoxFuture, FutureExt};
+use openssl::ssl::{SslConnector, SslMethod};
+use postgres_openssl::MakeTlsConnector;
