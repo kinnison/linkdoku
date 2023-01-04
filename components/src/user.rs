@@ -117,38 +117,41 @@ pub fn login_user_provider(props: &UserProviderProps) -> Html {
     let state = use_reducer_eq(|| LoginStatus::Unknown);
 
     // First time out of the gate, acquire the status
-    use_effect({
-        let dispatcher = state.dispatcher();
-        let current_state = (*state).clone();
-        move || {
-            if current_state == LoginStatus::Unknown {
-                spawn_local(async move {
-                    match api.get_userinfo().await {
-                        Ok(status) => {
-                            if let Some(info) = status.info {
-                                dispatcher.dispatch(LoginStatusAction::LoggedIn {
-                                    uuid: info.uuid,
-                                    display_name: info.display_name,
-                                    gravatar_hash: info.gravatar_hash,
-                                    roles: info.roles,
-                                    default_role: info.default_role,
-                                });
-                            } else {
-                                // Not logged in
-                                dispatcher.dispatch(LoginStatusAction::LoggedOut);
+    use_effect_with_deps(
+        {
+            let dispatcher = state.dispatcher();
+            let current_state = (*state).clone();
+            move |_| {
+                if current_state == LoginStatus::Unknown {
+                    spawn_local(async move {
+                        match api.get_userinfo().await {
+                            Ok(status) => {
+                                if let Some(info) = status.info {
+                                    dispatcher.dispatch(LoginStatusAction::LoggedIn {
+                                        uuid: info.uuid,
+                                        display_name: info.display_name,
+                                        gravatar_hash: info.gravatar_hash,
+                                        roles: info.roles,
+                                        default_role: info.default_role,
+                                    });
+                                } else {
+                                    // Not logged in
+                                    dispatcher.dispatch(LoginStatusAction::LoggedOut);
+                                }
+                            }
+                            Err(e) => {
+                                log::error!("Woah, API error: {e:?}");
+                                // Nothing for now, next time anything happens, we'll try again to talk to the server.
                             }
                         }
-                        Err(e) => {
-                            log::error!("Woah, API error: {e:?}");
-                            // Nothing for now, next time anything happens, we'll try again to talk to the server.
-                        }
-                    }
-                });
+                    });
+                }
+                // No destructor
+                || ()
             }
-            // No destructor
-            || ()
-        }
-    });
+        },
+        (),
+    );
 
     html! {
         <ContextProvider<LoginStatus> context={(*state).clone()}>
