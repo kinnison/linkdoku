@@ -22,9 +22,17 @@ mod state;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-    tracing_subscriber::fmt::init();
+    // Detect if we're running inside the scaleway cloud, if so, we want a simpler logging format
+    if std::env::var("SCW_PUBLIC_KEY").is_ok() {
+        tracing_subscriber::fmt()
+            .without_time()
+            .with_ansi(false)
+            .init();
+    } else {
+        tracing_subscriber::fmt::init();
+    }
     let cli = cli::Cli::parse();
-    info!("{cli:#?}");
+    cli.show();
 
     if let Ok(port) = std::env::var("PORT") {
         info!("Overriding port from environment with {port}");

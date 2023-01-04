@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 use config::{Config, ConfigError, Environment, File};
 use itertools::Itertools;
 use serde::Deserialize;
-use tracing::{info, instrument};
+use tracing::info;
 use url::Url;
 
 use crate::cli::Cli;
@@ -53,7 +53,6 @@ impl OpenIDProvider {
 }
 
 impl Configuration {
-    #[instrument(skip(self))]
     pub fn show(&self) {
         info!("Listen on {}", self.port);
         info!("Base URL is {}", self.base_url);

@@ -4,6 +4,7 @@
 use std::path::PathBuf;
 
 use clap::Parser;
+use tracing::info;
 
 #[derive(Parser, Debug, Clone)]
 #[command(author,version,about,long_about=None)]
@@ -20,4 +21,13 @@ pub struct Cli {
     /// Port override
     #[arg(short, long, value_name = "PORT")]
     pub port: Option<u16>,
+}
+
+impl Cli {
+    pub fn show(&self) {
+        info!("Configuration file path: {}", self.config.display());
+        if let Some(port) = self.port {
+            info!("CLI provided port: {port}");
+        }
+    }
 }
