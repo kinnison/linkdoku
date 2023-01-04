@@ -28,3 +28,4 @@ yew = { version = "0.20.0", features = ["ssr"] }
 bounce = { version = "0.6", features = ["helmet", "ssr"] }
 clap = { version = "4.0.32", features = ["derive"] }
 itertools = "0.10.5"
+git-testament = "0.2"

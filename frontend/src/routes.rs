@@ -8,12 +8,15 @@ use yew::html::PhantomComponent;
 use yew::{platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
 
-use frontend_core::Route;
+use frontend_core::{component::core::VersionInfo, Route};
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
-use crate::pages::{
-    home::HomePage,
-    role::{RoleEditPage, RolePage},
+use crate::{
+    pages::{
+        home::HomePage,
+        role::{RoleEditPage, RolePage},
+    },
+    util_components::Title,
 };
 
 #[function_component(RouteSwitcher)]
@@ -42,6 +45,15 @@ fn route_switch(route: Route) -> Html {
             }
         }
 
+        // Uncommon routes
+        Route::VersionInformation => {
+            html! {
+                <>
+                    <Title value={"Version information"} />
+                    <VersionInfo />
+                </>
+            }
+        }
         // Internal routes
         Route::NotFound => {
             html! {

@@ -1,11 +1,14 @@
 //! Properly core components such as the footer, or navbar
 
 use bounce::helmet::Helmet;
+use git_testament::{git_testament, GitModification};
 use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::{use_asset_url, use_page_url, Route};
+
+git_testament!(VERSION);
 
 #[function_component(Footer)]
 pub fn core_page_footer() -> Html {
@@ -14,11 +17,75 @@ pub fn core_page_footer() -> Html {
             <div class="content has-text-centered">
                 <p>
                     <strong>{"Linkdoku"}</strong> {" by "} <a href="https://github.com/kinnison">{"Daniel Silverstone"}</a>{". "}
-                    <a href="https://github.com/kinnison/linkdoku">{"Linkdoku"}</a> {" is licensed "}
+                    <a href="https://github.com/kinnison/linkdoku">{"Linkdoku"}</a>
+                    <Link<Route> to={Route::VersionInformation}>{format!(" {VERSION}")}</Link<Route>>
+                    {" is licensed "}
                     <a href="https://www.gnu.org/licenses/#AGPL">{" GNU Affero GPL Version 3"}</a>{"."}
                 </p>
             </div>
         </footer>
+    }
+}
+
+#[function_component(VersionInfo)]
+pub fn version_info_render() -> Html {
+    fn field(title: &str, text: impl Into<String>) -> Html {
+        html! {
+            <div class="field">
+                <label class="label">{title}</label>
+                <div class="control">
+                    <input class="input" type="text" value={text.into()} readonly=true/>
+                </div>
+            </div>
+        }
+    }
+    fn render_modification(gmod: &GitModification<'_>) -> Html {
+        match gmod {
+            GitModification::Added(pathb) => html! {
+                <>
+                    <strong>{"Added: "}</strong>
+                    {String::from_utf8_lossy(pathb)}
+                    <br />
+                </>
+            },
+            GitModification::Removed(pathb) => html! {
+                <>
+                    <strong>{"Removed: "}</strong>
+                    {String::from_utf8_lossy(pathb)}
+                    <br />
+                </>
+            },
+            GitModification::Modified(pathb) => html! {
+                <>
+                    <strong>{"Modified: "}</strong>
+                    {String::from_utf8_lossy(pathb)}
+                    <br />
+                </>
+            },
+            GitModification::Untracked(pathb) => html! {
+                <>
+                    <strong>{"Untracked: "}</strong>
+                    {String::from_utf8_lossy(pathb)}
+                    <br />
+                </>
+            },
+        }
+    }
+    html! {
+        <>
+            {field("Version", format!("{}", VERSION.commit))}
+            {if let Some(branch) = VERSION.branch_name { field("Built from branch", branch)}else{html!{}}}
+            if !VERSION.modifications.is_empty() {
+                <div class="field">
+                    <label class="label">{"Modifications"}</label>
+                    <div class="control">
+                        <pre class="textarea">
+                            {for VERSION.modifications.iter().map(render_modification)}
+                        </pre>
+                    </div>
+                </div>
+            }
+        </>
     }
 }
 

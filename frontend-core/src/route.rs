@@ -9,6 +9,9 @@ pub enum Route {
     #[at("/role/:role/edit")]
     EditRole { role: String },
 
+    // These routes are informational and not for general use
+    #[at("/-/version-info")]
+    VersionInformation,
     // The remaining routes are "internal"
     #[at("/-/complete-login")]
     CompleteLogin,

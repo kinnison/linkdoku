@@ -170,6 +170,7 @@ dependencies = [
  "cookie",
  "database",
  "frontend",
+ "git-testament",
  "include_dir",
  "itertools",
  "lazy_static",
@@ -735,6 +736,7 @@ version = "0.1.0"
 dependencies = [
  "bounce",
  "common",
+ "git-testament",
  "gloo",
  "js-sys",
  "url",
@@ -873,6 +875,29 @@ checksum = "d930750de5717d2dd0b8c0d42c076c0e884c81a73e6cab859bbd2339c71e3e40"
 dependencies = [
  "opaque-debug",
  "polyval",
+]
+
+[[package]]
+name = "git-testament"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bddca8182c031676362c5ceb276478870044cd714da27a0637aaa143994ad74"
+dependencies = [
+ "git-testament-derive",
+ "no-std-compat",
+]
+
+[[package]]
+name = "git-testament-derive"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a782db5866c7ab75f3552dda4cbf34e3e257cc64c963c6ed5af1e12818e8ae6"
+dependencies = [
+ "log",
+ "proc-macro2",
+ "quote",
+ "syn",
+ "time",
 ]
 
 [[package]]
@@ -1519,6 +1544,12 @@ dependencies = [
  "security-framework-sys",
  "tempfile",
 ]
+
+[[package]]
+name = "no-std-compat"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b93853da6d84c2e3c7d730d6473e8817692dd89be387eb01b94d7f108ecb5b8c"
 
 [[package]]
 name = "nom"

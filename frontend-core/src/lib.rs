@@ -8,5 +8,5 @@ pub use base::*;
 pub use route::*;
 
 pub fn make_title<S: AsRef<str>>(partial: S) -> String {
-    format!("Linkdoku - {}", partial.as_ref())
+    format!("{} - Linkdoku", partial.as_ref())
 }

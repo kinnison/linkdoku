@@ -4,6 +4,7 @@
 
 use axum::Router;
 use clap::Parser;
+use git_testament::git_testament;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
@@ -20,6 +21,8 @@ mod login;
 mod spa;
 mod state;
 
+git_testament!(VERSION);
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     // Detect if we're running inside the scaleway cloud, if so, we want a simpler logging format
@@ -31,6 +34,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     } else {
         tracing_subscriber::fmt::init();
     }
+
+    info!("Starting up Linkdoku {VERSION}");
+
     let cli = cli::Cli::parse();
     cli.show();
 

@@ -15,6 +15,7 @@ yew = "0.20.0"
 yew-router = "0.17.0"
 common = { path = "../common" }
 bounce = { version = "0.6", features = ["helmet"] }
+git-testament = "0.2"
 
 [features]
 ssr = ["yew/ssr"]
