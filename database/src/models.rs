@@ -90,6 +90,23 @@ impl Identity {
             .await
     }
 
+    /// Update this identity with new data
+    pub async fn update(
+        &self,
+        conn: &mut AsyncPgConnection,
+        gravatar_hash: &str,
+        display_name: &str,
+    ) -> QueryResult<Self> {
+        use crate::schema::identity::dsl;
+        diesel::update(dsl::identity.find(&self.uuid))
+            .set((
+                dsl::gravatar_hash.eq(gravatar_hash),
+                dsl::display_name.eq(display_name),
+            ))
+            .get_result(conn)
+            .await
+    }
+
     /// Retrieve the roles for this identity
     pub async fn roles(&self, conn: &mut AsyncPgConnection) -> QueryResult<Vec<Role>> {
         Role::by_owner(conn, &self.uuid).await

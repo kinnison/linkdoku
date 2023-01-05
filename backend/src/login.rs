@@ -1,7 +1,7 @@
 //! Login provision for Linkdoku, this is not the APIs, just the
 //! core OpenID Connect behaviour
 
-use std::{collections::HashMap, error::Error, sync::Arc};
+use std::{error::Error, sync::Arc};
 
 use axum::{
     async_trait,
@@ -20,11 +20,13 @@ use common::{
 };
 use cookie::{Cookie, Key, SameSite};
 use database::{activity, models};
+use linked_hash_map::LinkedHashMap;
 use openidconnect::{
-    core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata},
+    core::{CoreAuthenticationFlow, CoreClient, CoreGenderClaim, CoreProviderMetadata},
     reqwest::async_http_client,
-    AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl, Nonce, PkceCodeChallenge,
-    PkceCodeVerifier, RedirectUrl, Scope, TokenResponse,
+    AuthorizationCode, ClientId, ClientSecret, CsrfToken, EmptyAdditionalClaims, IssuerUrl, Nonce,
+    OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, Scope, TokenResponse,
+    UserInfoClaims,
 };
 use serde::{Deserialize, Serialize};
 use tower_cookies::Cookies;
@@ -37,6 +39,7 @@ use crate::{
 };
 
 pub struct ProviderSetup {
+    icon: String,
     client_id: String,
     client_secret: String,
     provider_metadata: CoreProviderMetadata,
@@ -45,11 +48,11 @@ pub struct ProviderSetup {
 
 #[derive(Clone)]
 pub struct Providers {
-    inner: Arc<HashMap<String, ProviderSetup>>,
+    inner: Arc<LinkedHashMap<String, ProviderSetup>>,
 }
 
 impl std::ops::Deref for Providers {
-    type Target = HashMap<String, ProviderSetup>;
+    type Target = LinkedHashMap<String, ProviderSetup>;
 
     fn deref(&self) -> &Self::Target {
         self.inner.as_ref()
@@ -59,19 +62,19 @@ impl std::ops::Deref for Providers {
 pub async fn load_providers(
     config: &Configuration,
 ) -> Result<Providers, Box<dyn Error + Send + Sync + 'static>> {
-    let mut map = HashMap::new();
-    for (name, oidp) in config.openid.iter() {
-        info!("Loading OIDC metadata for {} from config", name);
+    let mut map = LinkedHashMap::new();
+    for oidp in config.openid.iter() {
+        info!("Loading OIDC metadata for {} from config", oidp.name);
         let provider_metadata = CoreProviderMetadata::discover_async(
             IssuerUrl::new(oidp.discovery_doc.clone())?,
             async_http_client,
         )
         .await
         .map_err(|e| {
-            warn!("Unable to load config for {name}: {e:?}");
+            warn!("Unable to load config for {}: {:?}", oidp.name, e);
             e
         })?;
-        info!("Successfully loaded provider metadata for {name}");
+        info!("Successfully loaded provider metadata for {}", oidp.name);
         let client_id = oidp.client_id.clone();
         let client_secret = oidp.client_secret.clone();
         let scopes = oidp
@@ -81,12 +84,13 @@ pub async fn load_providers(
             .map(Scope::new)
             .collect();
         map.insert(
-            name.to_lowercase(),
+            oidp.name.to_lowercase(),
             ProviderSetup {
                 client_id,
                 client_secret,
                 provider_metadata,
                 scopes,
+                icon: oidp.icon.clone(),
             },
         );
     }
@@ -233,10 +237,10 @@ async fn handle_providers(
     State(providers): State<Providers>,
 ) -> Json<APIResult<providers::Response>> {
     Json::from(Ok(providers
-        .keys()
-        .map(|s| providers::Provider {
+        .iter()
+        .map(|(s, prov)| providers::Provider {
             name: s.clone(),
-            icon: "".into(),
+            icon: prov.icon.clone(),
         })
         .collect::<Vec<_>>()))
 }
@@ -372,12 +376,46 @@ async fn handle_login_continue(
                             return Json::from(Err(APIError::BadIdentityToken));
                         }
                     };
+                    let uinfo: UserInfoClaims<EmptyAdditionalClaims, CoreGenderClaim> = match {
+                        match client.user_info(token_response.access_token().clone(), None) {
+                            Ok(uinfo) => uinfo,
+                            Err(e) => {
+                                tracing::error!("Failed to acquire user info: {e:?}");
+                                flow.flow = None;
+                                set_login_flow_status(&cookies, &flow).await;
+                                return Json::from(Err(APIError::LoginFlowError(
+                                    "Unable to create user info request".into(),
+                                )));
+                            }
+                        }
+                    }
+                    .request_async(async_http_client)
+                    .await
+                    {
+                        Ok(uinfo) => uinfo,
+                        Err(e) => {
+                            tracing::error!("Failed to acquire user info: {e:?}");
+                            flow.flow = None;
+                            set_login_flow_status(&cookies, &flow).await;
+                            return Json::from(Err(APIError::LoginFlowError(
+                                "Unable to acquire user info".into(),
+                            )));
+                        }
+                    };
                     // Okay, at this point we *are* logged in, so let's prepare our data
                     let subject = format!("{}:{}", setup.provider, claims.subject().as_str());
                     let name = claims
                         .name()
                         .and_then(|n| n.get(None).map(|n| n.to_string()));
-                    let email = claims.email().map(|e| e.to_string());
+                    let name = name.or_else(|| {
+                        uinfo
+                            .name()
+                            .and_then(|n| n.get(None).map(|n| n.to_string()))
+                    });
+                    let email = claims
+                        .email()
+                        .or_else(|| uinfo.email())
+                        .map(|e| e.to_string());
 
                     flow.flow = None;
 

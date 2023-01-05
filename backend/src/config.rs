@@ -1,6 +1,6 @@
 //! Configuration data for Linkdoku
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use config::{Config, ConfigError, Environment, File};
 use itertools::Itertools;
@@ -12,6 +12,8 @@ use crate::cli::Cli;
 
 #[derive(Debug, Deserialize)]
 pub struct OpenIDProvider {
+    pub name: String,
+    pub icon: String,
     pub client_id: String,
     pub client_secret: String,
     pub discovery_doc: String,
@@ -25,12 +27,14 @@ pub struct Configuration {
     pub base_url: Url,
     pub redirect_url: String,
     pub cookie_secret: String,
-    pub openid: HashMap<String, OpenIDProvider>,
+    pub openid: Vec<OpenIDProvider>,
 }
 
 #[allow(unstable_name_collisions)]
 impl OpenIDProvider {
     fn show(&self) {
+        info!("OpenID provider: {}", self.name);
+        info!("  Icon: {}", self.icon);
         info!("  Client ID: {}", self.client_id);
         info!(
             "  Client Secret: {}",
@@ -66,8 +70,7 @@ impl Configuration {
                 "*****"
             }
         );
-        for (name, prov) in &self.openid {
-            info!("OpenID provider: {name}");
+        for prov in &self.openid {
             prov.show();
         }
     }

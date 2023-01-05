@@ -3,9 +3,13 @@
 use std::rc::Rc;
 
 use apiprovider::use_apiprovider;
-use frontend_core::{component::user::Avatar, Route};
-use yew::{platform::spawn_local, prelude::*};
+use frontend_core::{
+    component::{icon::GenericIcon, user::Avatar},
+    Route,
+};
+use yew::{platform::spawn_local, prelude::*, suspense::use_future};
 use yew_router::prelude::*;
+use yew_toastrack::{use_toaster, Toast};
 
 use crate::role::Role;
 
@@ -162,7 +166,7 @@ pub fn login_user_provider(props: &UserProviderProps) -> Html {
     }
 }
 
-#[function_component(LoginButton)]
+#[function_component(LoginButtonx)]
 pub fn login_button() -> Html {
     let nav = use_navigator().unwrap();
     let api = use_apiprovider();
@@ -193,9 +197,97 @@ pub fn login_button() -> Html {
 
     html! {
         <button class={"button is-primary"} onclick={login_click}>
-            {"Login with Google"}
+            <span class="icon-text">
+                <GenericIcon icon="mdi-google" />
+                <span>{"Login with Google"}</span>
+            </span>
         </button>
     }
+}
+
+#[function_component(LoginButton)]
+pub fn login_buttons() -> Html {
+    let fallback = html! {};
+    html! {
+        <Suspense fallback={fallback}>
+            <LoginButtonsInner />
+        </Suspense>
+    }
+}
+
+#[function_component(LoginButtonsInner)]
+pub fn login_buttons_inner() -> HtmlResult {
+    let nav = use_navigator().unwrap();
+    let api = use_apiprovider();
+    let toaster = use_toaster();
+    let providers = use_future({
+        let api = api.clone();
+        move || async move { api.login_providers().await }
+    })?;
+
+    let p = match providers.as_ref() {
+        Err(e) => {
+            toaster.toast(
+                Toast::new(format!("Unable to retrieve login providers: {e}"))
+                    .with_level(yew_toastrack::ToastLevel::Danger)
+                    .with_lifetime(5000),
+            );
+            return Ok(html! {});
+        }
+        Ok(p) => p,
+    };
+
+    let login_click = Callback::from(move |name: String| {
+        let nav = nav.clone();
+        let api = api.clone();
+        spawn_local(async move {
+            match api.start_login(&name).await {
+                Ok(response) => {
+                    use common::internal::login::begin;
+                    match response {
+                        begin::Response::LoggedIn => {
+                            // Nothing to do, let's just force a jump to the root
+                            nav.push(&Route::Home);
+                        }
+                        begin::Response::Continue(url) => {
+                            gloo::utils::window().location().set_href(&url).unwrap();
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::error!("Woah, API error: {e:?}");
+                    // TODO: Nothing for now, maybe toast later?
+                }
+            }
+        });
+    });
+
+    let mut buttons = Vec::new();
+    for (prov, bclass) in p
+        .iter()
+        .zip(std::iter::once("is-primary").chain(std::iter::repeat("is-link")))
+    {
+        let cb = Callback::from({
+            let login_click = login_click.clone();
+            let name = prov.name.to_lowercase();
+            move |_| {
+                login_click.emit(name.clone());
+            }
+        });
+        let title = format!("Log in using {}", prov.name.clone());
+        let buttonclasses = classes!("button", bclass);
+        buttons.push(html! {
+            <button class={buttonclasses} onclick={cb} title={title}>
+                <GenericIcon icon={prov.icon.clone()} />
+            </button>
+        });
+    }
+
+    Ok(html! {
+        <div class="control buttons">
+            {for buttons}
+        </div>
+    })
 }
 
 #[function_component(LogoutButton)]
@@ -245,6 +337,7 @@ pub fn user_menu_button() -> Html {
             </div>
         },
         LoginStatus::LoggedIn {
+            display_name,
             gravatar_hash,
             roles,
             role,
@@ -268,6 +361,7 @@ pub fn user_menu_button() -> Html {
                 <div class={"navbar-item has-dropdown is-hoverable"}>
                     <a class={"navbar-link"}>
                         <Avatar gravatar_hash={gravatar_hash} />
+                        <span>{display_name}</span>
                     </a>
 
                     <div class={"navbar-dropdown is-right"}>

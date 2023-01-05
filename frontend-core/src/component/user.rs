@@ -9,8 +9,8 @@ pub struct AvatarProps {
 pub fn user_avatar(props: &AvatarProps) -> Html {
     // Email provided, so try and do a gravatar
     html! {
-        <figure class={"image is-32x32"}>
-            <img class={"is-rounded"} style={"max-height: inherit;"} src={format!("https://www.gravatar.com/avatar/{}", props.gravatar_hash)} />
+        <figure class={"image is-32x32 mr-2"}>
+            <img class={"is-rounded"} style={"max-height: inherit;"} src={format!("https://www.gravatar.com/avatar/{}?d=robohash", props.gravatar_hash)} />
         </figure>
     }
 }

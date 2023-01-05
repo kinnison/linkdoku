@@ -23,12 +23,23 @@ database_url: "postgres://linkdoku:linkdoku@localhost:15432/linkdoku"
 # You are welcome to use it when testing changes to the Linkdoku software.
 # If it stops working it's because someone was abusing it enough that we
 # recycled the secret etc. and you may need to set one up for yourself.
+# Note, the order in which they appear here is the order they will be served
+# to the linkdoku frontend.
 openid:
-  google:
+  - name: google
+    icon: mdi-google
     client_id: "739049102074-nbqhs8ss06d75o5lta70r01u5focufi5.apps.googleusercontent.com"
     client_secret: "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"
     # the OpenIDConnect crate automatically adds the .well-known/...
     discovery_doc: "https://accounts.google.com"
+    scopes:
+      - profile
+      - email
+  - name: gitlab
+    icon: mdi-gitlab
+    client_id: "5a5a54fb7635895ea472c5289448ecd5ef707c3552d5644dc9befa5fb437e4b8"
+    client_secret: "43db4d7dbcce6eb645f76887853aaca6c66a112b2fdb50f67893737d96a74c13"
+    discovery_doc: "https://gitlab.com"
     scopes:
       - profile
       - email

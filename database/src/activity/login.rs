@@ -19,7 +19,8 @@ pub async fn login_upsert(
     conn.build_transaction()
         .run(|conn| {
             Box::pin(async move {
-                let (new, identity) = match models::Identity::from_handle(conn, oidc_handle).await?
+                let (new, mut identity) = match models::Identity::from_handle(conn, oidc_handle)
+                    .await?
                 {
                     Some(identity) => (false, identity),
                     None => (
@@ -28,6 +29,12 @@ pub async fn login_upsert(
                             .await?,
                     ),
                 };
+                if !new
+                    && (identity.gravatar_hash != gravatar_hash
+                        || identity.display_name != display_name)
+                {
+                    identity = identity.update(conn, gravatar_hash, display_name).await?;
+                }
                 let roles = if new {
                     vec![
                         models::Role::create(
