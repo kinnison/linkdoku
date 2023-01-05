@@ -63,18 +63,18 @@ pub async fn load_providers(
     config: &Configuration,
 ) -> Result<Providers, Box<dyn Error + Send + Sync + 'static>> {
     let mut map = LinkedHashMap::new();
-    for oidp in config.openid.iter() {
-        info!("Loading OIDC metadata for {} from config", oidp.name);
+    for (name, oidp) in config.openid.iter() {
+        info!("Loading OIDC metadata for {name} from config");
         let provider_metadata = CoreProviderMetadata::discover_async(
             IssuerUrl::new(oidp.discovery_doc.clone())?,
             async_http_client,
         )
         .await
         .map_err(|e| {
-            warn!("Unable to load config for {}: {:?}", oidp.name, e);
+            warn!("Unable to load config for {name}: {e:?}");
             e
         })?;
-        info!("Successfully loaded provider metadata for {}", oidp.name);
+        info!("Successfully loaded provider metadata for {name}");
         let client_id = oidp.client_id.clone();
         let client_secret = oidp.client_secret.clone();
         let scopes = oidp
@@ -84,7 +84,7 @@ pub async fn load_providers(
             .map(Scope::new)
             .collect();
         map.insert(
-            oidp.name.to_lowercase(),
+            name.to_lowercase(),
             ProviderSetup {
                 client_id,
                 client_secret,

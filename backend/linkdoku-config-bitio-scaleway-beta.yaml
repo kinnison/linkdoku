@@ -24,10 +24,19 @@ database_url: "posgres://linkdoku-beta"
 
 openid:
   google:
+    icon: mdi-google
     client_id: "739049102074-s5rick1s2efek896ummpib53n6jo7ro1.apps.googleusercontent.com"
     client_secret: "ENVOVERRIDE"
     # the OpenIDConnect crate automatically adds the .well-known/...
     discovery_doc: "https://accounts.google.com"
+    scopes:
+      - profile
+      - email
+  gitlab:
+    icon: mdi-gitlab
+    client_id: "d79907e2f8eb88338626799f7859d73c6b798d0b3c63e353e2041c535d2f9715"
+    client_secret: "ENVOVERRIDE"
+    discovery_doc: "https://gitlab.com"
     scopes:
       - profile
       - email

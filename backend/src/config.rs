@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use config::{Config, ConfigError, Environment, File};
 use itertools::Itertools;
+use linked_hash_map::LinkedHashMap;
 use serde::Deserialize;
 use tracing::info;
 use url::Url;
@@ -12,7 +13,6 @@ use crate::cli::Cli;
 
 #[derive(Debug, Deserialize)]
 pub struct OpenIDProvider {
-    pub name: String,
     pub icon: String,
     pub client_id: String,
     pub client_secret: String,
@@ -27,13 +27,12 @@ pub struct Configuration {
     pub base_url: Url,
     pub redirect_url: String,
     pub cookie_secret: String,
-    pub openid: Vec<OpenIDProvider>,
+    pub openid: LinkedHashMap<String, OpenIDProvider>,
 }
 
 #[allow(unstable_name_collisions)]
 impl OpenIDProvider {
     fn show(&self) {
-        info!("OpenID provider: {}", self.name);
         info!("  Icon: {}", self.icon);
         info!("  Client ID: {}", self.client_id);
         info!(
@@ -70,7 +69,8 @@ impl Configuration {
                 "*****"
             }
         );
-        for prov in &self.openid {
+        for (name, prov) in &self.openid {
+            info!("OpenID provider: {}", name);
             prov.show();
         }
     }

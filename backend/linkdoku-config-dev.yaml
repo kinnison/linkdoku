@@ -26,7 +26,7 @@ database_url: "postgres://linkdoku:linkdoku@localhost:15432/linkdoku"
 # Note, the order in which they appear here is the order they will be served
 # to the linkdoku frontend.
 openid:
-  - name: google
+  google:
     icon: mdi-google
     client_id: "739049102074-nbqhs8ss06d75o5lta70r01u5focufi5.apps.googleusercontent.com"
     client_secret: "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"
@@ -35,7 +35,7 @@ openid:
     scopes:
       - profile
       - email
-  - name: gitlab
+  gitlab:
     icon: mdi-gitlab
     client_id: "5a5a54fb7635895ea472c5289448ecd5ef707c3552d5644dc9befa5fb437e4b8"
     client_secret: "43db4d7dbcce6eb645f76887853aaca6c66a112b2fdb50f67893737d96a74c13"
