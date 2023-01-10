@@ -10,4 +10,5 @@ members = [
     "yew-toastrack",
     "yew-bulma-tabs",
     "yew-markdown",
+    "puzzleutils",
 ]
