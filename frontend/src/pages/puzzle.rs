@@ -1,7 +1,6 @@
 use common::public::puzzle;
 use components::{role::Role, user::LoginStatus};
 use frontend_core::Route;
-use tracing::info;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;

@@ -10,6 +10,7 @@ use serde_json::Value;
 pub struct Role {
     pub uuid: String,
     pub owner: String,
+    pub short_name: String,
     pub display_name: String,
     pub description: String,
 }

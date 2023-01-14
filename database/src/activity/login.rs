@@ -43,6 +43,7 @@ pub async fn login_upsert(
                             &identity.uuid,
                             &format!("{} (Role)", display_name),
                             &format!("# Initial role for {}", display_name),
+                            &identity.uuid,
                         )
                         .await?,
                     ]

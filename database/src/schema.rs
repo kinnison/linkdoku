@@ -58,6 +58,7 @@ diesel::table! {
         owner -> Varchar,
         display_name -> Varchar,
         description -> Text,
+        short_name -> Varchar,
     }
 }
 

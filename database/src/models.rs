@@ -119,6 +119,7 @@ pub struct Role {
     pub owner: String,
     pub display_name: String,
     pub description: String,
+    pub short_name: String,
 }
 
 #[derive(Insertable)]
@@ -128,6 +129,7 @@ pub struct NewRole<'a> {
     pub owner: &'a str,
     pub display_name: &'a str,
     pub description: &'a str,
+    pub short_name: &'a str,
 }
 
 impl Role {
@@ -156,6 +158,7 @@ impl Role {
         owner: &str,
         display_name: &str,
         description: &str,
+        short_name: &str,
     ) -> QueryResult<Role> {
         use crate::schema::role;
         let new = NewRole {
@@ -163,6 +166,7 @@ impl Role {
             owner,
             display_name,
             description,
+            short_name,
         };
         diesel::insert_into(role::table)
             .values(&new)
@@ -188,6 +192,7 @@ impl Role {
             .filter(role::uuid.eq(&self.uuid))
             .set((
                 role::owner.eq(&self.owner),
+                role::short_name.eq(&self.short_name),
                 role::display_name.eq(&self.display_name),
                 role::description.eq(&self.description),
             ))

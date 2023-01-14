@@ -79,8 +79,8 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
 
     Ok(html! {
         <>
-            <Title value={format!("Role - {}", raw_role.display_name)} />
-            <h1 class={"title"}>{raw_role.display_name.clone()}{edit_link}</h1>
+            <Title value={format!("{} - Role", raw_role.display_name)} />
+            <h1 class={"title"}>{format!("{} ({}) ", raw_role.display_name, raw_role.short_name)}{edit_link}</h1>
             <hr width={"40%"} />
             <MarkdownRender markdown={raw_role.description.clone()} />
             <hr width={"40%"} />
@@ -107,6 +107,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
     let user_info = use_context::<LoginStatus>().unwrap();
     let cached_role = use_cached_value::<objects::Role>(props.role.clone())?;
     let toaster = use_toaster();
+    let short_name_ref = use_node_ref();
     let display_name_ref = use_node_ref();
     let api = use_apiprovider();
 
@@ -151,9 +152,30 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
         });
     }
 
+    let short_name = use_state_eq(|| raw_role.short_name.clone());
     let display_name = use_state_eq(|| raw_role.display_name.clone());
     let description = use_state_eq(|| raw_role.description.clone());
     let button_enabled = use_state_eq(|| true);
+
+    let short_name_changed = Callback::from({
+        let setter = short_name.setter();
+        let short_name_ref = short_name_ref.clone();
+        move |_| {
+            let field: HtmlInputElement = short_name_ref.cast().unwrap();
+            let value = field.value();
+            setter.set(value);
+        }
+    });
+
+    let short_name_updated = Callback::from({
+        let setter = short_name.setter();
+        let short_name_ref = short_name_ref.clone();
+        move |_| {
+            let field: HtmlInputElement = short_name_ref.cast().unwrap();
+            let value = field.value();
+            setter.set(value);
+        }
+    });
 
     let display_name_changed = Callback::from({
         let setter = display_name.setter();
@@ -184,6 +206,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
 
     let on_save_changes = Callback::from({
         let description = description.clone();
+        let short_name = short_name.clone();
         let display_name = display_name.clone();
         let button_setter = button_enabled.setter();
         let uuid = raw_role.uuid.clone();
@@ -193,6 +216,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
             // Disable the button and begin the save operation
             button_setter.set(false);
             let description = (*description).clone();
+            let short_name = (*short_name).clone();
             let display_name = (*display_name).clone();
             let api = api.clone();
             let uuid = uuid.clone();
@@ -200,7 +224,10 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
             let button_setter = button_setter.clone();
             let cached_role = cached_role.clone();
             spawn_local(async move {
-                match api.update_role(uuid, display_name, description).await {
+                match api
+                    .update_role(uuid, short_name, display_name, description)
+                    .await
+                {
                     Ok(_) => {
                         // We successfully saved
                         toaster.toast(
@@ -232,6 +259,15 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
     Ok(html! {
         <>
             <Title value={format!("Edit Role - {}", raw_role.display_name)} />
+            <div class="field">
+                <label class={"label"}>
+                    {"Short name"}
+                </label>
+                <div class="control">
+                    <input ref={short_name_ref} class={"input"} type={"text"} placeholder={"Role's Short Name"}
+                           value={(*short_name).clone()} onchange={short_name_changed} oninput={short_name_updated}/>
+                 </div>
+            </div>
             <div class={"field"}>
                 <label class={"label"}>
                     {"Display name"}

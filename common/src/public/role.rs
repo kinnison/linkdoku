@@ -10,6 +10,7 @@ pub mod update {
     #[derive(Serialize, Deserialize)]
     pub struct Request {
         pub uuid: String,
+        pub short_name: String,
         pub display_name: String,
         pub description: String,
     }

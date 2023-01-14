@@ -170,6 +170,7 @@ impl LinkdokuAPI {
     pub async fn update_role(
         &self,
         uuid: impl Into<String>,
+        short_name: impl Into<String>,
         display_name: impl Into<String>,
         description: impl Into<String>,
     ) -> APIResult<public::role::update::Response> {
@@ -179,6 +180,7 @@ impl LinkdokuAPI {
             None,
             Some(public::role::update::Request {
                 uuid: uuid.into(),
+                short_name: short_name.into(),
                 display_name: display_name.into(),
                 description: description.into(),
             }),

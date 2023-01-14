@@ -27,6 +27,7 @@ async fn update_role(
         Err(e) => return Json::from(Err(APIError::DatabaseError(e.to_string()))),
     };
 
+    role.short_name = req.short_name;
     role.display_name = req.display_name;
     role.description = req.description;
 

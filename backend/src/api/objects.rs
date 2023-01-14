@@ -23,6 +23,7 @@ async fn get_role(Path(uuid): Path<String>, mut db: Connection) -> Json<APIResul
     Json::from(Ok(objects::Role {
         uuid: role.uuid,
         owner: role.owner,
+        short_name: role.short_name,
         display_name: role.display_name,
         description: role.description,
     }))
