@@ -8,6 +8,8 @@ pub enum Route {
     ViewRole { role: String },
     #[at("/role/:role/edit")]
     EditRole { role: String },
+    #[at("/puzzle/_new")]
+    CreatePuzzle,
 
     // These routes are informational and not for general use
     #[at("/-/version-info")]

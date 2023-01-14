@@ -2,6 +2,7 @@
 //! about various things.  A public API is considered stable and has some
 //! amount of version numbering behind it.
 
+pub mod puzzle;
 pub mod role;
 pub mod userinfo;
 

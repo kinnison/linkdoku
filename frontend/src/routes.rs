@@ -14,6 +14,7 @@ use yew_toastrack::{use_toaster, Toast, ToastLevel};
 use crate::{
     pages::{
         home::HomePage,
+        puzzle::CreatePuzzlePage,
         role::{RoleEditPage, RolePage},
     },
     util_components::Title,
@@ -42,6 +43,12 @@ fn route_switch(route: Route) -> Html {
         Route::EditRole { role } => {
             html! {
                 <RoleEditPage role={role} />
+            }
+        }
+
+        Route::CreatePuzzle => {
+            html! {
+                <CreatePuzzlePage />
             }
         }
 

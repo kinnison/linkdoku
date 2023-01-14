@@ -12,3 +12,6 @@ members = [
     "yew-markdown",
     "puzzleutils",
 ]
+
+[patch.crates-io]
+gloo-history = { git = "https://github.com/kinnison/gloo", branch = "fix-284" }

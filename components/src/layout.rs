@@ -68,6 +68,13 @@ fn main_menu_render() -> Html {
         }
     };
 
+    blocks.push(html! {
+        <Link<Route> to={Route::CreatePuzzle} classes={"panel-block"}>
+            <Icon class={"panel-icon"} icon={PuzzleAddIcon}/>
+            {"Create Puzzle"}
+        </Link<Route>>
+    });
+
     html! {
         <div class={"panel"}>
             <p class="panel-heading">
