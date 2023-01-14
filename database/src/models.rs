@@ -142,6 +142,18 @@ impl Role {
         role.filter(uuid.eq(role_uuid)).first(conn).await.optional()
     }
 
+    /// Retrieve a role by short name
+    pub async fn by_short_name(
+        conn: &mut AsyncPgConnection,
+        role_name: &str,
+    ) -> QueryResult<Option<Role>> {
+        use crate::schema::role::dsl::*;
+        role.filter(short_name.eq(role_name))
+            .first(conn)
+            .await
+            .optional()
+    }
+
     /// Retrieve roles owned by a given identity
     pub async fn by_owner(
         conn: &mut AsyncPgConnection,
@@ -213,6 +225,19 @@ impl Role {
             .order_by(created_at.desc())
             .load(conn)
             .await
+    }
+
+    /// This role's short name is available if either no other role has it,
+    /// or the name is unchanged.
+    pub async fn short_name_available(&self, conn: &mut AsyncPgConnection) -> QueryResult<bool> {
+        use crate::schema::role::dsl::*;
+        let count: i64 = role
+            .filter(short_name.eq(&self.short_name))
+            .filter(uuid.ne(&self.uuid))
+            .count()
+            .get_result(conn)
+            .await?;
+        Ok(count == 0)
     }
 }
 

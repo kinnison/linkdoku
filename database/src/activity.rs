@@ -2,7 +2,7 @@
 //!
 //! These include things like the login activity as far as databases go
 
-use common::APIError;
+use common::{APIError, BadShortNameReason};
 
 pub mod login;
 pub mod role;
@@ -10,6 +10,7 @@ pub mod role;
 pub enum ActivityError {
     PermissionDenied,
     InvalidInput,
+    ShortNameInUse,
     Error(diesel::result::Error),
 }
 
@@ -18,6 +19,7 @@ pub type ActivityResult<T> = Result<T, ActivityError>;
 impl From<ActivityError> for APIError {
     fn from(value: ActivityError) -> Self {
         match value {
+            ActivityError::ShortNameInUse => APIError::BadShortName(BadShortNameReason::NotUnique),
             ActivityError::PermissionDenied => APIError::PermissionDenied,
             ActivityError::InvalidInput => APIError::BadInput,
             ActivityError::Error(e) => APIError::DatabaseError(e.to_string()),

@@ -2,7 +2,7 @@
 //!
 //! Currently there are two main pages here, the RolePage and the RoleEditPage
 
-use apiprovider::{use_apiprovider, use_cached_value};
+use apiprovider::{use_apiprovider, use_cached_value, use_cached_value_by_name};
 use common::objects;
 use components::{layout::MainPageLayout, puzzle::PuzzleList, user::LoginStatus};
 use frontend_core::{component::icon::*, Route};
@@ -12,7 +12,7 @@ use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
-use crate::util_components::Title;
+use crate::{routes::core_frontend_route_switch, util_components::Title};
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct RolePageProps {
@@ -238,7 +238,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                     }
                     Err(e) => {
                         toaster.toast(
-                            Toast::new(format!("Unable to save: {e:?}"))
+                            Toast::new(format!("Unable to save: {e}"))
                                 .with_level(ToastLevel::Danger)
                                 .with_lifetime(5000),
                         );
@@ -296,4 +296,54 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
             </div>
         </>
     })
+}
+
+#[derive(Properties, PartialEq)]
+pub struct FindRoleAndRedirectProps {
+    pub name: AttrValue,
+}
+
+#[function_component(FindRoleAndRedirect)]
+pub fn find_role_and_redirect(props: &FindRoleAndRedirectProps) -> Html {
+    let fallback = html! { {"Please wait…"} };
+    html! {
+        <Suspense fallback={fallback}>
+            <FindRoleAndRedirectInner name={props.name.clone()} />
+        </Suspense>
+    }
+}
+
+#[function_component(FindRoleAndRedirectInner)]
+fn find_role_and_redirect_inner(props: &FindRoleAndRedirectProps) -> HtmlResult {
+    let raw_role = use_cached_value_by_name::<objects::Role>(props.name.clone())?;
+    let toaster = use_toaster();
+
+    let raw_role = match raw_role.as_ref() {
+        Err(e) => {
+            toaster.toast(
+                Toast::new(format!("Failure viewing role: {e:?}")).with_level(ToastLevel::Danger),
+            );
+            return Ok(html! {
+                <Redirect<Route> to={Route::Home} />
+            });
+        }
+        Ok(role) => {
+            if let Some(role) = role.get() {
+                role
+            } else {
+                toaster.toast(
+                    Toast::new(format!("Role not found: {}", props.name))
+                        .with_level(ToastLevel::Warning),
+                );
+                return Ok(html! {
+                    <Redirect<Route> to={Route::Home} />
+                });
+            }
+        }
+    };
+
+    // We now "sub-render" as though our role route was here
+    Ok(core_frontend_route_switch(Route::ViewRole {
+        role: raw_role.uuid.clone(),
+    }))
 }

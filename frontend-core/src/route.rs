@@ -18,6 +18,6 @@ pub enum Route {
     #[at("/-/complete-login")]
     CompleteLogin,
     #[not_found]
-    #[at("/404")]
-    NotFound,
+    #[at("/-/shortcut-route")]
+    Shortcut,
 }

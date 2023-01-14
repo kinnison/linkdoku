@@ -19,8 +19,13 @@ pub async fn update(
                 if !role.can_modify(txn, actor).await? {
                     Err(ActivityError::PermissionDenied)
                 } else {
-                    // Okay we're permitted to make the change, so let's go
-                    role.save(txn).await.map_err(|e| e.into())
+                    // Now let's count roles with this short name
+                    if !role.short_name_available(txn).await? {
+                        Err(ActivityError::ShortNameInUse)
+                    } else {
+                        // Okay we're permitted to make the change, so let's go
+                        role.save(txn).await.map_err(|e| e.into())
+                    }
                 }
             })
         })

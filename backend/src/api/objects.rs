@@ -8,10 +8,33 @@ use database::{models, Connection};
 
 use crate::{login::PrivateCookies, state::BackendState};
 
-async fn get_role(Path(uuid): Path<String>, mut db: Connection) -> Json<APIResult<objects::Role>> {
+async fn get_role_by_uuid(
+    Path(uuid): Path<String>,
+    db: Connection,
+) -> Json<APIResult<objects::Role>> {
+    get_role_(&uuid, db, false).await
+}
+
+async fn get_role_by_name(
+    Path(uuid): Path<String>,
+    db: Connection,
+) -> Json<APIResult<objects::Role>> {
+    get_role_(&uuid, db, true).await
+}
+
+async fn get_role_(
+    item: &str,
+    mut db: Connection,
+    is_name: bool,
+) -> Json<APIResult<objects::Role>> {
     // Role data is always public, so there's no access control to be done here
-    let role = match models::Role::by_uuid(&mut db, &uuid)
-        .await
+    let res = if is_name {
+        models::Role::by_short_name(&mut db, item).await
+    } else {
+        models::Role::by_uuid(&mut db, item).await
+    };
+
+    let role = match res
         .map_err(|e| APIError::DatabaseError(e.to_string()))
         .transpose()
         .unwrap_or(Err(APIError::ObjectNotFound))
@@ -109,6 +132,7 @@ async fn get_puzzle(
 
 pub fn public_router() -> Router<BackendState> {
     Router::new()
-        .route("/role/:uuid", get(get_role))
-        .route("/puzzle/:uuid", get(get_puzzle))
+        .route("/role/by-uuid/:uuid", get(get_role_by_uuid))
+        .route("/role/by-name/:uuid", get(get_role_by_name))
+        .route("/puzzle/by-uuid/:uuid", get(get_puzzle))
 }

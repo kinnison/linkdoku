@@ -9,6 +9,8 @@
 //! linkdoku is free software, but it is only intended to be
 //! used by the frontend and makes no stability guarantees.
 
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -24,6 +26,9 @@ pub enum APIError {
     /// Generic problem, rarely returned
     #[error("{0}")]
     Generic(String),
+    /// A bad shortname was selected
+    #[error("Bad short name, {0}")]
+    BadShortName(BadShortNameReason),
     /// Whatever was asked for was not found (we locally transform this from a 404 in the client)
     #[error("Object not found")]
     ObjectNotFound,
@@ -59,3 +64,48 @@ pub enum APIError {
 // Every API call possible will return APIResult<Response>
 // where the response is the response type
 pub type APIResult<T> = std::result::Result<T, APIError>;
+
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum BadShortNameReason {
+    NotUnique,
+    TooShort,
+    TooLong,
+    InvalidCharacter,
+    ReservedWord,
+}
+
+impl fmt::Display for BadShortNameReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NotUnique => write!(f, "name is not unique"),
+            Self::TooShort => write!(f, "minimum length is 3 characters"),
+            Self::TooLong => write!(f, "maximum length is 32 characters"),
+            Self::InvalidCharacter => write!(
+                f,
+                "only basic (not accented) letters, numbers, underscore, and hyphen are permitted"
+            ),
+            Self::ReservedWord => write!(f, "you may not use a reserved word"),
+        }
+    }
+}
+
+pub fn clean_short_name(name: &str, skip_bad_chars: bool) -> Result<String, BadShortNameReason> {
+    let mut ret = String::new();
+    for ch in name.chars() {
+        match ch {
+            '-' | '_' | '0'..='9' | 'a'..='z' => ret.push(ch),
+            'A'..='Z' => ret.push(ch.to_ascii_lowercase()),
+            _ => {
+                if !skip_bad_chars {
+                    return Err(BadShortNameReason::InvalidCharacter);
+                }
+            }
+        }
+    }
+    match ret {
+        _ if ret.len() < 3 => Err(BadShortNameReason::TooShort),
+        _ if ret.len() > 32 => Err(BadShortNameReason::TooLong),
+        _ => Ok(ret),
+    }
+}

@@ -1,13 +1,15 @@
 //! Role APIs such as updating/creating them
 
 use axum::{routing::post, Json, Router};
-use common::{public, APIError, APIResult};
+use common::{clean_short_name, public, APIError, APIResult, BadShortNameReason};
 use database::{
     activity::{self},
     models, Connection,
 };
 
 use crate::{login::PrivateCookies, state::BackendState};
+
+const RESERVED_ROLE_NAMES: &[&str] = &["puzzle", "role", "settings", "linkdoku"];
 
 async fn update_role(
     mut db: Connection,
@@ -27,9 +29,18 @@ async fn update_role(
         Err(e) => return Json::from(Err(APIError::DatabaseError(e.to_string()))),
     };
 
-    role.short_name = req.short_name;
+    role.short_name = match clean_short_name(&req.short_name, false) {
+        Ok(short_name) => short_name,
+        Err(reason) => return Json::from(Err(APIError::BadShortName(reason))),
+    };
     role.display_name = req.display_name;
     role.description = req.description;
+
+    if RESERVED_ROLE_NAMES.iter().any(|&v| v == role.short_name) {
+        return Json::from(Err(APIError::BadShortName(
+            BadShortNameReason::ReservedWord,
+        )));
+    }
 
     activity::role::update(&mut db, user, &role)
         .await

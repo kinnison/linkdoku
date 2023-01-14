@@ -64,13 +64,24 @@ impl LinkdokuAPI {
         Url::parse(&combined).expect("Unable to construct API URL?")
     }
 
-    fn compute_basic_uri(&self, kind: &str, uuid: &str) -> Url {
+    fn compute_basic_uri_by_uuid(&self, kind: &str, uuid: &str) -> Url {
         let combined = format!(
-            "{}api{}/{}/{}",
+            "{}api{}/{}/by-uuid/{}",
             self.base.as_str(),
             PUBLIC_SEGMENT,
             kind,
             uuid
+        );
+        Url::parse(&combined).expect("Unable to construct API url?")
+    }
+
+    fn compute_basic_uri_by_name(&self, kind: &str, name: &str) -> Url {
+        let combined = format!(
+            "{}api{}/{}/by-name/{}",
+            self.base.as_str(),
+            PUBLIC_SEGMENT,
+            kind,
+            name
         );
         Url::parse(&combined).expect("Unable to construct API url?")
     }
@@ -163,7 +174,16 @@ impl LinkdokuAPI {
         kind: &str,
         uuid: &str,
     ) -> APIResult<T> {
-        let uri = self.compute_basic_uri(kind, uuid);
+        let uri = self.compute_basic_uri_by_uuid(kind, uuid);
+        self.make_api_call(uri, None, NO_BODY).await
+    }
+
+    pub(crate) async fn get_generic_obj_by_name<T: DeserializeOwned>(
+        &self,
+        kind: &str,
+        name: &str,
+    ) -> APIResult<T> {
+        let uri = self.compute_basic_uri_by_name(kind, name);
         self.make_api_call(uri, None, NO_BODY).await
     }
 

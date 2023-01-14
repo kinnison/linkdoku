@@ -16,6 +16,7 @@ use crate::{
         home::HomePage,
         puzzle::CreatePuzzlePage,
         role::{RoleEditPage, RolePage},
+        shortcuts::ShortcutHandler,
     },
     util_components::Title,
 };
@@ -23,11 +24,11 @@ use crate::{
 #[function_component(RouteSwitcher)]
 pub fn route_switcher() -> Html {
     html! {
-        <Switch<Route> render={route_switch} />
+        <Switch<Route> render={core_frontend_route_switch} />
     }
 }
 
-fn route_switch(route: Route) -> Html {
+pub fn core_frontend_route_switch(route: Route) -> Html {
     let page_html = match route {
         Route::Home => {
             html! {
@@ -62,9 +63,9 @@ fn route_switch(route: Route) -> Html {
             }
         }
         // Internal routes
-        Route::NotFound => {
+        Route::Shortcut => {
             html! {
-                <Redirect<Route> to={Route::Home} />
+                <ShortcutHandler />
             }
         }
         #[cfg(not(feature = "ssr"))]
