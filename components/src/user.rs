@@ -7,7 +7,7 @@ use frontend_core::{
     component::{icon::GenericIcon, user::Avatar},
     LinkdokuBase, Route,
 };
-use log::debug;
+use tracing::{debug, error};
 use yew::{platform::spawn_local, prelude::*, suspense::use_future};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast};
@@ -87,7 +87,7 @@ impl Reducible for LoginStatus {
     type Action = LoginStatusAction;
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
-        log::debug!("Reducing login status by {action:?}");
+        debug!("Reducing login status by {action:?}");
         match action {
             LoginStatusAction::LoggedOut => LoginStatus::LoggedOut,
             LoginStatusAction::LoggedIn {
@@ -160,7 +160,7 @@ pub fn login_user_provider(props: &UserProviderProps) -> Html {
                                 }
                             }
                             Err(e) => {
-                                log::error!("Woah, API error: {e:?}");
+                                error!("Woah, API error: {e:?}");
                                 // Nothing for now, next time anything happens, we'll try again to talk to the server.
                             }
                         }
@@ -204,7 +204,7 @@ pub fn login_button() -> Html {
                     }
                 }
                 Err(e) => {
-                    log::error!("Woah, API error: {e:?}");
+                    error!("Woah, API error: {e:?}");
                     // TODO: Nothing for now, maybe toast later?
                 }
             }
@@ -271,7 +271,7 @@ pub fn login_buttons_inner() -> HtmlResult {
                     }
                 }
                 Err(e) => {
-                    log::error!("Woah, API error: {e:?}");
+                    error!("Woah, API error: {e:?}");
                     // TODO: Nothing for now, maybe toast later?
                 }
             }
@@ -326,7 +326,7 @@ pub fn logout_button() -> Html {
                     }
                 }
                 Err(e) => {
-                    log::error!("Woah API error: {e:?}");
+                    error!("Woah API error: {e:?}");
                     // TODO: Nothing for now, but maybe toast later?
                 }
             }

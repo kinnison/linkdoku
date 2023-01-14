@@ -5,7 +5,7 @@ use std::{hash::Hash, sync::Arc};
 
 use common::{
     internal::{login, logout, INTERNAL_SEGMENT},
-    public::{self, userinfo, PUBLIC_SEGMENT},
+    public::{self, scaffold, userinfo, PUBLIC_SEGMENT},
     APIError, APIResult,
 };
 use reqwest::{header::COOKIE, Client, StatusCode, Url};
@@ -157,6 +157,11 @@ impl LinkdokuAPI {
         };
         let uri = self.compute_uri(INTERNAL_SEGMENT, login::complete::URI);
         self.make_api_call(uri, None, Some(body)).await
+    }
+
+    pub async fn get_scaffold(&self) -> APIResult<scaffold::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, scaffold::URI);
+        self.make_api_call(uri, None, NO_BODY).await
     }
 
     pub async fn get_userinfo(&self) -> APIResult<userinfo::Response> {

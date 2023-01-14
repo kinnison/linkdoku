@@ -1,9 +1,15 @@
 //! Main layout components
 //!
 
+use apiprovider::use_apiprovider;
+use common::public::scaffold::{self, hash_version_info};
 use frontend_core::{component::icon::*, Route};
-use yew::prelude::*;
+use futures_util::stream::StreamExt;
+use git_testament::git_testament;
+use gloo::timers::future::IntervalStream;
+use yew::{platform::spawn_local, prelude::*};
 use yew_router::prelude::*;
+use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
 use crate::{
     role::Role,
@@ -83,4 +89,53 @@ fn main_menu_render() -> Html {
             {blocks}
         </div>
     }
+}
+
+git_testament!(VERSION);
+
+#[function_component(VersionChecker)]
+pub fn version_checker_render() -> Html {
+    let my_hash = hash_version_info(&VERSION);
+    let api = use_apiprovider();
+    let toaster = use_toaster();
+    let found_data = use_state_eq(|| None::<scaffold::Response>);
+
+    use_effect_with_deps(
+        {
+            let setter = found_data.setter();
+            let toaster = toaster.clone();
+            move |_| {
+                spawn_local(async move {
+                    IntervalStream::new(30_000)
+                        .for_each(|_| async {
+                            match api.get_scaffold().await {
+                                Ok(scaf) => {
+                                    setter.set(Some(scaf));
+                                }
+                                Err(e) => {
+                                    toaster.toast(
+                                        Toast::new(format!(
+                                            "Failure retrieving backend status: {e}"
+                                        ))
+                                        .with_level(ToastLevel::Warning)
+                                        .with_lifetime(2500),
+                                    );
+                                }
+                            }
+                        })
+                        .await;
+                });
+                move || ()
+            }
+        },
+        (),
+    );
+
+    if let Some(scaf) = found_data.as_ref() {
+        if scaf.version_hash != my_hash {
+            toaster.toast(Toast::new("Backend has updated").with_level(ToastLevel::Danger));
+        }
+    }
+
+    html! {}
 }

@@ -3,7 +3,10 @@ use bounce::{
     helmet::{Helmet, HelmetBridge},
     BounceRoot,
 };
-use components::user::{UserMenuNavbarItem, UserProvider};
+use components::{
+    layout::VersionChecker,
+    user::{UserMenuNavbarItem, UserProvider},
+};
 use frontend_core::{
     component::core::{Footer, Navbar},
     make_title, BaseProvider,
@@ -49,6 +52,7 @@ pub(crate) fn root_element() -> Html {
                     <Helmet>
                         <meta charset="utf-8" />
                     </Helmet>
+                    <VersionChecker />
                     <Navbar>
                         <UserMenuNavbarItem />
                     </Navbar>

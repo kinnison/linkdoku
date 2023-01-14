@@ -4,6 +4,7 @@
 
 pub mod puzzle;
 pub mod role;
+pub mod scaffold;
 pub mod userinfo;
 
 pub const PUBLIC_SEGMENT: &str = "/public";

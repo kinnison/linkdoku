@@ -386,6 +386,8 @@ dependencies = [
 name = "common"
 version = "0.1.0"
 dependencies = [
+ "git-testament",
+ "md5",
  "serde",
  "serde_json",
  "thiserror",
@@ -398,9 +400,11 @@ dependencies = [
  "apiprovider",
  "common",
  "frontend-core",
+ "futures-util",
+ "git-testament",
  "gloo",
- "log",
  "stylist",
+ "tracing",
  "yew",
  "yew-router",
  "yew-toastrack",
