@@ -2,6 +2,7 @@
 //!
 
 use apiprovider::use_apiprovider;
+use bounce::helmet::Helmet;
 use common::public::scaffold::{self, hash_version_info};
 use frontend_core::{component::icon::*, Route};
 use futures_util::stream::StreamExt;
@@ -133,9 +134,47 @@ pub fn version_checker_render() -> Html {
 
     if let Some(scaf) = found_data.as_ref() {
         if scaf.version_hash != my_hash {
-            toaster.toast(Toast::new("Backend has updated").with_level(ToastLevel::Danger));
+            let reloader = Callback::from(|_| {
+                gloo::utils::window().location().reload().unwrap();
+            });
+            html! {
+                <>
+                    <Helmet>
+                        <html class="is-clipped" />
+                    </Helmet>
+                    <div class="modal is-active">
+                        <div class="modal-background"></div>
+                        <div class="modal-card">
+                            <header class="modal-card-head">
+                                <p class="modal-card-title">{"Backend version change detected"}</p>
+                            </header>
+                            <section class="modal-card-body">
+                                <div class="content">
+                                    <div class="field">
+                                        <label class="label">{"Frontend version"}</label>
+                                        <div class="control">
+                                            <input class="input" type="text" value={format!("{VERSION}")} readonly=true />
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label">{"Backend version"}</label>
+                                        <div class="control">
+                                            <input class="input" type="text" value={scaf.version.clone()} readonly=true />
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                            <footer class="modal-card-foot">
+                                <button class="button is-success" onclick={reloader}>{"Reload page"}</button>
+                            </footer>
+                        </div>
+                    </div>
+                </>
+            }
+        } else {
+            html! {}
         }
+    } else {
+        html! {}
     }
-
-    html! {}
 }

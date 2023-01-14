@@ -17,3 +17,4 @@ stylist = { version = "0.11", features = ["yew_integration"] }
 yew-toastrack = { path = "../yew-toastrack" }
 git-testament = "0.2"
 futures-util = "0.3"
+bounce = { version = "0.6", features = ["helmet"] }
