@@ -22,6 +22,18 @@ pub struct BaseURIProviderProps {
 
 #[function_component(BaseProvider)]
 pub fn core_base_provider(props: &BaseURIProviderProps) -> Html {
+    let fallback = html! {};
+    html! {
+        <Suspense fallback={fallback}>
+            <BaseProviderInner uri={props.uri.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()}>
+                {for props.children.iter()}
+            </BaseProviderInner>
+        </Suspense>
+    }
+}
+
+#[function_component(BaseProviderInner)]
+pub fn core_base_provider_inner(props: &BaseURIProviderProps) -> HtmlResult {
     let uri = use_memo(
         |uri| match uri {
             Some(uri) => uri.clone(),
@@ -40,17 +52,23 @@ pub fn core_base_provider(props: &BaseURIProviderProps) -> Html {
         props.uri.clone(),
     );
 
+    let _raw_userinfo = props.userinfo.clone();
+
+    let prepared_userinfo =
+        use_prepared_state!(move |_| -> Option<UserInfo> { _raw_userinfo }, ())?
+            .and_then(|v| (*v).clone());
+
     let context = LinkdokuBase {
         uri,
         login: props.login.clone().map(Rc::new),
-        userinfo: props.userinfo.clone(),
+        userinfo: prepared_userinfo,
     };
 
-    html! {
+    Ok(html! {
         <ContextProvider<LinkdokuBase> context={context}>
             { for props.children.iter() }
         </ContextProvider<LinkdokuBase>>
-    }
+    })
 }
 
 #[hook]

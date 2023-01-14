@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 pub const URI: &str = "/userinfo";
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct UserInfo {
     pub uuid: String,
     pub display_name: String,

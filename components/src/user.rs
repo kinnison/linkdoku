@@ -5,8 +5,9 @@ use std::rc::Rc;
 use apiprovider::use_apiprovider;
 use frontend_core::{
     component::{icon::GenericIcon, user::Avatar},
-    Route,
+    LinkdokuBase, Route,
 };
+use log::debug;
 use yew::{platform::spawn_local, prelude::*, suspense::use_future};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast};
@@ -118,7 +119,22 @@ pub type LoginStatusDispatcher = UseReducerDispatcher<LoginStatus>;
 #[function_component(UserProvider)]
 pub fn login_user_provider(props: &UserProviderProps) -> Html {
     let api = use_apiprovider();
-    let state = use_reducer_eq(|| LoginStatus::Unknown);
+    let base = use_context::<LinkdokuBase>().unwrap();
+    let state = use_reducer_eq(|| {
+        base.userinfo
+            .as_ref()
+            .map(|u| {
+                debug!("Initialising user provider with: {u:?}");
+                LoginStatus::LoggedIn {
+                    display_name: u.display_name.clone(),
+                    gravatar_hash: u.gravatar_hash.clone(),
+                    role: u.default_role.clone(),
+                    uuid: u.uuid.clone(),
+                    roles: u.roles.clone(),
+                }
+            })
+            .unwrap_or(LoginStatus::Unknown)
+    });
 
     // First time out of the gate, acquire the status
     use_effect_with_deps(
