@@ -4,9 +4,11 @@ use yew::prelude::*;
 pub enum IconType {
     InternalLinkIcon,
     ExternalLinkIcon,
+    PermaLinkIcon,
     RoleIcon,
     CurrentRoleIcon,
     RoleEditIcon,
+    RoleNiceLinkIcon,
     SubmitFormIcon,
     SpinnerIcon,
     PuzzleIcon,
@@ -20,9 +22,11 @@ impl IconType {
         match self {
             InternalLinkIcon => "mdi-arrow-right-bottom",
             ExternalLinkIcon => "mdi-arrow-u-left-top",
+            PermaLinkIcon => "mdi-pound",
             RoleIcon => "mdi-account-circle-outline",
             CurrentRoleIcon => "mdi-account-circle",
             RoleEditIcon => "mdi-account-edit-outline",
+            RoleNiceLinkIcon => "mdi-account-arrow-left",
             SubmitFormIcon => "mdi-content-save",
             SpinnerIcon => "mdi-loading mdi-spin",
             PuzzleIcon => "mdi-puzzle-outline",
@@ -66,6 +70,7 @@ pub struct IconProps {
     pub icon: IconType,
     #[prop_or_default]
     pub size: IconSize,
+    pub onclick: Option<Callback<MouseEvent>>,
 }
 
 #[function_component(Icon)]
@@ -81,7 +86,7 @@ pub fn icon_render(props: &IconProps) -> Html {
     let span_class = classes![class, props.size.size_class()];
 
     html! {
-        <span class={span_class}>
+        <span class={span_class} onclick={props.onclick.clone()}>
             <i class={icon_class} aria-hidden={"true"}/>
         </span>
     }

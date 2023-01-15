@@ -21,3 +21,11 @@ pub enum Route {
     #[at("/-/shortcut-route")]
     Shortcut,
 }
+
+#[derive(Routable, Clone, PartialEq)]
+pub enum ShortcutRoute {
+    #[at("/:role")]
+    RoleShortcut { role: String },
+    #[at("/:role/:puzzle")]
+    PuzzleShortcut { role: String, puzzle: String },
+}

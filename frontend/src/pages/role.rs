@@ -5,7 +5,10 @@
 use apiprovider::{use_apiprovider, use_cached_value, use_cached_value_by_name};
 use common::objects;
 use components::{layout::MainPageLayout, puzzle::PuzzleList, user::LoginStatus};
-use frontend_core::{component::icon::*, Route};
+use frontend_core::{
+    component::{icon::*, utility::*},
+    use_route_url, Route, ShortcutRoute,
+};
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender};
@@ -70,17 +73,43 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
     let edit_link = if can_edit {
         html! {
             <Link<Route> to={Route::EditRole{role: props.role.to_string()}}>
-                <Icon icon={RoleEditIcon} size={IconSize::Medium} />
+                <Tooltip content={"Edit role"} alignment={TooltipAlignment::Bottom}>
+                    <Icon icon={RoleEditIcon} size={IconSize::Medium} />
+                </Tooltip>
             </Link<Route>>
         }
     } else {
         html! {}
     };
 
+    let perma_link = {
+        let permalink = Route::ViewRole {
+            role: raw_role.uuid.clone(),
+        };
+        let permalink = use_route_url(&permalink);
+        html! {
+            <Tooltip content={"Copy permalink to role"} alignment={TooltipAlignment::Bottom}>
+                <CopyButton content={permalink} size={IconSize::Medium}/>
+            </Tooltip>
+        }
+    };
+
+    let shortcut_link = {
+        let shortlink = ShortcutRoute::RoleShortcut {
+            role: raw_role.short_name.clone(),
+        };
+        let shortlink = use_route_url(&shortlink);
+        html! {
+            <Tooltip content={"Copy shortcut to role"} alignment={TooltipAlignment::Bottom}>
+                <CopyButton content={shortlink} icon={RoleNiceLinkIcon} size={IconSize::Medium}/>
+            </Tooltip>
+        }
+    };
+
     Ok(html! {
         <>
             <Title value={format!("{} - Role", raw_role.display_name)} />
-            <h1 class={"title"}>{format!("{} ({}) ", raw_role.display_name, raw_role.short_name)}{edit_link}</h1>
+            <h1 class={"title"}>{format!("{} ({}) ", raw_role.display_name, raw_role.short_name)}{perma_link}{shortcut_link}{edit_link}</h1>
             <hr width={"40%"} />
             <MarkdownRender markdown={raw_role.description.clone()} />
             <hr width={"40%"} />

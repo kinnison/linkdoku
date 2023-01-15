@@ -13,6 +13,8 @@ wasm-bindgen = "0.2.83"
 web-sys = { version = "0.3.60", features = ["HtmlLinkElement"] }
 yew = "0.20.0"
 yew-router = "0.17.0"
+yew-hooks = "0.2"
+yew-toastrack = { path = "../yew-toastrack" }
 common = { path = "../common" }
 bounce = { version = "0.6", features = ["helmet"] }
 git-testament = "0.2"

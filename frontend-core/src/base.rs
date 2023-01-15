@@ -3,7 +3,7 @@ use std::rc::Rc;
 use common::public::userinfo::UserInfo;
 use url::Url;
 use yew::prelude::*;
-use yew_router::prelude::use_location;
+use yew_router::prelude::*;
 
 #[derive(Clone, PartialEq)]
 pub struct LinkdokuBase {
@@ -86,4 +86,15 @@ pub fn use_page_url() -> String {
     } else {
         format!("{}{}", base.uri, loc.path())
     }
+}
+
+#[hook]
+pub fn use_route_url<R: Routable>(route: &R) -> String {
+    let base = use_context::<LinkdokuBase>().unwrap();
+    let path = route.to_path();
+    format!(
+        "{}{}",
+        base.uri,
+        path.strip_prefix('/').unwrap_or(path.as_str())
+    )
 }

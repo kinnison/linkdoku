@@ -28,4 +28,10 @@ log = "0.4"
 
 [features]
 hydration = ["yew/hydration"]
-ssr = ["yew/ssr", "apiprovider/ssr", "yew-toastrack/ssr", "bounce/ssr"]
+ssr = [
+    "yew/ssr",
+    "apiprovider/ssr",
+    "yew-toastrack/ssr",
+    "bounce/ssr",
+    "frontend-core/ssr",
+]

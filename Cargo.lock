@@ -752,7 +752,9 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "yew",
+ "yew-hooks",
  "yew-router",
+ "yew-toastrack",
 ]
 
 [[package]]
