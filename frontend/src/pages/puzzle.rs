@@ -7,6 +7,7 @@ use frontend_core::{component::icon::*, Route};
 use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
+use tracing::info;
 use web_sys::HtmlInputElement;
 use yew::{prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
@@ -15,6 +16,22 @@ use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
 use crate::util_components::Title;
+
+const DEFAULT_FPUZZLES_DESCRIPTION: &str = r"
+## Rules
+
+[rules]
+
+## Grid preview
+
+![grid]
+
+## Play this puzzle
+
+* [fpuzzles]
+* [sudokupad]
+* [beta-sudokupad]
+";
 
 #[function_component(CreatePuzzlePage)]
 pub fn create_puzzle_page_render() -> Html {
@@ -267,6 +284,8 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
             }
         });
 
+        info!("Setting initial={}", props.state.description);
+
         fields.push(html! {
             <div class="field">
                 <label class="label">{"Description"}</label>
@@ -318,6 +337,9 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
                 if let Some(value) = acquired {
                     let mut new_state = state.clone();
                     new_state.data = PuzzleData::FPuzzles(value);
+                    if new_state.description.is_empty() {
+                        new_state.description = DEFAULT_FPUZZLES_DESCRIPTION.to_string();
+                    }
                     setter.emit(new_state);
                 }
             }

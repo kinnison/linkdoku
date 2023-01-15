@@ -3370,7 +3370,6 @@ dependencies = [
 name = "yew-markdown"
 version = "0.1.0"
 dependencies = [
- "gloo",
  "pulldown-cmark",
  "stylist",
  "web-sys",

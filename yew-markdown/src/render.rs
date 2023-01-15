@@ -209,10 +209,6 @@ pub fn render_markdown_block(props: &MarkdownRenderProps) -> Html {
                                 | LinkType::CollapsedUnknown
                                 | LinkType::ShortcutUnknown
                         ) {
-                            gloo::console::log!(format!(
-                                "Woah, found an unknown link thingy: {} {}",
-                                url, title
-                            ));
                             props.transformer.as_ref().and_then(|transformer| {
                                 transformer.transform(TransformRequest::Link {
                                     url: url.clone(),
@@ -239,10 +235,6 @@ pub fn render_markdown_block(props: &MarkdownRenderProps) -> Html {
                                 | LinkType::CollapsedUnknown
                                 | LinkType::ShortcutUnknown
                         ) {
-                            gloo::console::log!(format!(
-                                "Woah, found an unknown image thingy: {} {}",
-                                url, title
-                            ));
                             props.transformer.as_ref().and_then(|transformer| {
                                 transformer.transform(TransformRequest::Image {
                                     url: url.clone(),

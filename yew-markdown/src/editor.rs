@@ -20,8 +20,13 @@ pub struct MarkdownEditorProps {
 #[function_component(MarkdownEditor)]
 pub fn markdown_editor(props: &MarkdownEditorProps) -> Html {
     let markdown = use_state(|| props.initial.clone());
+    let changed = use_state(|| false);
 
     let editor = use_node_ref();
+
+    if markdown.as_ref() != props.initial.as_ref() && !*changed {
+        markdown.set(props.initial.clone());
+    }
 
     let onchange = {
         let setter = markdown.clone();
