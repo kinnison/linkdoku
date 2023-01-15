@@ -1,6 +1,6 @@
 use common::public::puzzle;
 use components::{role::Role, user::LoginStatus};
-use frontend_core::Route;
+use frontend_core::{component::icon::*, Route};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -130,6 +130,22 @@ pub fn create_puzzle_page_render() -> Html {
                 <label class="label">{"Puzzle display-name"}</label>
                 <div class="control">
                     <input ref={input_ref} class="input" type="text" placeholder="Puzzle display name" onchange={onchange} oninput={oninput} value={state.display_name.clone()}/>
+                </div>
+            </div>
+        });
+    }
+
+    // Create button
+    {
+        fields.push(html! {
+            <div class={"field is-grouped"}>
+                <div class="control">
+                    <button class="button is-primary" disabled={true}>
+                        <span class={"icon-text"}>
+                            <Icon icon={SubmitFormIcon}/>
+                            <span>{"Creation unavailable"}</span>
+                        </span>
+                    </button>
                 </div>
             </div>
         });
