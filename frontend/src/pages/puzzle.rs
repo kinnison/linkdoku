@@ -1,10 +1,12 @@
 use common::public::puzzle;
-use components::{role::Role, user::LoginStatus};
+use components::{layout::MainPageLayout, role::Role, user::LoginStatus};
 use frontend_core::{component::icon::*, Route};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
+
+use crate::util_components::Title;
 
 #[function_component(CreatePuzzlePage)]
 pub fn create_puzzle_page_render() -> Html {
@@ -163,10 +165,11 @@ pub fn create_puzzle_page_render() -> Html {
             html! {}
         }
         LoginStatus::LoggedIn { .. } => html! {
-            <>
+            <MainPageLayout>
+                <Title value="Create puzzle" />
                 <h1 class="title">{"Creating a puzzle"}</h1>
                 {for fields.into_iter()}
-            </>
+            </MainPageLayout>
         },
     }
 }
