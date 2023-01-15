@@ -1,4 +1,5 @@
 use common::{
+    clean_short_name,
     objects::{PuzzleData, PuzzleState, Visibility},
     public::puzzle,
 };
@@ -176,6 +177,22 @@ pub fn create_puzzle_page_render() -> Html {
             move |new_data: PuzzleState| {
                 let mut state = (*state).clone();
                 state.initial_state = new_data;
+                // If we receive f-puzzles data and we've not set a display name, extract the title from the puzzle
+                if let PuzzleData::FPuzzles(value) = &state.initial_state.data {
+                    let metadata = fpuzzles::metadata(value);
+                    if state.display_name.is_empty() {
+                        if let Some(title) = &metadata.title {
+                            state.display_name = title.clone();
+                        }
+                    }
+                    if state.short_name.is_empty() {
+                        if let Some(title) = metadata.title {
+                            let space_dash = title.replace(' ', "-");
+                            state.short_name =
+                                clean_short_name(&space_dash, true).unwrap_or_default();
+                        }
+                    }
+                }
                 nav.replace_with_state(&Route::CreatePuzzle, state);
             }
         });
@@ -284,8 +301,6 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
             }
         });
 
-        info!("Setting initial={}", props.state.description);
-
         fields.push(html! {
             <div class="field">
                 <label class="label">{"Description"}</label>
@@ -324,12 +339,12 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
     {
         let input_ref = use_node_ref();
 
-        let onchanged = Callback::from({
+        let handle_change = Callback::from({
             let input_ref = input_ref.clone();
             let setter = props.state_change.clone();
             let state = props.state.clone();
             let memory_setter = fpuzzles_memory.setter();
-            move |_| {
+            move |()| {
                 let input: HtmlInputElement = input_ref.cast().unwrap();
                 let value = input.value();
                 memory_setter.set(value.clone());
@@ -344,6 +359,13 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
                 }
             }
         });
+
+        let onchanged = Callback::from({
+            let handle_change = handle_change.clone();
+            move |_| handle_change.emit(())
+        });
+
+        let oninput = Callback::from(move |_| handle_change.emit(()));
 
         let content_to_render = if let PuzzleData::FPuzzles(value) = &props.state.data {
             if !matches!(value, Value::Null) {
@@ -373,7 +395,7 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
                 <div class="field">
                     <label class="label">{"Link to puzzle, or puzzle string"}</label>
                     <div class="control has-icons-left">
-                        <input ref={input_ref} class="input" type="text" placeholder="http://f-puzzles.com/?load=......" onchange={onchanged} value={fpuzzles_memory.to_string()}/>
+                        <input ref={input_ref} class="input" type="text" placeholder="http://f-puzzles.com/?load=......" onchange={onchanged} oninput={oninput} value={fpuzzles_memory.to_string()}/>
                         <Icon size={IconSize::Small} icon={SimpleLinkIcon} class="icon is-left" />
                     </div>
                 </div>
