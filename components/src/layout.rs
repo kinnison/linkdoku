@@ -1,6 +1,8 @@
 //! Main layout components
 //!
 
+use std::time::Duration;
+
 use apiprovider::use_apiprovider;
 use bounce::helmet::Helmet;
 use common::public::scaffold::{self, hash_version_info};
@@ -106,7 +108,7 @@ pub fn version_checker_render() -> Html {
             let setter = found_data.setter();
             move |_| {
                 spawn_local(async move {
-                    IntervalStream::new(30_000)
+                    IntervalStream::new(Duration::from_secs(60 * 30).as_millis() as u32)
                         .for_each(|_| async {
                             match api.get_scaffold().await {
                                 Ok(scaf) => {

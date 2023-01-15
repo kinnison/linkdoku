@@ -8,7 +8,6 @@ use frontend_core::{component::icon::*, Route};
 use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
-use tracing::info;
 use web_sys::HtmlInputElement;
 use yew::{prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
