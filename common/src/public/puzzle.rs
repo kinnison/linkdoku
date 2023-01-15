@@ -12,6 +12,7 @@ pub mod create {
         pub owner: String,
         pub display_name: String,
         pub short_name: String,
+        pub initial_state: objects::PuzzleState,
     }
 
     pub type Response = objects::Puzzle;

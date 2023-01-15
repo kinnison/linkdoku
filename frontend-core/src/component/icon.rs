@@ -4,6 +4,7 @@ use yew::prelude::*;
 pub enum IconType {
     InternalLinkIcon,
     ExternalLinkIcon,
+    SimpleLinkIcon,
     PermaLinkIcon,
     RoleIcon,
     CurrentRoleIcon,
@@ -13,6 +14,9 @@ pub enum IconType {
     SpinnerIcon,
     PuzzleIcon,
     PuzzleAddIcon,
+    OkayIcon,
+    WarningIcon,
+    BrokenIcon,
 }
 
 pub use IconType::*;
@@ -22,6 +26,7 @@ impl IconType {
         match self {
             InternalLinkIcon => "mdi-arrow-right-bottom",
             ExternalLinkIcon => "mdi-arrow-u-left-top",
+            SimpleLinkIcon => "mdi-link-variant",
             PermaLinkIcon => "mdi-pound",
             RoleIcon => "mdi-account-circle-outline",
             CurrentRoleIcon => "mdi-account-circle",
@@ -31,6 +36,9 @@ impl IconType {
             SpinnerIcon => "mdi-loading mdi-spin",
             PuzzleIcon => "mdi-puzzle-outline",
             PuzzleAddIcon => "mdi-puzzle-plus-outline",
+            OkayIcon => "mdi-check-circle",
+            WarningIcon => "mdi-alert-circle",
+            BrokenIcon => "mdi-heart-broken",
         }
     }
 }

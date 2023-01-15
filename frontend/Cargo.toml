@@ -15,12 +15,16 @@ apiprovider = { path = "../apiprovider" }
 components = { path = "../components" }
 yew-toastrack = { path = "../yew-toastrack" }
 yew-markdown = { path = "../yew-markdown" }
+yew-bulma-tabs = { path = "../yew-bulma-tabs" }
 yew = "0.20"
 yew-router = "0.17.0"
 serde = { version = "1.0.151", features = ["derive"] }
+serde_json = "1"
 web-sys = "0.3.60"
 bounce = { version = "0.6", features = ["helmet"] }
 tracing = { version = "0.1.37", features = ["log"] }
+puzzleutils = { path = "../puzzleutils" }
+stylist = { version = "0.11", features = ["yew"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-logger = "0.2"
