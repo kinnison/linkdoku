@@ -104,7 +104,6 @@ pub fn version_checker_render() -> Html {
     use_effect_with_deps(
         {
             let setter = found_data.setter();
-            let toaster = toaster.clone();
             move |_| {
                 spawn_local(async move {
                     IntervalStream::new(30_000)
