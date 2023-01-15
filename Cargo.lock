@@ -2077,10 +2077,13 @@ dependencies = [
 name = "puzzleutils"
 version = "0.1.0"
 dependencies = [
+ "common",
  "lz-str",
  "serde",
  "serde_json",
  "url",
+ "yew",
+ "yew-markdown",
 ]
 
 [[package]]

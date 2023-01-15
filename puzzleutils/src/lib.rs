@@ -1,7 +1,7 @@
 //! Puzzle utilities for Linkdoku
 
 pub mod fpuzzles;
-
+pub mod xform;
 pub struct GridMetadata {
     pub title: Option<String>,
     pub author: Option<String>,

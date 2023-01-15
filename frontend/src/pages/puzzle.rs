@@ -1,18 +1,16 @@
-use std::rc::Rc;
-
 use common::{
     objects::{PuzzleData, PuzzleState, Visibility},
     public::puzzle,
 };
 use components::{layout::MainPageLayout, role::Role, user::LoginStatus};
 use frontend_core::{component::icon::*, Route};
-use puzzleutils::fpuzzles;
+use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
 use web_sys::HtmlInputElement;
 use yew::{prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
-use yew_markdown::editor::MarkdownEditor;
+use yew_markdown::{editor::MarkdownEditor, xform::Transformer};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
@@ -252,6 +250,11 @@ impl EditorKind {
 fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
     let mut fields = vec![];
 
+    let transformer = Transformer::from({
+        let state = props.state.clone();
+        move |req| transform_markdown(&state, req)
+    });
+
     // Description
     {
         let onchange = Callback::from({
@@ -268,7 +271,7 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
             <div class="field">
                 <label class="label">{"Description"}</label>
                 <div class="control">
-                    <MarkdownEditor initial={props.state.description.clone()} onchange={onchange}/>
+                    <MarkdownEditor initial={props.state.description.clone()} onchange={onchange} transformer={transformer}/>
                 </div>
             </div>
         });
@@ -286,20 +289,21 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
         })
     }
 
+    let fpuzzles_memory = use_state_eq(|| {
+        if let PuzzleData::FPuzzles(value) = &props.state.data {
+            if matches!(value, Value::Null) {
+                "".into()
+            } else {
+                fpuzzles::encode(value)
+            }
+        } else {
+            "".into()
+        }
+    });
+
     // FPuzzles data
     {
         let input_ref = use_node_ref();
-        let fpuzzles_memory = use_state_eq(|| {
-            if let PuzzleData::FPuzzles(value) = &props.state.data {
-                if matches!(value, Value::Null) {
-                    "".into()
-                } else {
-                    fpuzzles::encode(value)
-                }
-            } else {
-                "".into()
-            }
-        });
 
         let onchanged = Callback::from({
             let input_ref = input_ref.clone();
@@ -367,8 +371,26 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
     {
         let tabchanged = Callback::from({
             let kind_setter = editor_kind.setter();
+            let state = props.state.clone();
+            let state_setter = props.state_change.clone();
             move |title: AttrValue| {
-                kind_setter.set(EditorKind::from_title(&title));
+                let kind = EditorKind::from_title(&title);
+                kind_setter.set(kind);
+                let mut new_state = state.clone();
+                match kind {
+                    EditorKind::Nothing => {
+                        new_state.data = PuzzleData::Nothing;
+                    }
+                    EditorKind::FPuzzles => {
+                        new_state.data = PuzzleData::FPuzzles(
+                            fpuzzles::extract(fpuzzles_memory.as_str()).unwrap_or(Value::Null),
+                        );
+                    }
+                    _ => {
+                        todo!();
+                    }
+                }
+                state_setter.emit(new_state);
             }
         });
         fields.push(html! {
