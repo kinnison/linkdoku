@@ -32,9 +32,11 @@ pub fn markdown_editor(props: &MarkdownEditorProps) -> Html {
         let setter = markdown.clone();
         let editor = editor.clone();
         let parent_onchange = props.onchange.clone();
+        let changed_setter = changed.setter();
         Callback::from(move |_| {
             let editor: HtmlTextAreaElement = editor.cast().unwrap();
             let value: AttrValue = editor.value().into();
+            changed_setter.set(true);
             if let Some(cb) = &parent_onchange {
                 cb.emit(value.clone());
             }
@@ -45,10 +47,16 @@ pub fn markdown_editor(props: &MarkdownEditorProps) -> Html {
     let oninput = {
         let setter = markdown.clone();
         let editor = editor.clone();
+        let parent_onchange = props.onchange.clone();
+        let changed_setter = changed.setter();
         Callback::from(move |_| {
             let editor: HtmlTextAreaElement = editor.cast().unwrap();
-            let value = editor.value();
-            setter.set(value.into());
+            let value: AttrValue = editor.value().into();
+            changed_setter.set(true);
+            if let Some(cb) = &parent_onchange {
+                cb.emit(value.clone());
+            }
+            setter.set(value);
         })
     };
 
