@@ -1,3 +1,4 @@
+use apiprovider::use_apiprovider;
 use common::{
     clean_short_name,
     objects::{PuzzleData, PuzzleState, Visibility},
@@ -9,13 +10,31 @@ use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
 use web_sys::HtmlInputElement;
-use yew::{prelude::*, virtual_dom::VChild};
+use yew::{platform::spawn_local, prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
 use yew_markdown::{editor::MarkdownEditor, xform::Transformer};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
 use crate::util_components::Title;
+
+// Viewers
+
+#[derive(Properties, PartialEq)]
+pub struct PuzzlePageProps {
+    pub puzzle: AttrValue,
+}
+
+#[function_component(PuzzlePage)]
+pub fn view_puzzle(props: &PuzzlePageProps) -> Html {
+    html! {
+        <>
+            {"TODO: View puzzle "}{props.puzzle.clone()}
+        </>
+    }
+}
+
+// Editors
 
 const DEFAULT_FPUZZLES_DESCRIPTION: &str = r"
 ## Rules
@@ -39,6 +58,7 @@ pub fn create_puzzle_page_render() -> Html {
     let loc = use_location().unwrap();
     let user_info = use_context::<LoginStatus>().unwrap();
     let toaster = use_toaster();
+    let api = use_apiprovider();
 
     let state = loc.state();
 
@@ -202,13 +222,63 @@ pub fn create_puzzle_page_render() -> Html {
 
     // Create button
     {
+        let could_create = {
+            !state.short_name.is_empty()
+                && !state.display_name.is_empty()
+                && !state.initial_state.description.is_empty()
+        };
+
+        let submitting = use_state_eq(|| false);
+
+        let try_submit = Callback::from({
+            //let state = state.clone();
+            let submitting_setter = submitting.setter();
+            //let api = api.clone();
+            let nav = nav.clone();
+            let toaster = toaster.clone();
+            move |_| {
+                submitting_setter.set(true);
+                let submitting_setter = submitting_setter.clone();
+                let api = api.clone();
+                let nav = nav.clone();
+                let toaster = toaster.clone();
+                let state = state.clone();
+                spawn_local(async move {
+                    match api
+                        .create_puzzle(
+                            &state.owner,
+                            &state.short_name,
+                            &state.display_name,
+                            &state.initial_state.description,
+                            &state.initial_state.data,
+                        )
+                        .await
+                    {
+                        Ok(puzzle) => {
+                            nav.push(&Route::ViewPuzzle {
+                                puzzle: puzzle.uuid,
+                            });
+                        }
+                        Err(e) => {
+                            toaster.toast(
+                                Toast::new(format!("Unable to create puzzle: {e}"))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                            );
+                            submitting_setter.set(false);
+                        }
+                    }
+                });
+            }
+        });
+
         fields.push(html! {
             <div class={"field is-grouped"}>
                 <div class="control">
-                    <button class="button is-primary" disabled={true}>
+                    <button class="button is-primary" disabled={!could_create || *submitting} onclick={try_submit}>
                         <span class={"icon-text"}>
-                            <Icon icon={SubmitFormIcon}/>
-                            <span>{"Creation unavailable"}</span>
+                            <Icon icon={if *submitting { SpinnerIcon } else { SubmitFormIcon } }/>
+                            <span>{if could_create { "Create puzzle" } else { "Missing inputs" } }</span>
                         </span>
                     </button>
                 </div>

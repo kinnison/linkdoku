@@ -53,6 +53,16 @@ impl From<Visibility> for objects::Visibility {
     }
 }
 
+impl From<objects::Visibility> for Visibility {
+    fn from(value: objects::Visibility) -> Self {
+        match value {
+            objects::Visibility::Restricted => Visibility::Restricted,
+            objects::Visibility::Public => Visibility::Public,
+            objects::Visibility::Published => Visibility::Published,
+        }
+    }
+}
+
 impl QueryId for crate::schema::sql_types::Visibility {
     type QueryId = Self;
 

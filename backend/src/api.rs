@@ -15,6 +15,7 @@ use git_testament::git_testament;
 use crate::state::BackendState;
 
 mod objects;
+mod puzzle;
 mod role;
 
 git_testament!(VERSION);
@@ -36,7 +37,8 @@ pub fn router() -> Router<BackendState> {
         .merge(public_router())
         .merge(crate::login::public_router())
         .merge(objects::public_router())
-        .merge(role::public_router());
+        .merge(role::public_router())
+        .merge(puzzle::public_router());
 
     Router::new()
         .nest(INTERNAL_SEGMENT, internal)

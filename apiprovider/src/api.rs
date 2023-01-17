@@ -5,6 +5,7 @@ use std::{hash::Hash, sync::Arc};
 
 use common::{
     internal::{login, logout, INTERNAL_SEGMENT},
+    objects,
     public::{self, scaffold, userinfo, PUBLIC_SEGMENT},
     APIError, APIResult,
 };
@@ -220,6 +221,29 @@ impl LinkdokuAPI {
         let uri = self.compute_uri(PUBLIC_SEGMENT, public::role::puzzles::URI);
         let req = public::role::puzzles::Request {
             uuid: role_uuid.into(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
+
+    pub async fn create_puzzle(
+        &self,
+        owner: impl Into<String>,
+        short_name: impl Into<String>,
+        display_name: impl Into<String>,
+        description: impl Into<String>,
+        data: &objects::PuzzleData,
+    ) -> APIResult<public::puzzle::create::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::create::URI);
+        let req = public::puzzle::create::Request {
+            owner: owner.into(),
+            display_name: display_name.into(),
+            short_name: short_name.into(),
+            initial_state: objects::PuzzleState {
+                description: description.into(),
+                visibility: objects::Visibility::Restricted, // Ignored, but hey
+                updated_at: "".into(),                       // Ignored, but hey
+                data: data.clone(),
+            },
         };
         self.make_api_call(uri, None, Some(req)).await
     }

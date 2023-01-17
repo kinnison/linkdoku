@@ -214,17 +214,33 @@ impl Role {
     }
 
     /// Retrieve the puzzles which are published to this role
-    pub async fn published_puzzles(
+    pub async fn visible_puzzles(
         &self,
         conn: &mut AsyncPgConnection,
+        user: Option<&str>,
     ) -> QueryResult<Vec<Puzzle>> {
+        let can_see_unpublished = if let Some(actor) = user {
+            self.can_modify(conn, actor).await?
+        } else {
+            false
+        };
         use crate::schema::puzzle::dsl::*;
-        puzzle
-            .filter(owner.eq(&self.uuid))
-            .filter(visibility.eq(Visibility::Published))
-            .order_by(created_at.desc())
-            .load(conn)
-            .await
+        if can_see_unpublished {
+            // We're logged in as someone who can edit this role, so all puzzles
+            puzzle
+                .filter(owner.eq(&self.uuid))
+                .order_by(created_at.desc())
+                .load(conn)
+                .await
+        } else {
+            // Only published puzzles because the user is not logged in
+            puzzle
+                .filter(owner.eq(&self.uuid))
+                .filter(visibility.eq(Visibility::Published))
+                .order_by(created_at.desc())
+                .load(conn)
+                .await
+        }
     }
 
     /// This role's short name is available if either no other role has it,
@@ -277,6 +293,19 @@ impl Puzzle {
             .optional()
     }
 
+    pub async fn by_short_name(
+        conn: &mut AsyncPgConnection,
+        owning_role: &str,
+        puzzle_short_name: &str,
+    ) -> QueryResult<Option<Self>> {
+        use crate::schema::puzzle::dsl::*;
+        puzzle
+            .filter(owner.eq(owning_role).and(short_name.eq(puzzle_short_name)))
+            .first(conn)
+            .await
+            .optional()
+    }
+
     pub async fn create(
         conn: &mut AsyncPgConnection,
         uuid: &str,
@@ -303,11 +332,18 @@ impl Puzzle {
 
     pub async fn can_be_seen(
         &self,
-        _conn: &mut AsyncPgConnection,
+        conn: &mut AsyncPgConnection,
         user: Option<&str>,
     ) -> QueryResult<bool> {
         match self.visibility {
-            Visibility::Restricted => Ok(user.map(|u| u == self.owner).unwrap_or(false)),
+            Visibility::Restricted => {
+                if let Some(user) = user {
+                    let roles = Role::by_owner(conn, user).await?;
+                    Ok(roles.into_iter().any(|role| role.uuid == self.owner))
+                } else {
+                    Ok(false)
+                }
+            }
             _ => Ok(true),
         }
     }
@@ -368,12 +404,23 @@ impl Puzzle {
 impl PuzzleState {
     pub async fn can_be_seen(
         &self,
-        _conn: &mut AsyncPgConnection,
+        conn: &mut AsyncPgConnection,
         puzzle: &Puzzle,
         user: Option<&str>,
     ) -> QueryResult<bool> {
+        assert_eq!(
+            self.puzzle, puzzle.uuid,
+            "Puzzle does not match puzzle state?"
+        );
         match self.visibility {
-            Visibility::Restricted => Ok(user.map(|u| u == puzzle.owner).unwrap_or(false)),
+            Visibility::Restricted => {
+                if let Some(user) = user {
+                    let roles = Role::by_owner(conn, user).await?;
+                    Ok(roles.into_iter().any(|role| role.uuid == puzzle.owner))
+                } else {
+                    Ok(false)
+                }
+            }
             _ => Ok(true),
         }
     }

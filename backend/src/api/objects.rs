@@ -4,7 +4,7 @@
 
 use axum::{extract::Path, routing::get, Json, Router};
 use common::{objects, APIError, APIResult};
-use database::{models, Connection};
+use database::{activity, models, Connection};
 
 use crate::{login::PrivateCookies, state::BackendState};
 
@@ -80,54 +80,11 @@ async fn get_puzzle(
         return Json::from(Err(APIError::ObjectNotFound));
     }
 
-    // Okay it's possible to see the puzzle, let's gather the puzzle states too
-    let states = {
-        let mut ret = Vec::new();
-        for state in match puzzle
-            .all_states(&mut db)
+    Json::from(
+        activity::puzzle::into_api_object(&mut db, user, puzzle)
             .await
-            .map_err(|e| APIError::DatabaseError(e.to_string()))
-        {
-            Ok(v) => v,
-            Err(e) => return Json::from(Err(e)),
-        } {
-            if match state
-                .can_be_seen(&mut db, &puzzle, user)
-                .await
-                .map_err(|e| APIError::DatabaseError(e.to_string()))
-            {
-                Ok(v) => v,
-                Err(e) => return Json::from(Err(e)),
-            } {
-                let ostate = objects::PuzzleState {
-                    description: state.description,
-                    visibility: state.visibility.into(),
-                    updated_at: state.updated_at.to_string(),
-                    data: match serde_json::from_str(&state.data) {
-                        Ok(v) => v,
-                        Err(e) => return Json::from(Err(APIError::Generic(e.to_string()))),
-                    },
-                };
-                ret.push(ostate);
-            }
-        }
-        ret
-    };
-
-    // We now have a puzzle and its states, we need to turn that into a returnable object.
-
-    let ret = objects::Puzzle {
-        uuid: puzzle.uuid.clone(),
-        display_name: puzzle.display_name.clone(),
-        short_name: puzzle.short_name.clone(),
-        owner: puzzle.owner.clone(),
-        visibility: puzzle.visibility.into(),
-        created_at: puzzle.created_at.to_string(),
-        updated_at: puzzle.updated_at.to_string(),
-        states,
-    };
-
-    Ok(ret).into()
+            .map_err(|e| e.into()),
+    )
 }
 
 pub fn public_router() -> Router<BackendState> {

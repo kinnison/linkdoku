@@ -14,7 +14,7 @@ use yew_toastrack::{use_toaster, Toast, ToastLevel};
 use crate::{
     pages::{
         home::HomePage,
-        puzzle::CreatePuzzlePage,
+        puzzle::{CreatePuzzlePage, PuzzlePage},
         role::{RoleEditPage, RolePage},
         shortcuts::ShortcutHandler,
     },
@@ -50,6 +50,12 @@ pub fn core_frontend_route_switch(route: Route) -> Html {
         Route::CreatePuzzle => {
             html! {
                 <CreatePuzzlePage />
+            }
+        }
+
+        Route::ViewPuzzle { puzzle } => {
+            html! {
+                <PuzzlePage puzzle={puzzle} />
             }
         }
 
