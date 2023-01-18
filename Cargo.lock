@@ -976,7 +976,7 @@ dependencies = [
 [[package]]
 name = "gloo-events"
 version = "0.1.2"
-source = "git+https://github.com/kinnison/gloo?branch=fix-284#3d7a8ce2ea550a0316a53804e78800e0662ea222"
+source = "git+https://github.com/kinnison/gloo?branch=fix-284#08b089460389aadbf87c7d4d1ee3c83bc612320b"
 dependencies = [
  "wasm-bindgen",
  "web-sys",
@@ -998,7 +998,7 @@ dependencies = [
 [[package]]
 name = "gloo-history"
 version = "0.1.2"
-source = "git+https://github.com/kinnison/gloo?branch=fix-284#3d7a8ce2ea550a0316a53804e78800e0662ea222"
+source = "git+https://github.com/kinnison/gloo?branch=fix-284#08b089460389aadbf87c7d4d1ee3c83bc612320b"
 dependencies = [
  "gloo-events 0.1.2 (git+https://github.com/kinnison/gloo?branch=fix-284)",
  "gloo-utils 0.1.6 (git+https://github.com/kinnison/gloo?branch=fix-284)",
@@ -1083,7 +1083,7 @@ dependencies = [
 [[package]]
 name = "gloo-utils"
 version = "0.1.6"
-source = "git+https://github.com/kinnison/gloo?branch=fix-284#3d7a8ce2ea550a0316a53804e78800e0662ea222"
+source = "git+https://github.com/kinnison/gloo?branch=fix-284#08b089460389aadbf87c7d4d1ee3c83bc612320b"
 dependencies = [
  "js-sys",
  "serde",
@@ -2366,11 +2366,10 @@ dependencies = [
 
 [[package]]
 name = "serde-wasm-bindgen"
-version = "0.3.1"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "618365e8e586c22123d692b72a7d791d5ee697817b65a218cdf12a98870af0f7"
+checksum = "e3b4c031cd0d9014307d82b8abf653c0290fbdaeb4c02d00c63cf52f728628bf"
 dependencies = [
- "fnv",
  "js-sys",
  "serde",
  "wasm-bindgen",
