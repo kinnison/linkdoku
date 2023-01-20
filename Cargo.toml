@@ -11,6 +11,7 @@ members = [
     "yew-bulma-tabs",
     "yew-markdown",
     "puzzleutils",
+    "yew-paginator",
 ]
 
 [patch.crates-io]
