@@ -17,6 +17,7 @@ use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
 use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender, xform::Transformer};
+use yew_paginator::Paginator;
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
@@ -194,6 +195,11 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             .0
     });
 
+    let set_index = Callback::from({
+        let setter = display_index.setter();
+        move |n| setter.set(n)
+    });
+
     let display_state = &puzzle.states[*display_index];
 
     let transformer = Transformer::from({
@@ -224,6 +230,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}</h1>
             <hr width={"40%"} />
             <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
+            <hr width={"40%"} />
+            <Paginator count={puzzle.states.len()} current={*display_index} aria_label={"Puzzle State"} element={"puzzle state"} onchange={set_index} />
         </>
     })
 }

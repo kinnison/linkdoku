@@ -745,6 +745,7 @@ dependencies = [
  "yew",
  "yew-bulma-tabs",
  "yew-markdown",
+ "yew-paginator",
  "yew-router",
  "yew-toastrack",
 ]
@@ -3381,6 +3382,14 @@ dependencies = [
  "yew",
  "yew-bulma-tabs",
  "yew-hooks",
+]
+
+[[package]]
+name = "yew-paginator"
+version = "0.1.0"
+dependencies = [
+ "tracing",
+ "yew",
 ]
 
 [[package]]
