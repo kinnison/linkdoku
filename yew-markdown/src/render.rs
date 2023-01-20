@@ -75,7 +75,7 @@ pub fn render_markdown_block(props: &MarkdownRenderProps) -> Html {
                 let new_content = match tag {
                     Tag::Paragraph => {
                         html! {
-                            <p>{content}</p>
+                            <div class="block">{content}</div>
                         }
                     }
                     Tag::BlockQuote => {
