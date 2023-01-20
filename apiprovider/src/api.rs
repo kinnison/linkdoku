@@ -247,4 +247,17 @@ impl LinkdokuAPI {
         };
         self.make_api_call(uri, None, Some(req)).await
     }
+
+    pub async fn lookup_puzzle(
+        &self,
+        role: impl Into<String>,
+        puzzle: impl Into<String>,
+    ) -> APIResult<public::puzzle::lookup::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::lookup::URI);
+        let req = public::puzzle::lookup::Request {
+            role: role.into(),
+            puzzle: puzzle.into(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
 }

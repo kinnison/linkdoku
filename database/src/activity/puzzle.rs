@@ -6,7 +6,7 @@ use diesel_async::AsyncPgConnection;
 use time::format_description::well_known::Iso8601;
 
 use crate::{
-    models::{self, Visibility},
+    models::{self, Puzzle, Role, Visibility},
     utils::random_uuid,
 };
 
@@ -100,6 +100,32 @@ pub async fn into_api_object(
                     updated_at: puzzle.updated_at.format(&Iso8601::DEFAULT)?,
                     states,
                 })
+            })
+        })
+        .await
+}
+
+pub async fn lookup(
+    conn: &mut AsyncPgConnection,
+    role: &str,
+    puzzle: &str,
+    user: Option<&str>,
+) -> ActivityResult<String> {
+    conn.build_transaction()
+        .run(|txn| {
+            Box::pin(async move {
+                let role = match Role::by_short_name(txn, role).await? {
+                    Some(role) => role,
+                    None => return Err(ActivityError::UnknownShortName),
+                };
+                let puzzle = match Puzzle::by_short_name(txn, &role.uuid, puzzle).await? {
+                    Some(puzzle) => puzzle,
+                    None => return Err(ActivityError::UnknownShortName),
+                };
+                if !puzzle.can_be_seen(txn, user).await? {
+                    return Err(ActivityError::UnknownShortName);
+                }
+                Ok(puzzle.uuid)
             })
         })
         .await

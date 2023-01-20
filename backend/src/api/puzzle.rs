@@ -49,6 +49,24 @@ async fn create_puzzle(
     )
 }
 
+async fn lookup_puzzle(
+    mut db: Connection,
+    cookies: PrivateCookies,
+    Json(req): Json<puzzle::lookup::Request>,
+) -> Json<APIResult<puzzle::lookup::Response>> {
+    let logged_in = cookies.get_login_flow_status().await;
+    let user = logged_in.user_uuid();
+
+    Json::from(
+        activity::puzzle::lookup(&mut db, &req.role, &req.puzzle, user)
+            .await
+            .map(|s| puzzle::lookup::Response { uuid: s })
+            .map_err(|e| e.into()),
+    )
+}
+
 pub fn public_router() -> Router<BackendState> {
-    Router::new().route(puzzle::create::URI, post(create_puzzle))
+    Router::new()
+        .route(puzzle::create::URI, post(create_puzzle))
+        .route(puzzle::lookup::URI, post(lookup_puzzle))
 }

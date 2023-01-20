@@ -7,7 +7,10 @@ use bounce::{
 };
 use common::APIError;
 use serde::de::DeserializeOwned;
-use yew::{prelude::*, suspense::SuspensionResult};
+use yew::{
+    prelude::*,
+    suspense::{use_future_with_deps, SuspensionResult},
+};
 
 use crate::{use_apiprovider, LinkdokuAPI};
 
@@ -124,4 +127,18 @@ pub fn use_cached_value_by_name<T: Cacheable + 'static>(
         (api, name),
     );
     use_query::<QueryCachedValue<T>>(query_input)
+}
+
+#[hook]
+pub fn use_puzzle_lookup(
+    role: AttrValue,
+    puzzle: AttrValue,
+) -> SuspensionResult<common::APIResult<String>> {
+    let api = use_apiprovider();
+    let res = use_future_with_deps(
+        move |deps| async move { api.lookup_puzzle(deps.0.as_str(), deps.1.as_str()).await },
+        (role, puzzle),
+    )?;
+
+    Ok((*res).clone().map(|r| r.uuid))
 }

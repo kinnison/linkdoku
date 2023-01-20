@@ -12,6 +12,7 @@ pub enum ActivityError {
     PermissionDenied,
     InvalidInput,
     ShortNameInUse,
+    UnknownShortName,
     Error(diesel::result::Error),
     JsonError(serde_json::Error),
     TimeFormatError(time::error::Format),
@@ -23,6 +24,7 @@ impl From<ActivityError> for APIError {
     fn from(value: ActivityError) -> Self {
         match value {
             ActivityError::ShortNameInUse => APIError::BadShortName(BadShortNameReason::NotUnique),
+            ActivityError::UnknownShortName => APIError::ObjectNotFound,
             ActivityError::PermissionDenied => APIError::PermissionDenied,
             ActivityError::InvalidInput => APIError::BadInput,
             ActivityError::Error(e) => APIError::DatabaseError(e.to_string()),

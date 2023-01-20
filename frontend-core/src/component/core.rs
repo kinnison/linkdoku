@@ -173,7 +173,7 @@ pub fn opengraph_meta_render(props: &OpenGraphMetaProps) -> Html {
         .unwrap_or_else(|| AttrValue::from("website"));
     let favicon = use_asset_url("linkdoku.svg");
     let image = props
-        .ogtype
+        .image
         .clone()
         .unwrap_or_else(|| AttrValue::from(favicon));
     let this_uri = use_page_url();

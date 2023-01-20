@@ -17,3 +17,20 @@ pub mod create {
 
     pub type Response = objects::Puzzle;
 }
+
+pub mod lookup {
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/puzzle/lookup";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Request {
+        pub role: String,
+        pub puzzle: String,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Response {
+        pub uuid: String,
+    }
+}

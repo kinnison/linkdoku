@@ -1,22 +1,68 @@
-use apiprovider::use_apiprovider;
+use apiprovider::{use_apiprovider, use_cached_value, use_puzzle_lookup};
 use common::{
     clean_short_name,
-    objects::{PuzzleData, PuzzleState, Visibility},
+    objects::{self, PuzzleData, PuzzleState, Visibility},
     public::puzzle,
 };
 use components::{layout::MainPageLayout, role::Role, user::LoginStatus};
-use frontend_core::{component::icon::*, Route};
+use frontend_core::{
+    component::{core::OpenGraphMeta, icon::*, utility::*},
+    use_route_url, Route, ShortcutRoute,
+};
 use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
+use tracing::info;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
-use yew_markdown::{editor::MarkdownEditor, xform::Transformer};
+use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender, xform::Transformer};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
-use crate::util_components::Title;
+use crate::{routes::core_frontend_route_switch, util_components::Title};
+
+// Shortcut redirector
+//
+#[derive(Properties, PartialEq)]
+pub struct FindPuzzleAndRedirectProps {
+    pub role: AttrValue,
+    pub puzzle: AttrValue,
+}
+
+#[function_component(FindPuzzleAndRedirect)]
+pub fn find_role_and_redirect(props: &FindPuzzleAndRedirectProps) -> Html {
+    let fallback = html! { {"Please wait…"} };
+    html! {
+        <Suspense fallback={fallback}>
+            <FindPuzzleAndRedirectInner role={props.role.clone()} puzzle={props.puzzle.clone()} />
+        </Suspense>
+    }
+}
+
+#[function_component(FindPuzzleAndRedirectInner)]
+fn find_role_and_redirect_inner(props: &FindPuzzleAndRedirectProps) -> HtmlResult {
+    let uuid = use_puzzle_lookup(props.role.clone(), props.puzzle.clone())?;
+    let toaster = use_toaster();
+
+    let uuid = match uuid.as_ref() {
+        Err(e) => {
+            toaster.toast(
+                Toast::new(format!("Failure looking up puzzle: {e:?}"))
+                    .with_level(ToastLevel::Danger),
+            );
+            return Ok(html! {
+                <Redirect<Route> to={Route::Home} />
+            });
+        }
+        Ok(uuid) => uuid,
+    };
+
+    // We now "sub-render" as though our puzzle route was here
+    Ok(core_frontend_route_switch(Route::ViewPuzzle {
+        puzzle: uuid.to_string(),
+    }))
+}
 
 // Viewers
 
@@ -27,11 +73,159 @@ pub struct PuzzlePageProps {
 
 #[function_component(PuzzlePage)]
 pub fn view_puzzle(props: &PuzzlePageProps) -> Html {
+    let fallback = html! {};
+
     html! {
-        <>
-            {"TODO: View puzzle "}{props.puzzle.clone()}
-        </>
+        <MainPageLayout>
+            <Suspense fallback={fallback}>
+                <PuzzlePageInner puzzle={props.puzzle.clone()} />
+            </Suspense>
+        </MainPageLayout>
     }
+}
+
+#[function_component(PuzzlePageInner)]
+fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
+    let user_info = use_context::<LoginStatus>().unwrap();
+    let puzzle_data = use_cached_value::<objects::Puzzle>(props.puzzle.clone())?;
+    let toaster = use_toaster();
+
+    let puzzle = match puzzle_data.as_ref() {
+        Err(e) => {
+            toaster.toast(
+                Toast::new(format!("Failure viewing puzzle: {e:?}")).with_level(ToastLevel::Danger),
+            );
+            return Ok(html! {
+                <Redirect<Route> to={Route::Home} />
+            });
+        }
+        Ok(puzzle) => {
+            if let Some(puzzle) = puzzle.get() {
+                puzzle
+            } else {
+                toaster.toast(
+                    Toast::new(format!("Puzzle not found: {}", props.puzzle))
+                        .with_level(ToastLevel::Warning),
+                );
+                return Ok(html! {
+                    <Redirect<Route> to={Route::Home} />
+                });
+            }
+        }
+    };
+
+    let role_data = use_cached_value::<objects::Role>(puzzle.owner.clone().into())?;
+    let role = match role_data.as_ref() {
+        Err(e) => {
+            toaster.toast(
+                Toast::new(format!("Failure finding owning role: {e:?}"))
+                    .with_level(ToastLevel::Danger),
+            );
+            return Ok(html! {
+                <Redirect<Route> to={Route::Home} />
+            });
+        }
+        Ok(role) => {
+            if let Some(role) = role.get() {
+                role
+            } else {
+                toaster.toast(
+                    Toast::new(format!("Owing role not found: {}", puzzle.owner))
+                        .with_level(ToastLevel::Warning),
+                );
+                return Ok(html! {
+                    <Redirect<Route> to={Route::Home} />
+                });
+            }
+        }
+    };
+
+    let can_edit = match user_info {
+        LoginStatus::LoggedIn { roles, .. } => roles.contains(&puzzle.owner),
+        _ => false,
+    };
+
+    let perma_link = {
+        let permalink = Route::ViewPuzzle {
+            puzzle: puzzle.uuid.clone(),
+        };
+        let permalink = use_route_url(&permalink);
+        html! {
+            <Tooltip content={"Copy permalink to puzzle"} alignment={TooltipAlignment::Bottom}>
+                <CopyButton content={permalink} size={IconSize::Medium}/>
+            </Tooltip>
+        }
+    };
+
+    let short_url = {
+        let shortlink = ShortcutRoute::PuzzleShortcut {
+            role: role.short_name.clone(),
+            puzzle: puzzle.short_name.clone(),
+        };
+        use_route_url(&shortlink)
+    };
+
+    let shortcut_link = {
+        html! {
+            <Tooltip content={"Copy shortcut to puzzle"} alignment={TooltipAlignment::Bottom}>
+                <CopyButton content={short_url.clone()} icon={PuzzleNiceLinkIcon} size={IconSize::Medium}/>
+            </Tooltip>
+        }
+    };
+
+    let display_index = use_state_eq(|| {
+        puzzle
+            .states
+            .iter()
+            .enumerate()
+            .skip(1)
+            .fold(
+                (0, puzzle.states[0].visibility),
+                |(best_index, best_vis), (idx, state)| {
+                    use Visibility::*;
+                    match (best_vis, state.visibility) {
+                        (Public, Restricted) | (Published, Restricted) | (Published, Public) => {
+                            (best_index, best_vis)
+                        }
+                        _ => (idx, state.visibility),
+                    }
+                },
+            )
+            .0
+    });
+
+    let display_state = &puzzle.states[*display_index];
+
+    let transformer = Transformer::from({
+        let state = display_state.clone();
+        move |req| transform_markdown(&state, req)
+    });
+
+    let image = match &display_state.data {
+        PuzzleData::FPuzzles(data) => Some(fpuzzles::grid_url(data)),
+        _ => None,
+    };
+
+    info!("Image url: {image:?}");
+
+    let ogtags = html! {
+        <OpenGraphMeta
+            title={puzzle.display_name.clone()}
+            image={image}
+            url={short_url}
+            description={format!("{} by {}", puzzle.display_name, role.display_name)}
+        />
+    };
+
+    Ok(html! {
+        <>
+            {ogtags}
+            <Title value={puzzle.display_name.clone()} />
+            <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}</h1>
+            <hr width={"40%"} />
+            <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
+        </>
+    })
 }
 
 // Editors
