@@ -122,7 +122,7 @@ pub fn paginator_render(props: &PaginatorProps) -> Html {
             };
             html! {
                 <li>
-                    <a class={cls} onclick={cb} aria-label={format!("Display {element} {n}")}>{n}</a>
+                    <a class={cls} onclick={cb} title={format!("Display {element} {n}")}>{n}</a>
                 </li>
             }
         }
