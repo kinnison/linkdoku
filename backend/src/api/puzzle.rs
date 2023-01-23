@@ -98,9 +98,75 @@ async fn update_puzzle_metadata(
     )
 }
 
+async fn update_puzzle_state(
+    mut db: Connection,
+    cookies: PrivateCookies,
+    Json(req): Json<puzzle::update_state::Request>,
+) -> Json<APIResult<puzzle::update_state::Response>> {
+    let logged_in = cookies.get_login_flow_status().await;
+    let logged_in = match logged_in.user() {
+        Some(data) => data,
+        None => {
+            return Json::from(Err(APIError::PermissionDenied));
+        }
+    };
+
+    let puzzle = match activity::puzzle::update_state(
+        &mut db,
+        &logged_in.identity().uuid,
+        &req.puzzle,
+        &req.state,
+    )
+    .await
+    {
+        Ok(puzzle) => puzzle,
+        Err(e) => return Json::from(Err(e.into())),
+    };
+
+    Json::from(
+        activity::puzzle::into_api_object(&mut db, Some(&logged_in.identity().uuid), puzzle)
+            .await
+            .map_err(|e| e.into()),
+    )
+}
+
+async fn add_puzzle_state(
+    mut db: Connection,
+    cookies: PrivateCookies,
+    Json(req): Json<puzzle::add_state::Request>,
+) -> Json<APIResult<puzzle::add_state::Response>> {
+    let logged_in = cookies.get_login_flow_status().await;
+    let logged_in = match logged_in.user() {
+        Some(data) => data,
+        None => {
+            return Json::from(Err(APIError::PermissionDenied));
+        }
+    };
+
+    let puzzle = match activity::puzzle::add_state(
+        &mut db,
+        &logged_in.identity().uuid,
+        &req.puzzle,
+        &req.state,
+    )
+    .await
+    {
+        Ok(puzzle) => puzzle,
+        Err(e) => return Json::from(Err(e.into())),
+    };
+
+    Json::from(
+        activity::puzzle::into_api_object(&mut db, Some(&logged_in.identity().uuid), puzzle)
+            .await
+            .map_err(|e| e.into()),
+    )
+}
+
 pub fn public_router() -> Router<BackendState> {
     Router::new()
         .route(puzzle::create::URI, post(create_puzzle))
         .route(puzzle::lookup::URI, post(lookup_puzzle))
         .route(puzzle::update_metadata::URI, post(update_puzzle_metadata))
+        .route(puzzle::update_state::URI, post(update_puzzle_state))
+        .route(puzzle::add_state::URI, post(add_puzzle_state))
 }

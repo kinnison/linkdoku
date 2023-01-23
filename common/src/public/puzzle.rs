@@ -50,3 +50,33 @@ pub mod update_metadata {
 
     pub type Response = objects::Puzzle;
 }
+
+pub mod update_state {
+    use crate::objects;
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/puzzle/update-state";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Request {
+        pub puzzle: String,
+        pub state: objects::PuzzleState,
+    }
+
+    pub type Response = objects::Puzzle;
+}
+
+pub mod add_state {
+    use crate::objects;
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/puzzle/add-state";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Request {
+        pub puzzle: String,
+        pub state: objects::PuzzleState,
+    }
+
+    pub type Response = objects::Puzzle;
+}

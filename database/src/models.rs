@@ -463,4 +463,34 @@ impl PuzzleState {
             _ => Ok(true),
         }
     }
+
+    pub async fn by_uuid(conn: &mut AsyncPgConnection, uuid: &str) -> QueryResult<Option<Self>> {
+        use crate::schema::puzzle_state::dsl;
+
+        dsl::puzzle_state
+            .filter(dsl::uuid.eq(uuid))
+            .first(conn)
+            .await
+            .optional()
+    }
+
+    pub async fn update(
+        &self,
+        conn: &mut AsyncPgConnection,
+        description: &str,
+        data: &str,
+    ) -> QueryResult<()> {
+        use crate::schema::puzzle_state::dsl;
+
+        diesel::update(dsl::puzzle_state)
+            .filter(dsl::id.eq(self.id))
+            .set((
+                dsl::description.eq(description),
+                dsl::data.eq(data),
+                dsl::updated_at.eq(OffsetDateTime::now_utc()),
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
 }

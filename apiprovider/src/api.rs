@@ -276,4 +276,30 @@ impl LinkdokuAPI {
         };
         self.make_api_call(uri, None, Some(req)).await
     }
+
+    pub async fn update_puzzle_state(
+        &self,
+        puzzle: impl Into<String>,
+        state: &objects::PuzzleState,
+    ) -> APIResult<public::puzzle::update_state::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::update_state::URI);
+        let req = public::puzzle::update_state::Request {
+            puzzle: puzzle.into(),
+            state: state.clone(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
+
+    pub async fn add_puzzle_state(
+        &self,
+        puzzle: impl Into<String>,
+        state: &objects::PuzzleState,
+    ) -> APIResult<public::puzzle::add_state::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::add_state::URI);
+        let req = public::puzzle::add_state::Request {
+            puzzle: puzzle.into(),
+            state: state.clone(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
 }

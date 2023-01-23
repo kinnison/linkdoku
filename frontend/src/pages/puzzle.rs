@@ -12,7 +12,6 @@ use frontend_core::{
 use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
-use tracing::info;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
@@ -205,7 +204,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
 
     let set_index = Callback::from({
         let setter = display_index.setter();
-        move |n| setter.set(n)
+        move |n| setter.set(n - 1)
     });
 
     let display_state = &puzzle.states[*display_index];
@@ -358,8 +357,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                     <div class="control">
                         <button class="button is-primary" disabled={!(*button_enabled && *data_good)} onclick={if *button_enabled && *data_good { Some(on_save_changes) } else { None }}>
                             <span class={"icon-text"}>
-                                <Icon icon={if *button_enabled { SubmitFormIcon } else { SpinnerIcon }}/>
-                                <span>{if *button_enabled { if *data_good { "Save changes" } else { "Please fill out both fields"} } else { "Saving changes" }}</span>
+                            <Icon icon={if *button_enabled { SubmitFormIcon } else { SpinnerIcon }}/>
+                            <span>{if *button_enabled { if *data_good { "Save changes" } else { "Please fill out both fields"} } else { "Saving changes" }}</span>
                             </span>
                         </button>
                     </div>
@@ -385,6 +384,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
     });
 
     let state_editor = {
+        let button_enabled = use_state_eq(|| true);
+
         let onchange = Callback::from({
             let state_setter = state_under_edit.clone();
             move |state| {
@@ -399,20 +400,69 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         };
 
         let do_save_state = Callback::from({
-            // ???
+            let do_add = *state == ViewPuzzleState::AddingState;
+            let button = button_enabled.setter();
+            let api = use_apiprovider();
+            let view_state = state.setter();
+            let state = state_under_edit.clone();
+            let puzzle = puzzle.uuid.clone();
+            //let toaster = toaster.clone();
+            let puzzle_data = puzzle_data.clone();
             move |_| {
-                // ???
+                let button = button.clone();
+                let api = api.clone();
+                button.set(false);
+                let state = state.clone();
+                let toaster = toaster.clone();
+                let puzzle = puzzle.clone();
+                let puzzle_data = puzzle_data.clone();
+                let view_state = view_state.clone();
+                spawn_local(async move {
+                    match if do_add {
+                        api.add_puzzle_state(&puzzle, &state).await
+                    } else {
+                        api.update_puzzle_state(&puzzle, &state).await
+                    } {
+                        Ok(_) => {
+                            if let Err(e) = puzzle_data.refresh().await {
+                                toaster.toast(
+                                    Toast::new(format!(
+                                        "State saved, but failed to refresh cache: {e}"
+                                    ))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                                );
+                            }
+                            view_state.set(ViewPuzzleState::Viewing);
+                        }
+                        Err(e) => {
+                            toaster.toast(
+                                Toast::new(format!(
+                                    "Unable to {} state: {}",
+                                    if do_add { "add" } else { "update" },
+                                    e
+                                ))
+                                .with_level(ToastLevel::Warning)
+                                .with_lifetime(2500),
+                            );
+                        }
+                    }
+
+                    button.set(true);
+                });
             }
         });
+
+        let has_desc = !state_under_edit.description.is_empty();
 
         html! {
             <>
                 <PuzzleStateEditor state_change={onchange} state={(*state_under_edit).clone()} />
                 <div class="field is-grouped">
                     <div class="control">
-                        <button class="button is-default" onclick={do_save_state}>
+                        <button class="button is-default" disabled={has_desc && !*button_enabled}onclick={do_save_state}>
                             <span class="icon-text">
-                                <Icon icon={PuzzleStateEditIcon} />
+                                <Icon icon={if *button_enabled { SubmitFormIcon } else { SpinnerIcon }}/>
                                 <span>{button_title}</span>
                             </span>
                         </button>
@@ -488,7 +538,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                     <hr width={"40%"} />
                     <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
                     <hr width={"40%"} />
-                    <Paginator count={puzzle.states.len()} current={*display_index} aria_label={"Puzzle State"} element={"puzzle state"} onchange={set_index} />
+                    <Paginator count={puzzle.states.len()} current={(*display_index)+1} aria_label={"Puzzle State"} element={"puzzle state"} onchange={set_index} />
                 </>
             }
         }

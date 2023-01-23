@@ -6,7 +6,7 @@ use diesel_async::AsyncPgConnection;
 use time::format_description::well_known::Iso8601;
 
 use crate::{
-    models::{self, Puzzle, Role, Visibility},
+    models::{self, Puzzle, PuzzleState, Role, Visibility},
     utils::random_uuid,
 };
 
@@ -154,6 +154,80 @@ pub async fn update_metadata(
                 Ok(puzzle
                     .update_metadata(txn, short_name, display_name)
                     .await?)
+            })
+        })
+        .await
+}
+
+pub async fn update_state(
+    conn: &mut AsyncPgConnection,
+    user: &str,
+    puzzle: &str,
+    state: &objects::PuzzleState,
+) -> ActivityResult<models::Puzzle> {
+    conn.build_transaction()
+        .run(|txn| {
+            Box::pin(async move {
+                let puzzle = match Puzzle::by_uuid(txn, puzzle).await? {
+                    Some(puzzle) => puzzle,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if !puzzle.can_edit(txn, user).await? {
+                    return Err(ActivityError::PermissionDenied);
+                }
+
+                let puzzle_state = match PuzzleState::by_uuid(txn, &state.uuid).await? {
+                    Some(ps) => ps,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if puzzle_state.puzzle != puzzle.uuid {
+                    return Err(ActivityError::NotFound);
+                }
+
+                puzzle_state
+                    .update(
+                        txn,
+                        &state.description,
+                        &serde_json::to_string(&state.data)?,
+                    )
+                    .await?;
+
+                Ok(puzzle)
+            })
+        })
+        .await
+}
+
+pub async fn add_state(
+    conn: &mut AsyncPgConnection,
+    user: &str,
+    puzzle: &str,
+    state: &objects::PuzzleState,
+) -> ActivityResult<models::Puzzle> {
+    conn.build_transaction()
+        .run(|txn| {
+            Box::pin(async move {
+                let puzzle = match Puzzle::by_uuid(txn, puzzle).await? {
+                    Some(puzzle) => puzzle,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if !puzzle.can_edit(txn, user).await? {
+                    return Err(ActivityError::PermissionDenied);
+                }
+
+                puzzle
+                    .add_state(
+                        txn,
+                        &state.description,
+                        Visibility::Restricted,
+                        &serde_json::to_string(&state.data)?,
+                    )
+                    .await?;
+
+                Ok(puzzle)
             })
         })
         .await
