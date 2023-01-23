@@ -15,5 +15,4 @@ members = [
 ]
 
 [patch.crates-io]
-gloo-history = { git = "https://github.com/kinnison/gloo", branch = "fix-284" }
-bounce = { git = "https://github.com/kinnison/bounce", branch = "fix-62" }
+bounce = { git = "https://github.com/bounce-rs/bounce", branch = "master" }
