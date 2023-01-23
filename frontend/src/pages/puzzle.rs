@@ -231,6 +231,11 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
 
     let state = use_state_eq(|| ViewPuzzleState::Viewing);
 
+    let cancel_onclick = Callback::from({
+        let state = state.clone();
+        move |_| state.set(ViewPuzzleState::Viewing)
+    });
+
     let edit_metadata_form = {
         let short_name_ref = use_node_ref();
         let display_name_ref = use_node_ref();
@@ -335,11 +340,6 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             }
         });
 
-        let cancel_onclick = Callback::from({
-            let state = state.clone();
-            move |_| state.set(ViewPuzzleState::Viewing)
-        });
-
         html! {
             <>
                 <div class="field">
@@ -364,6 +364,59 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                         </button>
                     </div>
                     <div class="control">
+                        <button class="button is-danger" onclick={cancel_onclick.clone()}>
+                            <span class="icon-text">
+                                <Icon icon={CancelIcon} />
+                                <span>{"Cancel edit"}</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </>
+        }
+    };
+
+    let state_under_edit = use_state_eq(|| PuzzleState {
+        description: "".to_string(),
+        updated_at: "".to_string(),
+        data: PuzzleData::Nothing,
+        visibility: Visibility::Restricted,
+    });
+
+    let state_editor = {
+        let onchange = Callback::from({
+            let state_setter = state_under_edit.clone();
+            move |state| {
+                state_setter.set(state);
+            }
+        });
+
+        let button_title = if *state == ViewPuzzleState::AddingState {
+            "Add new state"
+        } else {
+            "Update state"
+        };
+
+        let do_save_state = Callback::from({
+            // ???
+            move |_| {
+                // ???
+            }
+        });
+
+        html! {
+            <>
+                <PuzzleStateEditor state_change={onchange} state={(*state_under_edit).clone()} />
+                <div class="field is-grouped">
+                    <div class="control">
+                        <button class="button is-default" onclick={do_save_state}>
+                            <span class="icon-text">
+                                <Icon icon={PuzzleStateEditIcon} />
+                                <span>{button_title}</span>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="control">
                         <button class="button is-danger" onclick={cancel_onclick}>
                             <span class="icon-text">
                                 <Icon icon={CancelIcon} />
@@ -376,19 +429,49 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         }
     };
 
-    let metadata_edit = if can_edit {
+    let editor_buttons = if can_edit {
         let edit_puzzle_click = Callback::from({
             let viewstate_setter = state.setter();
             move |_| {
                 viewstate_setter.set(ViewPuzzleState::EditMetadata);
             }
         });
+        let edit_state_click = Callback::from({
+            let viewstate_setter = state.setter();
+            let state_under_edit_setter = state_under_edit.setter();
+            let display_state = display_state.clone();
+            move |_| {
+                state_under_edit_setter.set(display_state.clone());
+                viewstate_setter.set(ViewPuzzleState::EditingState);
+            }
+        });
+        let add_state_click = Callback::from({
+            let viewstate_setter = state.setter();
+            let state_under_edit_setter = state_under_edit.setter();
+            let display_state = display_state.clone();
+            move |_| {
+                state_under_edit_setter.set(display_state.clone());
+                viewstate_setter.set(ViewPuzzleState::AddingState);
+            }
+        });
         html! {
-            <Tooltip content={"Edit puzzle metadata"} alignment={TooltipAlignment::Bottom}>
-                <span class="has-text-link">
-                    <Icon icon={PuzzleEditMetadataIcon} onclick={edit_puzzle_click} size={IconSize::Medium} />
-                </span>
-            </Tooltip>
+            <>
+                <Tooltip content={"Edit puzzle metadata"} alignment={TooltipAlignment::Bottom}>
+                    <span class="has-text-link">
+                        <Icon icon={PuzzleEditMetadataIcon} onclick={edit_puzzle_click} size={IconSize::Medium} />
+                    </span>
+                </Tooltip>
+                <Tooltip content={"Edit current puzzle state"} alignment={TooltipAlignment::Bottom}>
+                    <span class="has-text-link">
+                        <Icon icon={PuzzleStateEditIcon} onclick={edit_state_click} size={IconSize::Medium} />
+                    </span>
+                </Tooltip>
+                <Tooltip content={"Copy current puzzle state as new state"} alignment={TooltipAlignment::Bottom}>
+                    <span class="has-text-link">
+                        <Icon icon={PuzzleStateAddIcon} onclick={add_state_click} size={IconSize::Medium} />
+                    </span>
+                </Tooltip>
+            </>
         }
     } else {
         html! {}
@@ -400,7 +483,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 <>
                     {ogtags}
                     <Title value={puzzle.display_name.clone()} />
-                    <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{metadata_edit}</h1>
+                    <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{editor_buttons}</h1>
                     <hr width={"40%"} />
                     <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
                     <hr width={"40%"} />
@@ -418,8 +501,26 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 </>
             }
         }
-        ViewPuzzleState::EditingState => todo!(),
-        ViewPuzzleState::AddingState => todo!(),
+        ViewPuzzleState::AddingState => {
+            html! {
+                <>
+                    <Title value={format!("Adding new state to {}", puzzle.display_name)} />
+                    <h1 class="title">{format!("Adding state - {} ({})", puzzle.display_name, puzzle.short_name)}</h1>
+                    <hr width={"40%"} />
+                    {state_editor}
+                </>
+            }
+        }
+        ViewPuzzleState::EditingState => {
+            html! {
+                <>
+                    <Title value={format!("Editing state of {}", puzzle.display_name)} />
+                    <h1 class="title">{format!("Editing state - {} ({})", puzzle.display_name, puzzle.short_name)}</h1>
+                    <hr width={"40%"} />
+                    {state_editor}
+                </>
+            }
+        }
     };
 
     Ok(page_body)
