@@ -814,6 +814,38 @@ pub fn create_puzzle_page_render() -> Html {
         });
     }
 
+    // Puzzle state
+    {
+        let onchange = Callback::from({
+            let nav = nav.clone();
+            let state = state.clone();
+            move |new_data: PuzzleState| {
+                let mut state = (*state).clone();
+                state.initial_state = new_data;
+                // If we receive f-puzzles data and we've not set a display name, extract the title from the puzzle
+                if let PuzzleData::FPuzzles(value) = &state.initial_state.data {
+                    let metadata = fpuzzles::metadata(value);
+                    if state.display_name.is_empty() {
+                        if let Some(title) = &metadata.title {
+                            state.display_name = title.clone();
+                        }
+                    }
+                    if state.short_name.is_empty() {
+                        if let Some(title) = metadata.title {
+                            let space_dash = title.replace(' ', "-");
+                            state.short_name =
+                                clean_short_name(&space_dash, true).unwrap_or_default();
+                        }
+                    }
+                }
+                nav.replace_with_state(&Route::CreatePuzzle, state);
+            }
+        });
+        fields.push(html! {
+            <PuzzleStateEditor state_change={onchange} state={state.initial_state.clone()} />
+        })
+    }
+
     // Short name
     {
         let input_ref = use_node_ref();
@@ -890,38 +922,6 @@ pub fn create_puzzle_page_render() -> Html {
                 </div>
             </div>
         });
-    }
-
-    // Puzzle state
-    {
-        let onchange = Callback::from({
-            let nav = nav.clone();
-            let state = state.clone();
-            move |new_data: PuzzleState| {
-                let mut state = (*state).clone();
-                state.initial_state = new_data;
-                // If we receive f-puzzles data and we've not set a display name, extract the title from the puzzle
-                if let PuzzleData::FPuzzles(value) = &state.initial_state.data {
-                    let metadata = fpuzzles::metadata(value);
-                    if state.display_name.is_empty() {
-                        if let Some(title) = &metadata.title {
-                            state.display_name = title.clone();
-                        }
-                    }
-                    if state.short_name.is_empty() {
-                        if let Some(title) = metadata.title {
-                            let space_dash = title.replace(' ', "-");
-                            state.short_name =
-                                clean_short_name(&space_dash, true).unwrap_or_default();
-                        }
-                    }
-                }
-                nav.replace_with_state(&Route::CreatePuzzle, state);
-            }
-        });
-        fields.push(html! {
-            <PuzzleStateEditor state_change={onchange} state={state.initial_state.clone()} />
-        })
     }
 
     // Create button
@@ -1062,28 +1062,6 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
         move |req| transform_markdown(&state, req)
     });
 
-    // Description
-    {
-        let onchange = Callback::from({
-            let state_change = props.state_change.clone();
-            let state = props.state.clone();
-            move |new_description: AttrValue| {
-                let mut new_state = state.clone();
-                new_state.description = new_description.to_string();
-                state_change.emit(new_state);
-            }
-        });
-
-        fields.push(html! {
-            <div class="field">
-                <label class="label">{"Description"}</label>
-                <div class="control">
-                    <MarkdownEditor initial={props.state.description.clone()} onchange={onchange} transformer={transformer}/>
-                </div>
-            </div>
-        });
-    }
-
     // Editors
     let mut editors: Vec<VChild<TabContent>> = vec![];
 
@@ -1220,6 +1198,28 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
                 </div>
             </div>
         })
+    }
+
+    // Description
+    {
+        let onchange = Callback::from({
+            let state_change = props.state_change.clone();
+            let state = props.state.clone();
+            move |new_description: AttrValue| {
+                let mut new_state = state.clone();
+                new_state.description = new_description.to_string();
+                state_change.emit(new_state);
+            }
+        });
+
+        fields.push(html! {
+            <div class="field">
+                <label class="label">{"Description"}</label>
+                <div class="control">
+                    <MarkdownEditor initial={props.state.description.clone()} onchange={onchange} transformer={transformer}/>
+                </div>
+            </div>
+        });
     }
 
     html! {
