@@ -11,3 +11,6 @@ UPDATE puzzle_state set uuid=md5(('migrate' || puzzle || 'entry' || id::text)::b
 
 ALTER TABLE puzzle_state
     ALTER COLUMN uuid SET NOT NULL;
+
+ALTER TABLE puzzle_state
+    ADD CONSTRAINT puzzle_state_uuid_unique UNIQUE(uuid);
