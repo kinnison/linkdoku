@@ -382,6 +382,21 @@ impl Puzzle {
             Ok(false)
         }
     }
+
+    pub async fn set_visibility(
+        &self,
+        conn: &mut AsyncPgConnection,
+        visibility: Visibility,
+    ) -> QueryResult<Self> {
+        use crate::schema::puzzle::dsl;
+        diesel::update(dsl::puzzle.find(&self.uuid))
+            .set((
+                dsl::visibility.eq(visibility),
+                dsl::updated_at.eq(OffsetDateTime::now_utc()),
+            ))
+            .get_result(conn)
+            .await
+    }
 }
 
 #[derive(Queryable)]
@@ -487,6 +502,24 @@ impl PuzzleState {
             .set((
                 dsl::description.eq(description),
                 dsl::data.eq(data),
+                dsl::updated_at.eq(OffsetDateTime::now_utc()),
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
+
+    pub async fn set_visibility(
+        &self,
+        conn: &mut AsyncPgConnection,
+        visibility: Visibility,
+    ) -> QueryResult<()> {
+        use crate::schema::puzzle_state::dsl;
+
+        diesel::update(dsl::puzzle_state)
+            .filter(dsl::id.eq(self.id))
+            .set((
+                dsl::visibility.eq(visibility),
                 dsl::updated_at.eq(OffsetDateTime::now_utc()),
             ))
             .execute(conn)

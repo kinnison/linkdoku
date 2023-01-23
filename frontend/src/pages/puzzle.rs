@@ -406,7 +406,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             let view_state = state.setter();
             let state = state_under_edit.clone();
             let puzzle = puzzle.uuid.clone();
-            //let toaster = toaster.clone();
+            let toaster = toaster.clone();
             let puzzle_data = puzzle_data.clone();
             move |_| {
                 let button = button.clone();
@@ -528,13 +528,171 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         html! {}
     };
 
+    let state_buttons = {
+        let visible_states = puzzle
+            .states
+            .iter()
+            .filter(|s| s.visibility != Visibility::Restricted)
+            .count();
+
+        let set_puzzle_visibility = Callback::from({
+            let api = use_apiprovider();
+            let puzzle = puzzle.uuid.clone();
+            let toaster = toaster.clone();
+            let puzzle_data = puzzle_data.clone();
+            move |visibility| {
+                let api = api.clone();
+                let puzzle = puzzle.clone();
+                let toaster = toaster.clone();
+                let puzzle_data = puzzle_data.clone();
+                spawn_local(async move {
+                    match api.set_puzzle_visibility(&puzzle, visibility).await {
+                        Ok(_) => {
+                            if let Err(e) = puzzle_data.refresh().await {
+                                toaster.toast(
+                                    Toast::new(format!(
+                                        "State saved, but failed to refresh cache: {e}"
+                                    ))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            toaster.toast(
+                                Toast::new(format!("Unable to update visibility: {e}"))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                            );
+                        }
+                    }
+                });
+            }
+        });
+
+        let set_state_visibility = Callback::from({
+            let api = use_apiprovider();
+            let puzzle = puzzle.uuid.clone();
+            let state = display_state.uuid.clone();
+            let toaster = toaster.clone();
+            let puzzle_data = puzzle_data.clone();
+            move |visibility| {
+                let api = api.clone();
+                let puzzle = puzzle.clone();
+                let state = state.clone();
+                let toaster = toaster.clone();
+                let puzzle_data = puzzle_data.clone();
+                spawn_local(async move {
+                    match api
+                        .set_puzzle_state_visibility(&puzzle, &state, visibility)
+                        .await
+                    {
+                        Ok(_) => {
+                            if let Err(e) = puzzle_data.refresh().await {
+                                toaster.toast(
+                                    Toast::new(format!(
+                                        "State saved, but failed to refresh cache: {e}"
+                                    ))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            toaster.toast(
+                                Toast::new(format!("Unable to update visibility: {e}"))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                            );
+                        }
+                    }
+                });
+            }
+        });
+
+        fn make_button(
+            has: Visibility,
+            vis: Visibility,
+            icon: IconType,
+            is_puzzle: bool,
+            cb: &Callback<Visibility>,
+            visible_states: usize,
+        ) -> Html {
+            let cb = if (has == vis)
+                || (is_puzzle && visible_states == 0)
+                || (!is_puzzle && visible_states == 1 && vis == Visibility::Restricted)
+            {
+                None
+            } else {
+                Some(cb.clone())
+            };
+            let cb = cb.map(|cb| cb.reform(move |_| vis));
+
+            let tip_text = if has != vis {
+                let mut ret = String::new();
+                match vis {
+                    Visibility::Restricted => ret.push_str("Restrict access to "),
+                    Visibility::Public => ret.push_str("Open access to "),
+                    Visibility::Published => ret.push_str("Publish "),
+                }
+                if is_puzzle {
+                    ret.push_str("this puzzle.")
+                } else {
+                    ret.push_str("this puzzle state.")
+                }
+                if cb.is_none() {
+                    ret = format!("Unable to {}", ret.to_ascii_lowercase());
+                }
+                ret
+            } else {
+                let mut ret = String::from("This ");
+                if is_puzzle {
+                    ret.push_str("puzzle ")
+                } else {
+                    ret.push_str("puzzle state ")
+                }
+                match vis {
+                    Visibility::Restricted => ret.push_str("is only visible to you."),
+                    Visibility::Public => ret.push_str("is visible to anyone with a link."),
+                    Visibility::Published => ret.push_str("is published."),
+                }
+                ret
+            };
+
+            let icon_class = if has != vis {
+                "has-text-link"
+            } else {
+                "has-text-info"
+            };
+
+            html! {
+                <Tooltip content={tip_text} alignment={TooltipAlignment::Bottom}>
+                    <span class={icon_class}>
+                        <Icon icon={icon} onclick={cb} size={IconSize::Medium} />
+                    </span>
+                </Tooltip>
+            }
+        }
+
+        html! {
+            <>
+                {make_button(puzzle.visibility, Visibility::Restricted, PuzzleRestrictedIcon, true, &set_puzzle_visibility, visible_states)}
+                {make_button(puzzle.visibility, Visibility::Public, PuzzlePublicIcon, true, &set_puzzle_visibility, visible_states)}
+                {make_button(puzzle.visibility, Visibility::Published, PuzzlePublishedIcon, true, &set_puzzle_visibility, visible_states)}
+                {make_button(display_state.visibility, Visibility::Restricted, PuzzleStateRestrictedIcon, false, &set_state_visibility, visible_states)}
+                {make_button(display_state.visibility, Visibility::Public, PuzzleStatePublicIcon, false, &set_state_visibility, visible_states)}
+                {make_button(display_state.visibility, Visibility::Published, PuzzleStatePublishedIcon, false, &set_state_visibility, visible_states)}
+            </>
+        }
+    };
+
     let page_body = match *state {
         ViewPuzzleState::Viewing => {
             html! {
                 <>
                     {ogtags}
                     <Title value={puzzle.display_name.clone()} />
-                    <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{editor_buttons}</h1>
+                    <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{editor_buttons}{state_buttons}</h1>
                     <hr width={"40%"} />
                     <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
                     <hr width={"40%"} />
@@ -573,6 +731,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             }
         }
     };
+
+    drop(toaster);
 
     Ok(page_body)
 }

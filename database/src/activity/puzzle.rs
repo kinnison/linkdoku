@@ -232,3 +232,65 @@ pub async fn add_state(
         })
         .await
 }
+
+pub async fn set_visibility(
+    conn: &mut crate::Connection,
+    user: &str,
+    puzzle: &str,
+    visibility: objects::Visibility,
+) -> ActivityResult<models::Puzzle> {
+    conn.build_transaction()
+        .run(|txn| {
+            Box::pin(async move {
+                let puzzle = match Puzzle::by_uuid(txn, puzzle).await? {
+                    Some(puzzle) => puzzle,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if !puzzle.can_edit(txn, user).await? {
+                    return Err(ActivityError::PermissionDenied);
+                }
+
+                puzzle.set_visibility(txn, visibility.into()).await?;
+
+                Ok(puzzle)
+            })
+        })
+        .await
+}
+
+pub async fn set_state_visibility(
+    conn: &mut crate::Connection,
+    user: &str,
+    puzzle: &str,
+    state: &str,
+    visibility: objects::Visibility,
+) -> ActivityResult<models::Puzzle> {
+    conn.build_transaction()
+        .run(|txn| {
+            Box::pin(async move {
+                let puzzle = match Puzzle::by_uuid(txn, puzzle).await? {
+                    Some(puzzle) => puzzle,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if !puzzle.can_edit(txn, user).await? {
+                    return Err(ActivityError::PermissionDenied);
+                }
+
+                let puzzle_state = match PuzzleState::by_uuid(txn, state).await? {
+                    Some(ps) => ps,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if puzzle_state.puzzle != puzzle.uuid {
+                    return Err(ActivityError::NotFound);
+                }
+
+                puzzle_state.set_visibility(txn, visibility.into()).await?;
+
+                Ok(puzzle)
+            })
+        })
+        .await
+}

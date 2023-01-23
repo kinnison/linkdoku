@@ -80,3 +80,36 @@ pub mod add_state {
 
     pub type Response = objects::Puzzle;
 }
+
+pub mod set_visibility {
+    use crate::objects;
+
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/puzzle/set-visibility";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Request {
+        pub puzzle: String,
+        pub visibility: objects::Visibility,
+    }
+
+    pub type Response = objects::Puzzle;
+}
+
+pub mod set_state_visibility {
+    use crate::objects;
+
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/puzzle/set-state-visibility";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Request {
+        pub puzzle: String,
+        pub state: String,
+        pub visibility: objects::Visibility,
+    }
+
+    pub type Response = objects::Puzzle;
+}

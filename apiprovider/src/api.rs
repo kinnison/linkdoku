@@ -302,4 +302,32 @@ impl LinkdokuAPI {
         };
         self.make_api_call(uri, None, Some(req)).await
     }
+
+    pub async fn set_puzzle_visibility(
+        &self,
+        puzzle: impl Into<String>,
+        visibility: objects::Visibility,
+    ) -> APIResult<public::puzzle::set_visibility::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::set_visibility::URI);
+        let req = public::puzzle::set_visibility::Request {
+            puzzle: puzzle.into(),
+            visibility,
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
+
+    pub async fn set_puzzle_state_visibility(
+        &self,
+        puzzle: impl Into<String>,
+        state: impl Into<String>,
+        visibility: objects::Visibility,
+    ) -> APIResult<public::puzzle::set_state_visibility::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::set_state_visibility::URI);
+        let req = public::puzzle::set_state_visibility::Request {
+            puzzle: puzzle.into(),
+            state: state.into(),
+            visibility,
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
 }

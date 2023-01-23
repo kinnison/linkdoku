@@ -162,6 +162,71 @@ async fn add_puzzle_state(
     )
 }
 
+async fn set_puzzle_visibility(
+    mut db: Connection,
+    cookies: PrivateCookies,
+    Json(req): Json<puzzle::set_visibility::Request>,
+) -> Json<APIResult<puzzle::set_visibility::Response>> {
+    let logged_in = cookies.get_login_flow_status().await;
+    let logged_in = match logged_in.user() {
+        Some(data) => data,
+        None => {
+            return Json::from(Err(APIError::PermissionDenied));
+        }
+    };
+
+    let puzzle = match activity::puzzle::set_visibility(
+        &mut db,
+        &logged_in.identity().uuid,
+        &req.puzzle,
+        req.visibility,
+    )
+    .await
+    {
+        Ok(puzzle) => puzzle,
+        Err(e) => return Json::from(Err(e.into())),
+    };
+
+    Json::from(
+        activity::puzzle::into_api_object(&mut db, Some(&logged_in.identity().uuid), puzzle)
+            .await
+            .map_err(|e| e.into()),
+    )
+}
+
+async fn set_puzzle_state_visibility(
+    mut db: Connection,
+    cookies: PrivateCookies,
+    Json(req): Json<puzzle::set_state_visibility::Request>,
+) -> Json<APIResult<puzzle::set_state_visibility::Response>> {
+    let logged_in = cookies.get_login_flow_status().await;
+    let logged_in = match logged_in.user() {
+        Some(data) => data,
+        None => {
+            return Json::from(Err(APIError::PermissionDenied));
+        }
+    };
+
+    let puzzle = match activity::puzzle::set_state_visibility(
+        &mut db,
+        &logged_in.identity().uuid,
+        &req.puzzle,
+        &req.state,
+        req.visibility,
+    )
+    .await
+    {
+        Ok(puzzle) => puzzle,
+        Err(e) => return Json::from(Err(e.into())),
+    };
+
+    Json::from(
+        activity::puzzle::into_api_object(&mut db, Some(&logged_in.identity().uuid), puzzle)
+            .await
+            .map_err(|e| e.into()),
+    )
+}
+
 pub fn public_router() -> Router<BackendState> {
     Router::new()
         .route(puzzle::create::URI, post(create_puzzle))
@@ -169,4 +234,9 @@ pub fn public_router() -> Router<BackendState> {
         .route(puzzle::update_metadata::URI, post(update_puzzle_metadata))
         .route(puzzle::update_state::URI, post(update_puzzle_state))
         .route(puzzle::add_state::URI, post(add_puzzle_state))
+        .route(puzzle::set_visibility::URI, post(set_puzzle_visibility))
+        .route(
+            puzzle::set_state_visibility::URI,
+            post(set_puzzle_state_visibility),
+        )
 }
