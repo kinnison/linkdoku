@@ -392,6 +392,7 @@ pub struct PuzzleState {
     pub visibility: Visibility,
     pub updated_at: OffsetDateTime,
     pub data: String,
+    pub uuid: String,
 }
 
 #[derive(Insertable)]
@@ -401,7 +402,8 @@ pub struct NewPuzzleState<'a> {
     pub description: &'a str,
     pub visibility: Visibility,
     pub updated_at: OffsetDateTime,
-    pub data: String,
+    pub data: &'a str,
+    pub uuid: &'a str,
 }
 
 impl Puzzle {
@@ -419,15 +421,17 @@ impl Puzzle {
         conn: &mut AsyncPgConnection,
         description: &str,
         visibility: Visibility,
-        data: String,
+        data: &str,
     ) -> QueryResult<PuzzleState> {
         use crate::schema::puzzle_state;
+        let state_uuid = utils::random_uuid_within("puzzle_state", &self.uuid);
         let new = NewPuzzleState {
             puzzle: &self.uuid,
             description,
             visibility,
             data,
             updated_at: OffsetDateTime::now_utc(),
+            uuid: &state_uuid,
         };
         diesel::insert_into(puzzle_state::table)
             .values(&new)

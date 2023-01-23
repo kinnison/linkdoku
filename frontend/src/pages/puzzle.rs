@@ -377,6 +377,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
     };
 
     let state_under_edit = use_state_eq(|| PuzzleState {
+        uuid: "".to_string(),
         description: "".to_string(),
         updated_at: "".to_string(),
         data: PuzzleData::Nothing,
@@ -560,6 +561,7 @@ pub fn create_puzzle_page_render() -> Html {
             display_name: "".to_string(),
             short_name: "".to_string(),
             initial_state: PuzzleState {
+                uuid: "".to_string(),
                 description: "".to_string(),
                 visibility: Visibility::Restricted,
                 updated_at: "".to_string(),

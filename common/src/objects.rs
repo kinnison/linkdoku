@@ -64,6 +64,7 @@ pub enum Visibility {
 /// objects API.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PuzzleState {
+    pub uuid: String,
     pub description: String,
     pub data: PuzzleData,
     pub visibility: Visibility,

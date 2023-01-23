@@ -52,7 +52,7 @@ pub async fn create(
                         txn,
                         &initial_state.description,
                         Visibility::Restricted,
-                        serde_json::to_string(&initial_state.data)?,
+                        &serde_json::to_string(&initial_state.data)?,
                     )
                     .await?;
                 Ok(puzzle)
@@ -78,6 +78,7 @@ pub async fn into_api_object(
                 for state in puzzle.all_states(txn).await? {
                     if state.can_be_seen(txn, &puzzle, actor).await? {
                         states.push(objects::PuzzleState {
+                            uuid: state.uuid,
                             description: state.description,
                             visibility: state.visibility.into(),
                             updated_at: state.updated_at.format(&Iso8601::DEFAULT)?,

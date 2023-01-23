@@ -41,6 +41,7 @@ diesel::table! {
         visibility -> Visibility,
         updated_at -> Timestamptz,
         data -> Text,
+        uuid -> Varchar,
     }
 }
 

@@ -239,6 +239,7 @@ impl LinkdokuAPI {
             display_name: display_name.into(),
             short_name: short_name.into(),
             initial_state: objects::PuzzleState {
+                uuid: "".into(), // Ignored, but hey
                 description: description.into(),
                 visibility: objects::Visibility::Restricted, // Ignored, but hey
                 updated_at: "".into(),                       // Ignored, but hey
