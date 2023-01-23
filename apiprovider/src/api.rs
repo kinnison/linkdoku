@@ -260,4 +260,19 @@ impl LinkdokuAPI {
         };
         self.make_api_call(uri, None, Some(req)).await
     }
+
+    pub async fn update_puzzle_metadata(
+        &self,
+        puzzle: impl Into<String>,
+        short_name: impl Into<String>,
+        display_name: impl Into<String>,
+    ) -> APIResult<public::puzzle::update_metadata::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::update_metadata::URI);
+        let req = public::puzzle::update_metadata::Request {
+            puzzle: puzzle.into(),
+            short_name: short_name.into(),
+            display_name: display_name.into(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
 }

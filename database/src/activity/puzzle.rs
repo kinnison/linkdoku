@@ -116,16 +116,43 @@ pub async fn lookup(
             Box::pin(async move {
                 let role = match Role::by_short_name(txn, role).await? {
                     Some(role) => role,
-                    None => return Err(ActivityError::UnknownShortName),
+                    None => return Err(ActivityError::NotFound),
                 };
                 let puzzle = match Puzzle::by_short_name(txn, &role.uuid, puzzle).await? {
                     Some(puzzle) => puzzle,
-                    None => return Err(ActivityError::UnknownShortName),
+                    None => return Err(ActivityError::NotFound),
                 };
                 if !puzzle.can_be_seen(txn, user).await? {
-                    return Err(ActivityError::UnknownShortName);
+                    return Err(ActivityError::NotFound);
                 }
                 Ok(puzzle.uuid)
+            })
+        })
+        .await
+}
+
+pub async fn update_metadata(
+    conn: &mut AsyncPgConnection,
+    user: &str,
+    puzzle: &str,
+    short_name: &str,
+    display_name: &str,
+) -> ActivityResult<models::Puzzle> {
+    conn.build_transaction()
+        .run(|txn| {
+            Box::pin(async move {
+                let puzzle = match Puzzle::by_uuid(txn, puzzle).await? {
+                    Some(puzzle) => puzzle,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if !puzzle.can_edit(txn, user).await? {
+                    return Err(ActivityError::PermissionDenied);
+                }
+
+                Ok(puzzle
+                    .update_metadata(txn, short_name, display_name)
+                    .await?)
             })
         })
         .await

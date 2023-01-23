@@ -34,3 +34,19 @@ pub mod lookup {
         pub uuid: String,
     }
 }
+
+pub mod update_metadata {
+    use crate::objects;
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/puzzle/update-metadata";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Request {
+        pub puzzle: String,
+        pub short_name: String,
+        pub display_name: String,
+    }
+
+    pub type Response = objects::Puzzle;
+}

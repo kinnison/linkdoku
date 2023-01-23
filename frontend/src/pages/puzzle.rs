@@ -85,6 +85,14 @@ pub fn view_puzzle(props: &PuzzlePageProps) -> Html {
     }
 }
 
+#[derive(PartialEq, Clone, Copy)]
+enum ViewPuzzleState {
+    Viewing,
+    EditMetadata,
+    AddingState,
+    EditingState,
+}
+
 #[function_component(PuzzlePageInner)]
 fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
     let user_info = use_context::<LoginStatus>().unwrap();
@@ -212,8 +220,6 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         _ => None,
     };
 
-    info!("Image url: {image:?}");
-
     let ogtags = html! {
         <OpenGraphMeta
             title={puzzle.display_name.clone()}
@@ -223,17 +229,200 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         />
     };
 
-    Ok(html! {
-        <>
-            {ogtags}
-            <Title value={puzzle.display_name.clone()} />
-            <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}</h1>
-            <hr width={"40%"} />
-            <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
-            <hr width={"40%"} />
-            <Paginator count={puzzle.states.len()} current={*display_index} aria_label={"Puzzle State"} element={"puzzle state"} onchange={set_index} />
-        </>
-    })
+    let state = use_state_eq(|| ViewPuzzleState::Viewing);
+
+    let edit_metadata_form = {
+        let short_name_ref = use_node_ref();
+        let display_name_ref = use_node_ref();
+        let editor_short_name = use_state_eq(|| puzzle.short_name.clone());
+        let editor_display_name = use_state_eq(|| puzzle.display_name.clone());
+        let button_enabled = use_state_eq(|| true);
+        let data_good = use_state_eq(|| true);
+
+        let short_name_changed = Callback::from({
+            let setter = editor_short_name.setter();
+            let noderef = short_name_ref.clone();
+            let button = data_good.setter();
+            move |_| {
+                let input: HtmlInputElement = noderef.cast().unwrap();
+                let value = input.value();
+                button.set(!value.is_empty());
+                setter.set(value)
+            }
+        });
+
+        let short_name_input = Callback::from({
+            let setter = editor_short_name.setter();
+            let noderef = short_name_ref.clone();
+            let button = data_good.setter();
+            move |_| {
+                let input: HtmlInputElement = noderef.cast().unwrap();
+                let value = input.value();
+                button.set(!value.is_empty());
+                setter.set(value)
+            }
+        });
+
+        let display_name_changed = Callback::from({
+            let setter = editor_display_name.setter();
+            let noderef = display_name_ref.clone();
+            let button = data_good.setter();
+            move |_| {
+                let input: HtmlInputElement = noderef.cast().unwrap();
+                let value = input.value();
+                button.set(!value.is_empty());
+                setter.set(value)
+            }
+        });
+
+        let display_name_input = Callback::from({
+            let setter = editor_display_name.setter();
+            let noderef = display_name_ref.clone();
+            let button = data_good.setter();
+            move |_| {
+                let input: HtmlInputElement = noderef.cast().unwrap();
+                let value = input.value();
+                button.set(!value.is_empty());
+                setter.set(value)
+            }
+        });
+
+        let on_save_changes = Callback::from({
+            let view_state = state.setter();
+            let short_name = editor_short_name.clone();
+            let display_name = editor_display_name.clone();
+            let puzzle = puzzle.uuid.clone();
+            let button = button_enabled.setter();
+            let api = use_apiprovider();
+            let toaster = toaster.clone();
+            let puzzle_data = puzzle_data.clone();
+            move |_| {
+                let sn = short_name.as_str().to_string();
+                let dn = display_name.as_str().to_string();
+                let uuid = puzzle.clone();
+                let api = api.clone();
+                let button = button.clone();
+                let toaster = toaster.clone();
+                let puzzle_data = puzzle_data.clone();
+                let view_state = view_state.clone();
+                button.set(false);
+                spawn_local(async move {
+                    match api.update_puzzle_metadata(uuid, sn, dn).await {
+                        Ok(_) => {
+                            // Puzzle successfully updated, so refresh the local cache
+                            if let Err(e) = puzzle_data.refresh().await {
+                                toaster.toast(
+                                    Toast::new(format!(
+                                        "Updated puzzle, but failed to refresh cache: {e}"
+                                    ))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                                );
+                            }
+                            view_state.set(ViewPuzzleState::Viewing);
+                        }
+                        Err(e) => {
+                            toaster.toast(
+                                Toast::new(format!("Unable to update puzzle metadata: {e}"))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                            );
+                        }
+                    }
+
+                    button.set(true);
+                });
+            }
+        });
+
+        let cancel_onclick = Callback::from({
+            let state = state.clone();
+            move |_| state.set(ViewPuzzleState::Viewing)
+        });
+
+        html! {
+            <>
+                <div class="field">
+                    <label class="label">{"Short name"}</label>
+                    <div class="control">
+                        <input ref={short_name_ref} class="input" placeholder="Short name for puzzle" value={editor_short_name.as_str().to_string()} onchange={short_name_changed} oninput={short_name_input} />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">{"Display name"}</label>
+                    <div class="control">
+                        <input ref={display_name_ref} class="input" placeholder="Display name for puzzle" value={editor_display_name.as_str().to_string()} onchange={display_name_changed} oninput={display_name_input} />
+                    </div>
+                </div>
+                <div class="field is-grouped">
+                    <div class="control">
+                        <button class="button is-primary" disabled={!(*button_enabled && *data_good)} onclick={if *button_enabled && *data_good { Some(on_save_changes) } else { None }}>
+                            <span class={"icon-text"}>
+                                <Icon icon={if *button_enabled { SubmitFormIcon } else { SpinnerIcon }}/>
+                                <span>{if *button_enabled { if *data_good { "Save changes" } else { "Please fill out both fields"} } else { "Saving changes" }}</span>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="control">
+                        <button class="button is-danger" onclick={cancel_onclick}>
+                            <span class="icon-text">
+                                <Icon icon={CancelIcon} />
+                                <span>{"Cancel edit"}</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </>
+        }
+    };
+
+    let metadata_edit = if can_edit {
+        let edit_puzzle_click = Callback::from({
+            let viewstate_setter = state.setter();
+            move |_| {
+                viewstate_setter.set(ViewPuzzleState::EditMetadata);
+            }
+        });
+        html! {
+            <Tooltip content={"Edit puzzle metadata"} alignment={TooltipAlignment::Bottom}>
+                <span class="has-text-link">
+                    <Icon icon={PuzzleEditMetadataIcon} onclick={edit_puzzle_click} size={IconSize::Medium} />
+                </span>
+            </Tooltip>
+        }
+    } else {
+        html! {}
+    };
+
+    let page_body = match *state {
+        ViewPuzzleState::Viewing => {
+            html! {
+                <>
+                    {ogtags}
+                    <Title value={puzzle.display_name.clone()} />
+                    <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{metadata_edit}</h1>
+                    <hr width={"40%"} />
+                    <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
+                    <hr width={"40%"} />
+                    <Paginator count={puzzle.states.len()} current={*display_index} aria_label={"Puzzle State"} element={"puzzle state"} onchange={set_index} />
+                </>
+            }
+        }
+        ViewPuzzleState::EditMetadata => {
+            html! {
+                <>
+                    <Title value={format!("Editing - {}", puzzle.display_name)} />
+                    <h1 class="title">{format!("Editing puzzle…")}</h1>
+                    <h1 width={"40%"} />
+                    {edit_metadata_form}
+                </>
+            }
+        }
+        ViewPuzzleState::EditingState => todo!(),
+        ViewPuzzleState::AddingState => todo!(),
+    };
+
+    Ok(page_body)
 }
 
 // Editors

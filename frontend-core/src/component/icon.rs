@@ -17,9 +17,11 @@ pub enum IconType {
     PuzzlePublishedIcon,
     PuzzleAddIcon,
     PuzzleNiceLinkIcon,
+    PuzzleEditMetadataIcon,
     OkayIcon,
     WarningIcon,
     BrokenIcon,
+    CancelIcon,
 }
 
 pub use IconType::*;
@@ -42,9 +44,11 @@ impl IconType {
             PuzzlePublishedIcon => "mdi-puzzle-check",
             PuzzleAddIcon => "mdi-puzzle-plus-outline",
             PuzzleNiceLinkIcon => "mdi-puzzle-star",
+            PuzzleEditMetadataIcon => "mdi-puzzle-edit-outline",
             OkayIcon => "mdi-check-circle",
             WarningIcon => "mdi-alert-circle",
             BrokenIcon => "mdi-heart-broken",
+            CancelIcon => "mdi-cancel",
         }
     }
 }

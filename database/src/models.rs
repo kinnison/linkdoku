@@ -347,6 +347,41 @@ impl Puzzle {
             _ => Ok(true),
         }
     }
+
+    pub async fn update_metadata(
+        &self,
+        conn: &mut AsyncPgConnection,
+        short_name: &str,
+        display_name: &str,
+    ) -> QueryResult<Self> {
+        use crate::schema::puzzle::dsl;
+        diesel::update(dsl::puzzle.find(&self.uuid))
+            .set((
+                dsl::short_name.eq(short_name),
+                dsl::display_name.eq(display_name),
+            ))
+            .get_result(conn)
+            .await
+    }
+
+    pub async fn can_edit(&self, conn: &mut AsyncPgConnection, user: &str) -> QueryResult<bool> {
+        // We're permitted to edit this puzzle *iff* the given user has access to the owning role
+        let user = match Identity::from_uuid(conn, user).await? {
+            Some(id) => id,
+            None => return Ok(false),
+        };
+
+        if user
+            .roles(conn)
+            .await?
+            .iter()
+            .any(|role| role.uuid == self.owner)
+        {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
 }
 
 #[derive(Queryable)]
