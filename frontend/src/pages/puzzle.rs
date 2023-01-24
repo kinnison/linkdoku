@@ -674,15 +674,19 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             }
         }
 
-        html! {
-            <>
-                {make_button(puzzle.visibility, Visibility::Restricted, PuzzleRestrictedIcon, true, &set_puzzle_visibility, visible_states)}
-                {make_button(puzzle.visibility, Visibility::Public, PuzzlePublicIcon, true, &set_puzzle_visibility, visible_states)}
-                {make_button(puzzle.visibility, Visibility::Published, PuzzlePublishedIcon, true, &set_puzzle_visibility, visible_states)}
-                {make_button(display_state.visibility, Visibility::Restricted, PuzzleStateRestrictedIcon, false, &set_state_visibility, visible_states)}
-                {make_button(display_state.visibility, Visibility::Public, PuzzleStatePublicIcon, false, &set_state_visibility, visible_states)}
-                {make_button(display_state.visibility, Visibility::Published, PuzzleStatePublishedIcon, false, &set_state_visibility, visible_states)}
-            </>
+        if can_edit {
+            html! {
+                <>
+                    {make_button(puzzle.visibility, Visibility::Restricted, PuzzleRestrictedIcon, true, &set_puzzle_visibility, visible_states)}
+                    {make_button(puzzle.visibility, Visibility::Public, PuzzlePublicIcon, true, &set_puzzle_visibility, visible_states)}
+                    {make_button(puzzle.visibility, Visibility::Published, PuzzlePublishedIcon, true, &set_puzzle_visibility, visible_states)}
+                    {make_button(display_state.visibility, Visibility::Restricted, PuzzleStateRestrictedIcon, false, &set_state_visibility, visible_states)}
+                    {make_button(display_state.visibility, Visibility::Public, PuzzleStatePublicIcon, false, &set_state_visibility, visible_states)}
+                    {make_button(display_state.visibility, Visibility::Published, PuzzleStatePublishedIcon, false, &set_state_visibility, visible_states)}
+                </>
+            }
+        } else {
+            html! {}
         }
     };
 
