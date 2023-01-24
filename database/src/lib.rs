@@ -84,6 +84,10 @@ pub async fn create_pool(db_url: &str) -> Result<Pool, PoolError> {
         .await
 }
 
+pub async fn create_connection(db_url: &str) -> ConnectionResult<AsyncPgConnection> {
+    establish_connection(db_url).await
+}
+
 pub mod axum_link {
     use std::ops::{Deref, DerefMut};
 
