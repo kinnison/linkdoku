@@ -113,3 +113,20 @@ pub mod set_state_visibility {
 
     pub type Response = objects::Puzzle;
 }
+
+pub mod edit_tags {
+    use crate::objects;
+
+    use serde::{Deserialize, Serialize};
+
+    pub const URI: &str = "/puzzle/edit-tags";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Request {
+        pub puzzle: String,
+        pub to_add: Vec<String>,
+        pub to_remove: Vec<String>,
+    }
+
+    pub type Response = objects::Puzzle;
+}

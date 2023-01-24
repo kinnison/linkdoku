@@ -87,6 +87,7 @@ pub struct Puzzle {
     pub created_at: String,
     pub updated_at: String,
     pub states: Vec<PuzzleState>,
+    pub tags: Vec<String>,
 }
 
 /// Tags are present on puzzles and indicate some kind of basic

@@ -227,6 +227,39 @@ async fn set_puzzle_state_visibility(
     )
 }
 
+async fn edit_puzzle_tags(
+    mut db: Connection,
+    cookies: PrivateCookies,
+    Json(req): Json<puzzle::edit_tags::Request>,
+) -> Json<APIResult<puzzle::edit_tags::Response>> {
+    let logged_in = cookies.get_login_flow_status().await;
+    let logged_in = match logged_in.user() {
+        Some(data) => data,
+        None => {
+            return Json::from(Err(APIError::PermissionDenied));
+        }
+    };
+
+    let puzzle = match activity::puzzle::edit_puzzle_tags(
+        &mut db,
+        &logged_in.identity().uuid,
+        &req.puzzle,
+        &req.to_add,
+        &req.to_remove,
+    )
+    .await
+    {
+        Ok(puzzle) => puzzle,
+        Err(e) => return Json::from(Err(e.into())),
+    };
+
+    Json::from(
+        activity::puzzle::into_api_object(&mut db, Some(&logged_in.identity().uuid), puzzle)
+            .await
+            .map_err(|e| e.into()),
+    )
+}
+
 pub fn public_router() -> Router<BackendState> {
     Router::new()
         .route(puzzle::create::URI, post(create_puzzle))
@@ -239,4 +272,5 @@ pub fn public_router() -> Router<BackendState> {
             puzzle::set_state_visibility::URI,
             post(set_puzzle_state_visibility),
         )
+        .route(puzzle::edit_tags::URI, post(edit_puzzle_tags))
 }

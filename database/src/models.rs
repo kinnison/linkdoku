@@ -397,6 +397,16 @@ impl Puzzle {
             .get_result(conn)
             .await
     }
+
+    pub async fn get_tags(&self, conn: &mut AsyncPgConnection) -> QueryResult<Vec<String>> {
+        use crate::schema::puzzle_tag::dsl;
+
+        dsl::puzzle_tag
+            .filter(dsl::puzzle.eq(&self.uuid))
+            .select(dsl::tag)
+            .get_results(conn)
+            .await
+    }
 }
 
 #[derive(Queryable)]
@@ -588,5 +598,37 @@ impl Tag {
         } else {
             dsl::tag.get_results(conn).await
         }
+    }
+}
+
+#[derive(Insertable)]
+#[diesel(table_name=crate::schema::puzzle_tag)]
+pub struct NewPuzzleTag<'a> {
+    pub puzzle: &'a str,
+    pub tag: &'a str,
+}
+
+impl Puzzle {
+    pub async fn add_tag(&self, conn: &mut AsyncPgConnection, tag: &str) -> QueryResult<()> {
+        use crate::schema::puzzle_tag::dsl;
+
+        diesel::insert_into(dsl::puzzle_tag)
+            .values(NewPuzzleTag {
+                puzzle: &self.uuid,
+                tag,
+            })
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
+
+    pub async fn remove_tag(&self, conn: &mut AsyncPgConnection, tag: &str) -> QueryResult<()> {
+        use crate::schema::puzzle_tag::dsl;
+
+        diesel::delete(dsl::puzzle_tag)
+            .filter(dsl::puzzle.eq(&self.uuid).and(dsl::tag.eq(tag)))
+            .execute(conn)
+            .await
+            .map(|_| ())
     }
 }

@@ -91,6 +91,8 @@ pub async fn into_api_object(
                     return Err(ActivityError::PermissionDenied);
                 }
 
+                let tags = puzzle.get_tags(txn).await?;
+
                 Ok(objects::Puzzle {
                     uuid: puzzle.uuid,
                     owner: puzzle.owner,
@@ -100,6 +102,7 @@ pub async fn into_api_object(
                     created_at: puzzle.created_at.format(&Iso8601::DEFAULT)?,
                     updated_at: puzzle.updated_at.format(&Iso8601::DEFAULT)?,
                     states,
+                    tags,
                 })
             })
         })
@@ -288,6 +291,39 @@ pub async fn set_state_visibility(
                 }
 
                 puzzle_state.set_visibility(txn, visibility.into()).await?;
+
+                Ok(puzzle)
+            })
+        })
+        .await
+}
+
+pub async fn edit_puzzle_tags(
+    conn: &mut AsyncPgConnection,
+    user: &str,
+    puzzle: &str,
+    to_add: &[String],
+    to_remove: &[String],
+) -> ActivityResult<models::Puzzle> {
+    conn.build_transaction()
+        .run(|txn| {
+            Box::pin(async move {
+                let puzzle = match Puzzle::by_uuid(txn, puzzle).await? {
+                    Some(puzzle) => puzzle,
+                    None => return Err(ActivityError::NotFound),
+                };
+
+                if !puzzle.can_edit(txn, user).await? {
+                    return Err(ActivityError::PermissionDenied);
+                }
+
+                for tag in to_add {
+                    puzzle.add_tag(txn, tag).await?;
+                }
+
+                for tag in to_remove {
+                    puzzle.remove_tag(txn, tag).await?;
+                }
 
                 Ok(puzzle)
             })
