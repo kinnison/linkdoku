@@ -11,7 +11,7 @@ async fn list_tags(
     mut db: Connection,
     Json(req): Json<public::tag::list::Request>,
 ) -> Json<APIResult<public::tag::list::Response>> {
-    let tags = match activity::tag::list(&mut db, req.prefix.as_deref()).await {
+    let tags = match activity::tag::list(&mut db, &req.pattern).await {
         Ok(tags) => tags,
         Err(e) => return Json::from(Err(e.into())),
     };

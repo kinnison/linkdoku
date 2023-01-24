@@ -69,6 +69,7 @@ diesel::table! {
         name -> Varchar,
         colour -> Varchar,
         black_text -> Bool,
+        description -> Varchar,
     }
 }
 

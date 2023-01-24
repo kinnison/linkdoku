@@ -10,12 +10,12 @@ use super::ActivityResult;
 
 pub async fn list(
     conn: &mut AsyncPgConnection,
-    prefix: Option<&str>,
+    pattern: &str,
 ) -> ActivityResult<Vec<objects::Tag>> {
     conn.build_transaction()
         .run(|txn| {
             Box::pin(async move {
-                let tags = models::Tag::get_all(txn, prefix).await?;
+                let tags = models::Tag::get_all(txn, pattern).await?;
 
                 Ok(tags
                     .into_iter()
@@ -24,6 +24,7 @@ pub async fn list(
                         name: tag.name,
                         colour: tag.colour,
                         black_text: tag.black_text,
+                        description: tag.description,
                     })
                     .collect())
             })

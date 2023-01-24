@@ -330,4 +330,30 @@ impl LinkdokuAPI {
         };
         self.make_api_call(uri, None, Some(req)).await
     }
+
+    pub async fn edit_puzzle_tags(
+        &self,
+        puzzle: impl Into<String>,
+        to_add: &[String],
+        to_remove: &[String],
+    ) -> APIResult<public::puzzle::edit_tags::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::edit_tags::URI);
+        let req = public::puzzle::edit_tags::Request {
+            puzzle: puzzle.into(),
+            to_add: to_add.to_vec(),
+            to_remove: to_remove.to_vec(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
+
+    pub async fn find_tags(
+        &self,
+        pattern: impl Into<String>,
+    ) -> APIResult<public::tag::list::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::tag::list::URI);
+        let req = public::tag::list::Request {
+            pattern: pattern.into(),
+        };
+        self.make_api_call(uri, None, Some(req)).await
+    }
 }

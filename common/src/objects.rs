@@ -99,4 +99,5 @@ pub struct Tag {
     pub name: String,
     pub colour: String,
     pub black_text: bool,
+    pub description: String,
 }

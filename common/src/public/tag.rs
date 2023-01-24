@@ -7,7 +7,7 @@ pub mod list {
 
     #[derive(Serialize, Deserialize)]
     pub struct Request {
-        pub prefix: Option<String>,
+        pub pattern: String,
     }
 
     pub type Response = Vec<crate::objects::Tag>;

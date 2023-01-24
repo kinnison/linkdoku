@@ -103,6 +103,7 @@ async fn get_tag(Path(uuid): Path<String>, mut db: Connection) -> Json<APIResult
         name: tag.name,
         colour: tag.colour,
         black_text: tag.black_text,
+        description: tag.description,
     }))
 }
 

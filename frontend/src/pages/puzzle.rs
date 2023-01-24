@@ -4,7 +4,7 @@ use common::{
     objects::{self, PuzzleData, PuzzleState, Visibility},
     public::puzzle,
 };
-use components::{layout::MainPageLayout, role::Role, user::LoginStatus};
+use components::{layout::MainPageLayout, role::Role, tag::TagSet, user::LoginStatus};
 use frontend_core::{
     component::{core::OpenGraphMeta, icon::*, utility::*},
     use_route_url, Route, ShortcutRoute,
@@ -12,6 +12,7 @@ use frontend_core::{
 use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
+use tracing::info;
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
@@ -90,6 +91,7 @@ enum ViewPuzzleState {
     EditMetadata,
     AddingState,
     EditingState,
+    EditingTags,
 }
 
 #[function_component(PuzzlePageInner)]
@@ -468,7 +470,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                         </button>
                     </div>
                     <div class="control">
-                        <button class="button is-danger" onclick={cancel_onclick}>
+                        <button class="button is-danger" onclick={cancel_onclick.clone()}>
                             <span class="icon-text">
                                 <Icon icon={CancelIcon} />
                                 <span>{"Cancel edit"}</span>
@@ -479,6 +481,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             </>
         }
     };
+
+    let edit_tags_list = use_state_eq(|| puzzle.tags.clone());
 
     let editor_buttons = if can_edit {
         let edit_puzzle_click = Callback::from({
@@ -505,11 +509,26 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 viewstate_setter.set(ViewPuzzleState::AddingState);
             }
         });
+        let edit_tags_click = Callback::from({
+            let viewstate_setter = state.setter();
+            let edit_tags_list_setter = edit_tags_list.setter();
+            let displayed_tags = puzzle.tags.clone();
+            move |_| {
+                edit_tags_list_setter.set(displayed_tags.clone());
+                viewstate_setter.set(ViewPuzzleState::EditingTags);
+            }
+        });
+
         html! {
             <>
                 <Tooltip content={"Edit puzzle metadata"} alignment={TooltipAlignment::Bottom}>
                     <span class="has-text-link">
                         <Icon icon={PuzzleEditMetadataIcon} onclick={edit_puzzle_click} size={IconSize::Medium} />
+                    </span>
+                </Tooltip>
+                <Tooltip content={"Edit puzzle's tags"} alignment={TooltipAlignment::Bottom}>
+                    <span class="has-text-link">
+                        <Icon icon={PuzzleEditTagsIcon} onclick={edit_tags_click} size={IconSize::Medium} />
                     </span>
                 </Tooltip>
                 <Tooltip content={"Edit current puzzle state"} alignment={TooltipAlignment::Bottom}>
@@ -690,6 +709,178 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         }
     };
 
+    let tag_editor = {
+        let api = use_apiprovider();
+        let on_delete_tag = Callback::from({
+            let taglist = edit_tags_list.clone();
+            move |tag: AttrValue| {
+                let mut newlist = (*taglist).clone();
+                newlist.retain(|v| v.as_str() != tag.as_str());
+                taglist.set(newlist);
+            }
+        });
+
+        let tag_filter = use_state_eq(String::new);
+        let tag_filter_ref = use_node_ref();
+
+        let filtered_tags = use_state_eq(Vec::new);
+
+        use_effect_with_deps(
+            {
+                let setter = filtered_tags.setter();
+                let filter = tag_filter.clone();
+                let api = api.clone();
+                let toaster = toaster.clone();
+                move |()| {
+                    spawn_local(async move {
+                        match api.find_tags(filter.as_str()).await {
+                            Ok(tags) => setter.set(tags.into_iter().map(|tag| tag.uuid).collect()),
+                            Err(e) => {
+                                toaster.toast(
+                                    Toast::new(format!("Unable to find tags: {e}"))
+                                        .with_level(ToastLevel::Warning)
+                                        .with_lifetime(2500),
+                                );
+                            }
+                        }
+                    });
+
+                    move || ()
+                }
+            },
+            (),
+        );
+
+        let on_filter_input = Callback::from({
+            let setter = filtered_tags.setter();
+            let api = api.clone();
+            let toaster = toaster.clone();
+            let filter_setter = tag_filter.setter();
+            let node = tag_filter_ref.clone();
+            move |_| {
+                let input: HtmlInputElement = node.cast().unwrap();
+                let value = input.value();
+                filter_setter.set(value.clone());
+                let api = api.clone();
+                let setter = setter.clone();
+                let toaster = toaster.clone();
+                spawn_local(async move {
+                    match api.find_tags(value).await {
+                        Ok(tags) => setter.set(tags.into_iter().map(|tag| tag.uuid).collect()),
+                        Err(e) => {
+                            toaster.toast(
+                                Toast::new(format!("Unable to find tags: {e}"))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                            );
+                        }
+                    }
+                });
+            }
+        });
+
+        let on_tag_click = Callback::from({
+            let taglist = edit_tags_list.clone();
+            move |tag: AttrValue| {
+                let mut newlist = (*taglist).clone();
+                if !newlist.iter().any(|v| v.as_str() == tag.as_str()) {
+                    newlist.push(tag.to_string());
+                }
+                taglist.set(newlist);
+            }
+        });
+
+        let button_enabled = use_state_eq(|| true);
+
+        let save_tags = Callback::from({
+            let state_setter = state.setter();
+            let button_setter = button_enabled.setter();
+            //let api = api.clone();
+            let toaster = toaster.clone();
+            let tag_list = (*edit_tags_list).clone();
+            let puzzle_tags = puzzle.tags.clone();
+            let puzzle_uuid = puzzle.uuid.clone();
+            let puzzle_data = puzzle_data.clone();
+            move |_| {
+                info!("Editing puzzle {}", puzzle_uuid);
+                info!("Puzzle tag list: {:?}", puzzle_tags);
+                info!("New tag list: {:?}", tag_list);
+                let to_add: Vec<_> = tag_list
+                    .iter()
+                    .filter(|tag| !puzzle_tags.contains(tag))
+                    .cloned()
+                    .collect();
+                let to_remove: Vec<_> = puzzle_tags
+                    .iter()
+                    .filter(|tag| !tag_list.contains(tag))
+                    .cloned()
+                    .collect();
+                info!("To add: {:?}", to_add);
+                info!("To remove: {:?}", to_remove);
+                let toaster = toaster.clone();
+                let api = api.clone();
+                let puzzle_uuid = puzzle_uuid.clone();
+                let puzzle_data = puzzle_data.clone();
+                let state_setter = state_setter.clone();
+                let button_setter = button_setter.clone();
+                button_setter.set(false);
+                spawn_local(async move {
+                    match api.edit_puzzle_tags(puzzle_uuid, &to_add, &to_remove).await {
+                        Ok(_) => {
+                            if let Err(e) = puzzle_data.refresh().await {
+                                toaster.toast(
+                                    Toast::new(format!("Unable to read new puzzle data: {e}"))
+                                        .with_level(ToastLevel::Warning)
+                                        .with_lifetime(2500),
+                                );
+                            }
+                            state_setter.set(ViewPuzzleState::Viewing);
+                        }
+                        Err(e) => {
+                            toaster.toast(
+                                Toast::new(format!("Unable to set puzzle tags: {e}"))
+                                    .with_level(ToastLevel::Warning)
+                                    .with_lifetime(2500),
+                            );
+                        }
+                    }
+                    button_setter.set(true);
+                })
+            }
+        });
+
+        html! {
+            <>
+                <TagSet tags={(*edit_tags_list).clone()} label={"Tags for puzzle"} ondelete={on_delete_tag} />
+                <div class="field">
+                    <label class="label">{"Tags to add to puzzle"}</label>
+                    <div class="control">
+                        <input ref={tag_filter_ref} class="input" value={(*tag_filter).clone()} placeholder="Filter tags" oninput={on_filter_input}/>
+                    </div>
+                </div>
+                <TagSet tags={(*filtered_tags).clone()} onclick={on_tag_click}/>
+                <div class="field is-grouped">
+                    <div class="control">
+                        <button class={if *button_enabled { "button" } else { "button is-disabled"}} onclick={save_tags}>
+                            <span class="icon-text">
+                                <Icon icon={if *button_enabled { SubmitFormIcon } else { SpinnerIcon }}/>
+                                <span>{"Save Tags"}</span>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="control">
+                        <button class="button is-danger" onclick={cancel_onclick}>
+                            <span class="icon-text">
+                                <Icon icon={CancelIcon} />
+                                <span>{"Cancel edit"}</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </>
+        }
+    };
+
     let page_body = match *state {
         ViewPuzzleState::Viewing => {
             html! {
@@ -697,6 +888,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                     {ogtags}
                     <Title value={puzzle.display_name.clone()} />
                     <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{editor_buttons}{state_buttons}</h1>
+                    <hr width={"40%"} />
+                    <TagSet tags={puzzle.tags.clone()} />
                     <hr width={"40%"} />
                     <MarkdownRender markdown={display_state.description.clone()} transformer={transformer}/>
                     <hr width={"40%"} />
@@ -731,6 +924,16 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                     <h1 class="title">{format!("Editing state - {} ({})", puzzle.display_name, puzzle.short_name)}</h1>
                     <hr width={"40%"} />
                     {state_editor}
+                </>
+            }
+        }
+        ViewPuzzleState::EditingTags => {
+            html! {
+                <>
+                    <Title value={format!("Editing tags of {}", puzzle.display_name)} />
+                    <h1 class="title">{format!("Editing state - {} ({})", puzzle.display_name, puzzle.short_name)}</h1>
+                    <hr width={"40%"} />
+                    {tag_editor}
                 </>
             }
         }

@@ -3,6 +3,7 @@
 use axum::{routing::post, Json, Router};
 use common::{public::puzzle, APIError, APIResult};
 use database::{activity, Connection};
+use tracing::info;
 
 use crate::{login::PrivateCookies, state::BackendState};
 
@@ -239,6 +240,11 @@ async fn edit_puzzle_tags(
             return Json::from(Err(APIError::PermissionDenied));
         }
     };
+
+    info!(
+        "Edit puzzle {}, add tags {:?}, remove tags {:?}",
+        req.puzzle, req.to_add, req.to_remove
+    );
 
     let puzzle = match activity::puzzle::edit_puzzle_tags(
         &mut db,

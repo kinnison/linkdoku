@@ -544,6 +544,7 @@ pub struct Tag {
     pub name: String,
     pub colour: String,
     pub black_text: bool,
+    pub description: String,
 }
 
 #[derive(Insertable)]
@@ -553,6 +554,7 @@ pub struct NewTag<'a> {
     pub name: &'a str,
     pub colour: &'a str,
     pub black_text: bool,
+    pub description: &'a str,
 }
 
 impl Tag {
@@ -567,6 +569,7 @@ impl Tag {
         name: &str,
         colour: &str,
         black_text: bool,
+        description: &str,
     ) -> QueryResult<Self> {
         use crate::schema::tag::dsl;
         let new_uuid = utils::random_uuid("tag");
@@ -576,6 +579,7 @@ impl Tag {
             name,
             colour,
             black_text,
+            description,
         };
 
         diesel::insert_into(dsl::tag)
@@ -584,26 +588,20 @@ impl Tag {
             .await
     }
 
-    pub async fn get_all(
-        conn: &mut AsyncPgConnection,
-        prefix: Option<&str>,
-    ) -> QueryResult<Vec<Self>> {
+    pub async fn get_all(conn: &mut AsyncPgConnection, pattern: &str) -> QueryResult<Vec<Self>> {
         use crate::schema::tag::dsl;
 
-        if let Some(prefix) = prefix {
-            dsl::tag
-                .filter(dsl::name.like(format!("{prefix}%")))
-                .get_results(conn)
-                .await
-        } else {
-            dsl::tag.get_results(conn).await
-        }
+        dsl::tag
+            .filter(dsl::name.ilike(format!("%{pattern}%")))
+            .get_results(conn)
+            .await
     }
 }
 
 #[derive(Insertable)]
 #[diesel(table_name=crate::schema::puzzle_tag)]
 pub struct NewPuzzleTag<'a> {
+    pub uuid: &'a str,
     pub puzzle: &'a str,
     pub tag: &'a str,
 }
@@ -612,8 +610,11 @@ impl Puzzle {
     pub async fn add_tag(&self, conn: &mut AsyncPgConnection, tag: &str) -> QueryResult<()> {
         use crate::schema::puzzle_tag::dsl;
 
+        let new_uuid = utils::uuid("tag", tag, &self.uuid);
+
         diesel::insert_into(dsl::puzzle_tag)
             .values(NewPuzzleTag {
+                uuid: &new_uuid,
                 puzzle: &self.uuid,
                 tag,
             })

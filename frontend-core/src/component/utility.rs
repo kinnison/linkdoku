@@ -132,6 +132,11 @@ pub fn tooltip_component(props: &TooltipProps) -> Html {
         } else {
             None
         },
+        if props.block {
+            Some("is-flex")
+        } else {
+            None
+        }
     };
 
     if props.block {
