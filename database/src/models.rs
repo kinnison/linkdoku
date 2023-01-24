@@ -527,3 +527,66 @@ impl PuzzleState {
             .map(|_| ())
     }
 }
+
+#[derive(Queryable)]
+pub struct Tag {
+    pub uuid: String,
+    pub name: String,
+    pub colour: String,
+    pub black_text: bool,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name=crate::schema::tag)]
+pub struct NewTag<'a> {
+    pub uuid: &'a str,
+    pub name: &'a str,
+    pub colour: &'a str,
+    pub black_text: bool,
+}
+
+impl Tag {
+    pub async fn by_uuid(conn: &mut AsyncPgConnection, uuid: &str) -> QueryResult<Option<Self>> {
+        use crate::schema::tag::dsl;
+
+        dsl::tag.find(uuid).first(conn).await.optional()
+    }
+
+    pub async fn create(
+        conn: &mut AsyncPgConnection,
+        name: &str,
+        colour: &str,
+        black_text: bool,
+    ) -> QueryResult<Self> {
+        use crate::schema::tag::dsl;
+        let new_uuid = utils::random_uuid("tag");
+
+        let newtag = NewTag {
+            uuid: &new_uuid,
+            name,
+            colour,
+            black_text,
+        };
+
+        diesel::insert_into(dsl::tag)
+            .values(newtag)
+            .get_result(conn)
+            .await
+    }
+
+    pub async fn get_all(
+        conn: &mut AsyncPgConnection,
+        prefix: Option<&str>,
+    ) -> QueryResult<Vec<Self>> {
+        use crate::schema::tag::dsl;
+
+        if let Some(prefix) = prefix {
+            dsl::tag
+                .filter(dsl::name.like(format!("{prefix}%")))
+                .get_results(conn)
+                .await
+        } else {
+            dsl::tag.get_results(conn).await
+        }
+    }
+}

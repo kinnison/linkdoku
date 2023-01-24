@@ -7,6 +7,7 @@ use common::{APIError, BadShortNameReason};
 pub mod login;
 pub mod puzzle;
 pub mod role;
+pub mod tag;
 
 pub enum ActivityError {
     PermissionDenied,

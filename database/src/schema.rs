@@ -67,6 +67,8 @@ diesel::table! {
     tag (uuid) {
         uuid -> Varchar,
         name -> Varchar,
+        colour -> Varchar,
+        black_text -> Bool,
     }
 }
 

@@ -87,9 +87,29 @@ async fn get_puzzle(
     )
 }
 
+async fn get_tag(Path(uuid): Path<String>, mut db: Connection) -> Json<APIResult<objects::Tag>> {
+    let tag = match models::Tag::by_uuid(&mut db, &uuid)
+        .await
+        .map_err(|e| APIError::DatabaseError(e.to_string()))
+        .transpose()
+        .unwrap_or(Err(APIError::ObjectNotFound))
+    {
+        Ok(tag) => tag,
+        Err(e) => return Json::from(Err(e)),
+    };
+
+    Json::from(Ok(objects::Tag {
+        uuid: tag.uuid,
+        name: tag.name,
+        colour: tag.colour,
+        black_text: tag.black_text,
+    }))
+}
+
 pub fn public_router() -> Router<BackendState> {
     Router::new()
         .route("/role/by-uuid/:uuid", get(get_role_by_uuid))
         .route("/role/by-name/:uuid", get(get_role_by_name))
         .route("/puzzle/by-uuid/:uuid", get(get_puzzle))
+        .route("/tag/by-uuid/:uuid", get(get_tag))
 }

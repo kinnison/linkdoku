@@ -88,3 +88,14 @@ pub struct Puzzle {
     pub updated_at: String,
     pub states: Vec<PuzzleState>,
 }
+
+/// Tags are present on puzzles and indicate some kind of basic
+/// metadata which a user might care about such as if a puzzle is good
+/// for streaming.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Tag {
+    pub uuid: String,
+    pub name: String,
+    pub colour: String,
+    pub black_text: bool,
+}
