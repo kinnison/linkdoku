@@ -1,4 +1,4 @@
-FROM rust:latest AS builder
+FROM rust:latest AS base-builder
 
 RUN apt update
 RUN apt install -y build-essential libpq-dev libssl-dev
@@ -9,6 +9,8 @@ RUN cargo install wasm-bindgen-cli
 RUN cargo install wasm-opt
 
 RUN mkdir -p /build
+
+FROM base-builder as builder
 
 COPY ./ /build/
 
