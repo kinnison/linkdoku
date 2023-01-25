@@ -217,7 +217,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
     });
 
     let image = match &display_state.data {
-        PuzzleData::FPuzzles(data) => Some(fpuzzles::grid_url(data)),
+        PuzzleData::FPuzzles(data) => Some(fpuzzles::grid_url_png(data)),
         _ => None,
     };
 
@@ -227,6 +227,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             image={image}
             width={512}
             height={512}
+            mimetype={"image/png"}
             url={short_url}
             description={format!("{} by {}", puzzle.display_name, role.display_name)}
         />

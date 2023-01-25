@@ -65,6 +65,13 @@ pub fn grid_url(input: &Value) -> String {
     )
 }
 
+pub fn grid_url_png(input: &Value) -> String {
+    format!(
+        "https://api.sudokupad.com/thumbnail/fpuzzles{}_512x512.png",
+        encode(input)
+    )
+}
+
 pub fn metadata(value: &Value) -> GridMetadata {
     let rows_cols = value
         .get("size")
