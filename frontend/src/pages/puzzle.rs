@@ -1198,7 +1198,6 @@ pub fn create_puzzle_page_render() -> Html {
     }
 
     match user_info {
-        LoginStatus::Unknown => html! {},
         LoginStatus::LoggedOut => {
             toaster.toast(
                 Toast::new("You must be logged in in order to create a puzzle")

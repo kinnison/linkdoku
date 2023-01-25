@@ -51,7 +51,6 @@ fn main_menu_render() -> Html {
     }];
 
     match user_info {
-        LoginStatus::Unknown => {}
         LoginStatus::LoggedOut => {
             blocks.push(html! {
                 <div class={"panel-block"}>

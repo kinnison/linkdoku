@@ -166,7 +166,6 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
 
     let can_edit = match &user_info {
         LoginStatus::LoggedIn { uuid, .. } => raw_role.can_edit(uuid),
-        LoginStatus::Unknown => true, // Let's just assume we can edit if we don't know, that's nicer for everyone.
         LoginStatus::LoggedOut => false, // Definitely cannot edit if we're logged out.
     };
 

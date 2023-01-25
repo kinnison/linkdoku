@@ -16,7 +16,6 @@ use crate::role::Role;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LoginStatus {
-    Unknown,
     LoggedOut,
     LoggedIn {
         uuid: String,
@@ -30,7 +29,6 @@ pub enum LoginStatus {
 impl LoginStatus {
     fn choose_role(&self, role: String) -> Self {
         match self {
-            Self::Unknown => Self::Unknown,
             Self::LoggedOut => Self::LoggedOut,
             Self::LoggedIn {
                 uuid,
@@ -48,9 +46,6 @@ impl LoginStatus {
         }
     }
 
-    pub fn is_unknown(&self) -> bool {
-        matches! {self, Self::Unknown}
-    }
     pub fn is_logged_in(&self) -> bool {
         matches! {self, Self::LoggedIn{..}}
     }
@@ -118,7 +113,6 @@ pub type LoginStatusDispatcher = UseReducerDispatcher<LoginStatus>;
 
 #[function_component(UserProvider)]
 pub fn login_user_provider(props: &UserProviderProps) -> Html {
-    let api = use_apiprovider();
     let base = use_context::<LinkdokuBase>().unwrap();
     let state = use_reducer_eq(|| {
         base.userinfo
@@ -133,45 +127,11 @@ pub fn login_user_provider(props: &UserProviderProps) -> Html {
                     roles: u.roles.clone(),
                 }
             })
-            .unwrap_or(LoginStatus::Unknown)
+            .unwrap_or_else(|| {
+                debug!("Initialising user provider as logged out");
+                LoginStatus::LoggedOut
+            })
     });
-
-    // First time out of the gate, acquire the status
-    use_effect_with_deps(
-        {
-            let dispatcher = state.dispatcher();
-            let current_state = (*state).clone();
-            move |_| {
-                if current_state == LoginStatus::Unknown {
-                    spawn_local(async move {
-                        match api.get_userinfo().await {
-                            Ok(status) => {
-                                if let Some(info) = status.info {
-                                    dispatcher.dispatch(LoginStatusAction::LoggedIn {
-                                        uuid: info.uuid,
-                                        display_name: info.display_name,
-                                        gravatar_hash: info.gravatar_hash,
-                                        roles: info.roles,
-                                        default_role: info.default_role,
-                                    });
-                                } else {
-                                    // Not logged in
-                                    dispatcher.dispatch(LoginStatusAction::LoggedOut);
-                                }
-                            }
-                            Err(e) => {
-                                error!("Woah, API error: {e:?}");
-                                // Nothing for now, next time anything happens, we'll try again to talk to the server.
-                            }
-                        }
-                    });
-                }
-                // No destructor
-                || ()
-            }
-        },
-        (),
-    );
 
     html! {
         <ContextProvider<LoginStatus> context={(*state).clone()}>
@@ -344,7 +304,6 @@ pub fn user_menu_button() -> Html {
     let login_status_dispatch =
         use_context::<LoginStatusDispatcher>().expect("Cannot get login status dispatcher");
     match use_context::<LoginStatus>().expect("Unable to retrieve login status") {
-        LoginStatus::Unknown => html! {},
         LoginStatus::LoggedOut => html! {
             <div class={"navbar-item"}>
                 <div class={"buttons"}>
