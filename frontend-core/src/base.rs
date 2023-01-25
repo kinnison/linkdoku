@@ -10,6 +10,7 @@ pub struct LinkdokuBase {
     pub uri: Rc<AttrValue>,
     pub login: Option<Rc<AttrValue>>,
     pub userinfo: Option<UserInfo>,
+    pub asset_str: AttrValue,
 }
 
 #[derive(Clone, Properties, PartialEq)]
@@ -18,6 +19,7 @@ pub struct BaseURIProviderProps {
     pub login: Option<AttrValue>,
     pub userinfo: Option<UserInfo>,
     pub children: Children,
+    pub linkdoku_svg_asset: Option<AttrValue>,
 }
 
 #[function_component(BaseProvider)]
@@ -25,7 +27,7 @@ pub fn core_base_provider(props: &BaseURIProviderProps) -> Html {
     let fallback = html! {};
     html! {
         <Suspense fallback={fallback}>
-            <BaseProviderInner uri={props.uri.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()}>
+            <BaseProviderInner uri={props.uri.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()} linkdoku_svg_asset={props.linkdoku_svg_asset.clone()}>
                 {for props.children.iter()}
             </BaseProviderInner>
         </Suspense>
@@ -58,10 +60,24 @@ pub fn core_base_provider_inner(props: &BaseURIProviderProps) -> HtmlResult {
         use_prepared_state!(move |_| -> Option<UserInfo> { _raw_userinfo }, ())?
             .and_then(|v| (*v).clone());
 
+    let _raw_asset = props.linkdoku_svg_asset.as_ref().map(|s| s.to_string());
+
+    let prepared_svg_asset = use_prepared_state!(move |_| -> Option<String> { _raw_asset }, ())?
+        .and_then(|v| (*v).clone());
+
+    let asset_str = match prepared_svg_asset {
+        Some(s) => s,
+        None => {
+            // Find the link tag in the head since we're in the browser here
+            todo!()
+        }
+    };
+
     let context = LinkdokuBase {
         uri,
         login: props.login.clone().map(Rc::new),
         userinfo: prepared_userinfo,
+        asset_str: asset_str.into(),
     };
 
     Ok(html! {

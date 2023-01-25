@@ -28,6 +28,7 @@ pub struct ServerAppProps {
     pub login: Option<String>,
     pub userinfo: Option<UserInfo>,
     pub header_writer: StaticWriter,
+    pub linkdoku_svg_asset: AttrValue,
 }
 
 #[function_component(ServerApp)]
@@ -40,7 +41,7 @@ pub fn server_app(props: &ServerAppProps) -> Html {
             <BounceRoot>
                 <HelmetBridge default_title={make_title("A Sudoku puzzle site")} writer={props.header_writer.clone()} />
                 <Router history={history}>
-                    <BaseProvider uri={props.base.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()}>
+                    <BaseProvider uri={props.base.clone()} login={props.login.clone()} userinfo={props.userinfo.clone()} linkdoku_svg_asset={props.linkdoku_svg_asset.clone()}>
                         <Root />
                     </BaseProvider>
                 </Router>

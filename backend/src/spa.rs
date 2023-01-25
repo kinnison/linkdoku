@@ -13,6 +13,7 @@ use bounce::helmet::render_static;
 use common::public::userinfo::UserInfo;
 use database::Connection;
 use include_dir::{include_dir, Dir};
+use tokio::sync::Mutex;
 use tower_cookies::Cookies;
 use tracing::{info, warn};
 use url::Url;
@@ -33,6 +34,27 @@ const MIMETYPES: &[(&str, &str)] = &[
     ("txt", "text/plain"),
     ("wasm", "application/wasm"),
 ];
+
+async fn find_linkdoku_svg() -> String {
+    static SVG_CACHE: Mutex<Option<String>> = Mutex::const_new(None);
+
+    let mut cache = SVG_CACHE.lock().await;
+
+    if let Some(cached) = cache.as_ref() {
+        return cached.clone();
+    }
+
+    for f in SPA_FILES.files() {
+        let fname = f.path().file_name().unwrap().to_string_lossy();
+        if fname.starts_with("linkdoku-") && fname.ends_with(".svg") {
+            let ret = fname.to_string();
+            *cache = Some(ret.clone());
+            return ret;
+        }
+    }
+
+    unreachable!()
+}
 
 async fn serve_file(filename: &str) -> Response {
     if let Some(file) = SPA_FILES.get_file(filename) {
@@ -83,6 +105,8 @@ async fn ssr_render(
 
     let (header_renderer, header_writer) = render_static();
 
+    let linkdoku_svg_asset = find_linkdoku_svg().await;
+
     let body = yew::ServerRenderer::<ServerApp>::with_props({
         let uri = uri.path().to_string();
         let base = base.clone();
@@ -93,6 +117,7 @@ async fn ssr_render(
             login,
             userinfo,
             header_writer,
+            linkdoku_svg_asset: linkdoku_svg_asset.into(),
         }
     })
     .render()

@@ -6,7 +6,7 @@ use wasm_bindgen::JsCast;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::{use_asset_url, use_page_url, Route};
+use crate::{use_asset_url, use_page_url, LinkdokuBase, Route};
 
 git_testament!(VERSION);
 
@@ -166,6 +166,7 @@ pub struct OpenGraphMetaProps {
 
 #[function_component(OpenGraphMeta)]
 pub fn opengraph_meta_render(props: &OpenGraphMetaProps) -> Html {
+    let base = use_context::<LinkdokuBase>().unwrap();
     let title = props
         .title
         .clone()
@@ -174,7 +175,7 @@ pub fn opengraph_meta_render(props: &OpenGraphMetaProps) -> Html {
         .ogtype
         .clone()
         .unwrap_or_else(|| AttrValue::from("website"));
-    let favicon = use_asset_url("linkdoku.svg");
+    let favicon = use_asset_url(&base.asset_str);
     let image = props
         .image
         .clone()
