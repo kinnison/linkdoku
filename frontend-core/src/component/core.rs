@@ -157,6 +157,9 @@ pub struct OpenGraphMetaProps {
     pub title: Option<AttrValue>,
     pub ogtype: Option<AttrValue>,
     pub image: Option<AttrValue>,
+    pub width: Option<usize>,
+    pub height: Option<usize>,
+    pub mimetype: Option<AttrValue>,
     pub url: Option<AttrValue>,
     pub description: AttrValue,
 }
@@ -176,6 +179,12 @@ pub fn opengraph_meta_render(props: &OpenGraphMetaProps) -> Html {
         .image
         .clone()
         .unwrap_or_else(|| AttrValue::from(favicon));
+    let width = format!("{}", props.width.unwrap_or(100));
+    let height = format!("{}", props.height.unwrap_or(100));
+    let mimetype = props
+        .mimetype
+        .clone()
+        .unwrap_or(AttrValue::Static("image/svg+xml"));
     let this_uri = use_page_url();
     let url = props
         .url
@@ -184,11 +193,14 @@ pub fn opengraph_meta_render(props: &OpenGraphMetaProps) -> Html {
     let description = props.description.clone();
     html! {
         <Helmet>
-            <meta property="og:title" value={title} />
-            <meta property="og:type" value={ogtype} />
-            <meta property="og:image" value={image} />
-            <meta property="og:url" value={url} />
-            <meta property="og:description" value={description} />
+            <meta property="og:title" content={title} />
+            <meta property="og:type" content={ogtype} />
+            <meta property="og:image" content={image} />
+            <meta property="og:image:width" content={width} />
+            <meta property="og:image:height" content={height} />
+            <meta property="og:image:type" content={mimetype} />
+            <meta property="og:url" content={url} />
+            <meta property="og:description" content={description} />
         </Helmet>
     }
 }

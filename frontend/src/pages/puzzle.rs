@@ -225,6 +225,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         <OpenGraphMeta
             title={puzzle.display_name.clone()}
             image={image}
+            width={512}
+            height={512}
             url={short_url}
             description={format!("{} by {}", puzzle.display_name, role.display_name)}
         />
