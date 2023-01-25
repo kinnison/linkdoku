@@ -3,12 +3,16 @@
 ///
 pub mod sql_types;
 
+use std::{collections::BTreeMap, sync::Arc};
+
 pub use self::sql_types::Visibility;
 
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use tokio::sync::Mutex;
+use tracing::info;
 
 use crate::utils;
 
@@ -538,7 +542,7 @@ impl PuzzleState {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Clone)]
 pub struct Tag {
     pub uuid: String,
     pub name: String,
@@ -557,8 +561,16 @@ pub struct NewTag<'a> {
     pub description: &'a str,
 }
 
+static TAG_CACHE: Mutex<BTreeMap<String, Arc<Tag>>> = Mutex::const_new(BTreeMap::new());
+static TAG_CACHE_BY_PATTERN: Mutex<BTreeMap<String, Vec<Arc<Tag>>>> =
+    Mutex::const_new(BTreeMap::new());
+
 impl Tag {
     pub async fn by_uuid(conn: &mut AsyncPgConnection, uuid: &str) -> QueryResult<Option<Self>> {
+        if let Some(tag) = TAG_CACHE.lock().await.get(uuid) {
+            info!("Cached tag {uuid} found");
+            return Ok(Some(tag.as_ref().clone()));
+        }
         use crate::schema::tag::dsl;
 
         dsl::tag.find(uuid).first(conn).await.optional()
@@ -591,10 +603,26 @@ impl Tag {
     pub async fn get_all(conn: &mut AsyncPgConnection, pattern: &str) -> QueryResult<Vec<Self>> {
         use crate::schema::tag::dsl;
 
-        dsl::tag
+        if let Some(tags) = TAG_CACHE_BY_PATTERN.lock().await.get(pattern) {
+            info!("Cached tag list for pattern '{pattern}' found");
+            return Ok(tags.iter().map(|t| t.as_ref().clone()).collect());
+        }
+
+        let tags: Vec<Self> = dsl::tag
             .filter(dsl::name.ilike(format!("%{pattern}%")))
             .get_results(conn)
-            .await
+            .await?;
+
+        let mut tcache = TAG_CACHE.lock().await;
+        for tag in &tags {
+            tcache.insert(tag.uuid.clone(), Arc::new(tag.clone()));
+        }
+        TAG_CACHE_BY_PATTERN.lock().await.insert(
+            pattern.to_string(),
+            tags.iter().map(|t| tcache[&t.uuid].clone()).collect(),
+        );
+
+        Ok(tags)
     }
 }
 
