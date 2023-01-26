@@ -557,16 +557,21 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             .filter(|s| s.visibility != Visibility::Restricted)
             .count();
 
+        let state_setter_acting = use_state_eq(|| false);
+
         let set_puzzle_visibility = Callback::from({
             let api = use_apiprovider();
             let puzzle = puzzle.uuid.clone();
             let toaster = toaster.clone();
             let puzzle_data = puzzle_data.clone();
+            let acting = state_setter_acting.setter();
             move |visibility| {
                 let api = api.clone();
                 let puzzle = puzzle.clone();
                 let toaster = toaster.clone();
                 let puzzle_data = puzzle_data.clone();
+                let acting = acting.clone();
+                acting.set(true);
                 spawn_local(async move {
                     match api.set_puzzle_visibility(&puzzle, visibility).await {
                         Ok(_) => {
@@ -588,6 +593,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                             );
                         }
                     }
+                    acting.set(false);
                 });
             }
         });
@@ -598,12 +604,15 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             let state = display_state.uuid.clone();
             let toaster = toaster.clone();
             let puzzle_data = puzzle_data.clone();
+            let acting = state_setter_acting.setter();
             move |visibility| {
                 let api = api.clone();
                 let puzzle = puzzle.clone();
                 let state = state.clone();
                 let toaster = toaster.clone();
                 let puzzle_data = puzzle_data.clone();
+                let acting = acting.clone();
+                acting.set(true);
                 spawn_local(async move {
                     match api
                         .set_puzzle_state_visibility(&puzzle, &state, visibility)
@@ -628,6 +637,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                             );
                         }
                     }
+                    acting.set(false);
                 });
             }
         });
@@ -639,6 +649,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             is_puzzle: bool,
             cb: &Callback<Visibility>,
             visible_states: usize,
+            state_setter_acting: bool,
         ) -> Html {
             let cb = if (has == vis)
                 || (is_puzzle && visible_states == 0)
@@ -681,11 +692,25 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 ret
             };
 
-            let icon_class = if has != vis {
+            let icon_class = if (has != vis) && !state_setter_acting {
                 "has-text-link"
             } else {
                 "has-text-info"
             };
+
+            let icon = if state_setter_acting {
+                SpinnerIcon
+            } else {
+                icon
+            };
+
+            let tip_text = if state_setter_acting {
+                "Please wait, setting visibility…".to_string()
+            } else {
+                tip_text
+            };
+
+            let cb = if state_setter_acting { None } else { cb };
 
             html! {
                 <Tooltip content={tip_text} alignment={TooltipAlignment::Bottom}>
@@ -699,12 +724,12 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         if can_edit {
             html! {
                 <>
-                    {make_button(puzzle.visibility, Visibility::Restricted, PuzzleRestrictedIcon, true, &set_puzzle_visibility, visible_states)}
-                    {make_button(puzzle.visibility, Visibility::Public, PuzzlePublicIcon, true, &set_puzzle_visibility, visible_states)}
-                    {make_button(puzzle.visibility, Visibility::Published, PuzzlePublishedIcon, true, &set_puzzle_visibility, visible_states)}
-                    {make_button(display_state.visibility, Visibility::Restricted, PuzzleStateRestrictedIcon, false, &set_state_visibility, visible_states)}
-                    {make_button(display_state.visibility, Visibility::Public, PuzzleStatePublicIcon, false, &set_state_visibility, visible_states)}
-                    {make_button(display_state.visibility, Visibility::Published, PuzzleStatePublishedIcon, false, &set_state_visibility, visible_states)}
+                    {make_button(puzzle.visibility, Visibility::Restricted, PuzzleRestrictedIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting)}
+                    {make_button(puzzle.visibility, Visibility::Public, PuzzlePublicIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting)}
+                    {make_button(puzzle.visibility, Visibility::Published, PuzzlePublishedIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting)}
+                    {make_button(display_state.visibility, Visibility::Restricted, PuzzleStateRestrictedIcon, false, &set_state_visibility, visible_states, *state_setter_acting)}
+                    {make_button(display_state.visibility, Visibility::Public, PuzzleStatePublicIcon, false, &set_state_visibility, visible_states, *state_setter_acting)}
+                    {make_button(display_state.visibility, Visibility::Published, PuzzleStatePublishedIcon, false, &set_state_visibility, visible_states, *state_setter_acting)}
                 </>
             }
         } else {
