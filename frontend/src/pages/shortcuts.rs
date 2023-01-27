@@ -9,14 +9,7 @@ use crate::pages::{puzzle::FindPuzzleAndRedirect, role::FindRoleAndRedirect};
 #[function_component(ShortcutHandler)]
 pub fn shortcut_handler() -> Html {
     let loc = use_location().unwrap();
-    let path = {
-        let raw_path = loc.path();
-        if let Some(rest) = raw_path.strip_prefix('/') {
-            rest
-        } else {
-            raw_path
-        }
-    };
+    let path = loc.path().trim_start_matches('/').trim_end_matches('/');
 
     if let Some((role, puzzle)) = path.split_once('/') {
         html! {
