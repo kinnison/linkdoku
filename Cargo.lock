@@ -180,6 +180,8 @@ dependencies = [
  "linked-hash-map",
  "md5",
  "openidconnect",
+ "puzzleutils",
+ "reqwest",
  "serde",
  "serde_json",
  "tokio",

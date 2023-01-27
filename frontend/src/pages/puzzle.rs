@@ -13,7 +13,7 @@ use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
 use tracing::info;
-use web_sys::HtmlInputElement;
+use web_sys::{HtmlInputElement, Url};
 use yew::{platform::spawn_local, prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
 use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender, xform::Transformer};
@@ -1273,11 +1273,13 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
             let setter = props.state_change.clone();
             let state = props.state.clone();
             let memory_setter = fpuzzles_memory.setter();
+            let apiprovider = use_apiprovider();
+            let toaster = use_toaster();
             move |()| {
                 let input: HtmlInputElement = input_ref.cast().unwrap();
                 let value = input.value();
                 memory_setter.set(value.clone());
-                let acquired = fpuzzles::extract(value);
+                let acquired = fpuzzles::extract(&value);
                 if let Some(value) = acquired {
                     let mut new_state = state.clone();
                     new_state.data = PuzzleData::FPuzzles(value);
@@ -1285,6 +1287,38 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
                         new_state.description = DEFAULT_FPUZZLES_DESCRIPTION.to_string();
                     }
                     setter.emit(new_state);
+                } else {
+                    // Maybe the user pasted a tinyurl or somesuch, kick off a background task to try
+                    // to resolve it, eg. https://tinyurl.com/e3xu5xb4
+                    let apiprovider = apiprovider.clone();
+                    let toaster = toaster.clone();
+                    if let Ok(url) = Url::new(&value) {
+                        if let Some(slug) = match url.hostname().to_ascii_lowercase().as_str() {
+                            "tinyurl.com" => Some(url.pathname()),
+                            "fpuzzles.com" => url.search_params().get("id"),
+                            _ => None,
+                        } {
+                            let slug = if let Some(rest) = slug.strip_prefix('/') {
+                                rest.to_string()
+                            } else {
+                                slug
+                            };
+                            spawn_local(async move {
+                                match apiprovider.try_expand_tinyurl(slug).await {
+                                    Err(e) => {
+                                        toaster.toast(
+                                            Toast::new(format!("Failed to expand slug: {e}"))
+                                                .with_level(ToastLevel::Warning)
+                                                .with_lifetime(2500),
+                                        );
+                                    }
+                                    Ok(res) => {
+                                        input.set_value(&res.replacement);
+                                    }
+                                }
+                            });
+                        }
+                    }
                 }
             }
         });

@@ -4,7 +4,7 @@
 use std::{hash::Hash, sync::Arc};
 
 use common::{
-    internal::{login, logout, INTERNAL_SEGMENT},
+    internal::{self, login, logout, INTERNAL_SEGMENT},
     objects,
     public::{self, scaffold, userinfo, PUBLIC_SEGMENT},
     APIError, APIResult,
@@ -354,6 +354,15 @@ impl LinkdokuAPI {
         let req = public::tag::list::Request {
             pattern: pattern.into(),
         };
+        self.make_api_call(uri, None, Some(req)).await
+    }
+
+    pub async fn try_expand_tinyurl(
+        &self,
+        slug: impl Into<String>,
+    ) -> APIResult<internal::util::expand_tinyurl::Response> {
+        let uri = self.compute_uri(INTERNAL_SEGMENT, internal::util::expand_tinyurl::URI);
+        let req = internal::util::expand_tinyurl::Request { slug: slug.into() };
         self.make_api_call(uri, None, Some(req)).await
     }
 }
