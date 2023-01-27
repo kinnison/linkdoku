@@ -16,7 +16,6 @@ use common::{
 use git_testament::git_testament;
 use puzzleutils::fpuzzles;
 use reqwest::{header::LOCATION, redirect::Policy, Client};
-use tracing::info;
 
 use crate::{login::PrivateCookies, state::BackendState};
 
