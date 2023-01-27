@@ -38,13 +38,7 @@ fn role_widget_inner(props: &RoleProps) -> HtmlResult {
                 <span class="is-danger">{e.to_string()}</span>
             }
         }
-        Ok(v) if v.is_none() => {
-            html! {
-                <span>{props.uuid.clone()}</span>
-            }
-        }
         Ok(role) => {
-            let role = role.as_ref().as_ref().unwrap();
             html! {
                 <span>{role.display_name.clone()}</span>
             }

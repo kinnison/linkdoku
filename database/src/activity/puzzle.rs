@@ -254,7 +254,7 @@ pub async fn set_visibility(
                     return Err(ActivityError::PermissionDenied);
                 }
 
-                puzzle.set_visibility(txn, visibility.into()).await?;
+                let puzzle = puzzle.set_visibility(txn, visibility.into()).await?;
 
                 Ok(puzzle)
             })

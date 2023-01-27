@@ -109,19 +109,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 <Redirect<Route> to={Route::Home} />
             });
         }
-        Ok(puzzle) => {
-            if let Some(puzzle) = puzzle.get() {
-                puzzle
-            } else {
-                toaster.toast(
-                    Toast::new(format!("Puzzle not found: {}", props.puzzle))
-                        .with_level(ToastLevel::Warning),
-                );
-                return Ok(html! {
-                    <Redirect<Route> to={Route::Home} />
-                });
-            }
-        }
+        Ok(puzzle) => puzzle,
     };
 
     let role_data = use_cached_value::<objects::Role>(puzzle.owner.clone().into())?;
@@ -135,19 +123,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 <Redirect<Route> to={Route::Home} />
             });
         }
-        Ok(role) => {
-            if let Some(role) = role.get() {
-                role
-            } else {
-                toaster.toast(
-                    Toast::new(format!("Owing role not found: {}", puzzle.owner))
-                        .with_level(ToastLevel::Warning),
-                );
-                return Ok(html! {
-                    <Redirect<Route> to={Route::Home} />
-                });
-            }
-        }
+        Ok(role) => role,
     };
 
     let can_edit = match user_info {
@@ -316,18 +292,10 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 let view_state = view_state.clone();
                 button.set(false);
                 spawn_local(async move {
-                    match api.update_puzzle_metadata(uuid, sn, dn).await {
-                        Ok(_) => {
+                    match api.update_puzzle_metadata(&uuid, sn, dn).await {
+                        Ok(puzz) => {
                             // Puzzle successfully updated, so refresh the local cache
-                            if let Err(e) = puzzle_data.refresh().await {
-                                toaster.toast(
-                                    Toast::new(format!(
-                                        "Updated puzzle, but failed to refresh cache: {e}"
-                                    ))
-                                    .with_level(ToastLevel::Warning)
-                                    .with_lifetime(2500),
-                                );
-                            }
+                            puzzle_data.refresh(&uuid, puzz);
                             view_state.set(ViewPuzzleState::Viewing);
                         }
                         Err(e) => {
@@ -428,16 +396,10 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                     } else {
                         api.update_puzzle_state(&puzzle, &state).await
                     } {
-                        Ok(_) => {
-                            if let Err(e) = puzzle_data.refresh().await {
-                                toaster.toast(
-                                    Toast::new(format!(
-                                        "State saved, but failed to refresh cache: {e}"
-                                    ))
-                                    .with_level(ToastLevel::Warning)
-                                    .with_lifetime(2500),
-                                );
-                            }
+                        Ok(puzz) => {
+                            // Puzzle successfully updated, so refresh the local cache
+                            puzzle_data.refresh(&puzzle, puzz);
+
                             view_state.set(ViewPuzzleState::Viewing);
                         }
                         Err(e) => {
@@ -574,16 +536,9 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 acting.set(true);
                 spawn_local(async move {
                     match api.set_puzzle_visibility(&puzzle, visibility).await {
-                        Ok(_) => {
-                            if let Err(e) = puzzle_data.refresh().await {
-                                toaster.toast(
-                                    Toast::new(format!(
-                                        "State saved, but failed to refresh cache: {e}"
-                                    ))
-                                    .with_level(ToastLevel::Warning)
-                                    .with_lifetime(2500),
-                                );
-                            }
+                        Ok(puzz) => {
+                            info!("Hmm, puzzle visibility is now {:?}", puzz.visibility);
+                            puzzle_data.refresh(&puzzle, puzz);
                         }
                         Err(e) => {
                             toaster.toast(
@@ -618,16 +573,8 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                         .set_puzzle_state_visibility(&puzzle, &state, visibility)
                         .await
                     {
-                        Ok(_) => {
-                            if let Err(e) = puzzle_data.refresh().await {
-                                toaster.toast(
-                                    Toast::new(format!(
-                                        "State saved, but failed to refresh cache: {e}"
-                                    ))
-                                    .with_level(ToastLevel::Warning)
-                                    .with_lifetime(2500),
-                                );
-                            }
+                        Ok(puzz) => {
+                            puzzle_data.refresh(&puzzle, puzz);
                         }
                         Err(e) => {
                             toaster.toast(
@@ -853,15 +800,12 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 let button_setter = button_setter.clone();
                 button_setter.set(false);
                 spawn_local(async move {
-                    match api.edit_puzzle_tags(puzzle_uuid, &to_add, &to_remove).await {
-                        Ok(_) => {
-                            if let Err(e) = puzzle_data.refresh().await {
-                                toaster.toast(
-                                    Toast::new(format!("Unable to read new puzzle data: {e}"))
-                                        .with_level(ToastLevel::Warning)
-                                        .with_lifetime(2500),
-                                );
-                            }
+                    match api
+                        .edit_puzzle_tags(&puzzle_uuid, &to_add, &to_remove)
+                        .await
+                    {
+                        Ok(puzz) => {
+                            puzzle_data.refresh(&puzzle_uuid, puzz);
                             state_setter.set(ViewPuzzleState::Viewing);
                         }
                         Err(e) => {

@@ -103,12 +103,7 @@ fn puzzle_list_entry_inner(props: &PuzzleListEntryProps) -> HtmlResult {
                 {format!("Unknown puzzle: {}", props.puzzle)}
             })
         }
-        Ok(r) if r.is_none() => {
-            return Ok(html! {
-                {format!("Puzzle not found: {}", props.puzzle)}
-            })
-        }
-        Ok(r) => r.as_ref().as_ref().unwrap(),
+        Ok(r) => r,
     };
     let icon = match puzzle.visibility {
         Visibility::Restricted => PuzzleRestrictedIcon,

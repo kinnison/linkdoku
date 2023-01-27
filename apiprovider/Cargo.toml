@@ -14,8 +14,11 @@ common = { path = "../common" }
 url = "2.3.1"
 gloo = "0.8.0"
 serde = { version = "1.0.151", features = ["derive"] }
-bounce = { version = "0.6", features = ["query"] }
+serde_json = "1"
+bounce = { version = "0.6" }
 tracing = { version = "0.1.37", features = ["log"] }
+state = "0.5"
+
 
 [features]
 ssr = ["yew/ssr", "bounce/ssr"]

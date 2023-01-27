@@ -50,19 +50,7 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
                 <Redirect<Route> to={Route::Home} />
             });
         }
-        Ok(role) => {
-            if let Some(role) = role.get() {
-                role
-            } else {
-                toaster.toast(
-                    Toast::new(format!("Role not found: {}", props.role))
-                        .with_level(ToastLevel::Warning),
-                );
-                return Ok(html! {
-                    <Redirect<Route> to={Route::Home} />
-                });
-            }
-        }
+        Ok(role) => role,
     };
 
     let can_edit = match &user_info {
@@ -149,19 +137,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                 <Redirect<Route> to={Route::Home} />
             });
         }
-        Ok(role) => {
-            if let Some(role) = role.get() {
-                role
-            } else {
-                toaster.toast(
-                    Toast::new(format!("Role not found: {}", props.role))
-                        .with_level(ToastLevel::Warning),
-                );
-                return Ok(html! {
-                    <Redirect<Route> to={Route::Home} />
-                });
-            }
-        }
+        Ok(role) => role,
     };
 
     let can_edit = match &user_info {
@@ -253,10 +229,11 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
             let cached_role = cached_role.clone();
             spawn_local(async move {
                 match api
-                    .update_role(uuid, short_name, display_name, description)
+                    .update_role(&uuid, short_name, display_name, description)
                     .await
                 {
-                    Ok(_) => {
+                    Ok(role) => {
+                        cached_role.refresh(&uuid, role);
                         // We successfully saved
                         toaster.toast(
                             Toast::new("Successfully saved")
@@ -272,13 +249,6 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                         );
                     }
                 };
-                if let Err(e) = cached_role.refresh().await {
-                    toaster.toast(
-                        Toast::new(format!("Unable to refresh role cache: {e}"))
-                            .with_level(ToastLevel::Warning)
-                            .with_lifetime(5000),
-                    );
-                }
                 button_setter.set(true);
             });
         }
@@ -355,19 +325,7 @@ fn find_role_and_redirect_inner(props: &FindRoleAndRedirectProps) -> HtmlResult 
                 <Redirect<Route> to={Route::Home} />
             });
         }
-        Ok(role) => {
-            if let Some(role) = role.get() {
-                role
-            } else {
-                toaster.toast(
-                    Toast::new(format!("Role not found: {}", props.name))
-                        .with_level(ToastLevel::Warning),
-                );
-                return Ok(html! {
-                    <Redirect<Route> to={Route::Home} />
-                });
-            }
-        }
+        Ok(role) => role,
     };
 
     // We now "sub-render" as though our role route was here

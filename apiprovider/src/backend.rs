@@ -1,13 +1,16 @@
 //! This is the fetcher for stuff which varies based on if it's SSR or CSR
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use reqwest::Client;
 use yew::prelude::*;
 
-#[derive(Debug, Clone)]
+use crate::ObjectCache;
+
+#[derive(Clone)]
 pub(crate) struct APIContents {
     pub(crate) client: Arc<Client>,
+    pub(crate) cache: Rc<ObjectCache>,
 }
 
 impl PartialEq for APIContents {
@@ -29,6 +32,7 @@ pub fn core_client_provider(props: &APIProviderProps) -> Html {
                 .build()
                 .expect("Unable to construct client"),
         ),
+        cache: Rc::new(ObjectCache::new()),
     });
 
     html! {

@@ -35,14 +35,8 @@ fn tag_inner_render(props: &TagProps) -> HtmlResult {
             black_text: true,
             description: format!("Unable to retrieve tag: {e}"),
         },
-        Ok(v) if v.is_none() => objects::Tag {
-            uuid: "".to_string(),
-            name: format!("unknown:{}", props.tag),
-            colour: "#f5f5f5".to_string(),
-            black_text: true,
-            description: format!("Unknown tag with UUID {}", props.tag),
-        },
-        Ok(v) => v.as_ref().as_ref().unwrap().clone(),
+
+        Ok(v) => v.clone(),
     };
 
     // We have a tag, we need to split it into prefix and body, and prepare colours

@@ -1,7 +1,7 @@
 //! Role APIs such as updating/creating them
 
 use axum::{routing::post, Json, Router};
-use common::{clean_short_name, public, APIError, APIResult, BadShortNameReason};
+use common::{clean_short_name, objects, public, APIError, APIResult, BadShortNameReason};
 use database::{
     activity::{self},
     models, Connection,
@@ -46,6 +46,13 @@ async fn update_role(
     activity::role::update(&mut db, user, &role)
         .await
         .map_err(|e| e.into())
+        .map(|_| objects::Role {
+            uuid: role.uuid,
+            owner: role.owner,
+            short_name: role.short_name,
+            display_name: role.display_name,
+            description: role.description,
+        })
         .into()
 }
 

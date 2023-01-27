@@ -3,6 +3,7 @@
 //! You can retrieve role information via the objects API though
 
 pub mod update {
+    use crate::objects;
     use serde::{Deserialize, Serialize};
 
     pub const URI: &str = "/role/update";
@@ -15,7 +16,7 @@ pub mod update {
         pub description: String,
     }
 
-    pub type Response = ();
+    pub type Response = objects::Role;
 }
 
 pub mod puzzles {
