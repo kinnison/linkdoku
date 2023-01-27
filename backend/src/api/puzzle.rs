@@ -1,7 +1,7 @@
 //! Puzzle APIs
 
 use axum::{routing::post, Json, Router};
-use common::{public::puzzle, APIError, APIResult};
+use common::{clean_short_name, public::puzzle, APIError, APIResult};
 use database::{activity, Connection};
 use tracing::info;
 
@@ -29,11 +29,16 @@ async fn create_puzzle(
     // the initial data because we're creating it now, but the description and the data will be
     // honoured.
 
+    let short_name = match clean_short_name(&req.short_name, false) {
+        Ok(s) => s,
+        Err(e) => return Json::from(Err(APIError::BadShortName(e))),
+    };
+
     let puzz = match activity::puzzle::create(
         &mut db,
         &logged_in.identity().uuid,
         &req.owner,
-        &req.short_name,
+        &short_name,
         &req.display_name,
         &req.initial_state,
     )
@@ -79,11 +84,16 @@ async fn update_puzzle_metadata(
         }
     };
 
+    let short_name = match clean_short_name(&req.short_name, false) {
+        Ok(s) => s,
+        Err(e) => return Json::from(Err(APIError::BadShortName(e))),
+    };
+
     let puzzle = match activity::puzzle::update_metadata(
         &mut db,
         &logged_in.identity().uuid,
         &req.puzzle,
-        &req.short_name,
+        &short_name,
         &req.display_name,
     )
     .await
