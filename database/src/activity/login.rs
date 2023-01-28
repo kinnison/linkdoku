@@ -10,6 +10,7 @@ use crate::models;
 /// Log into linkdoku.  This is called at the end of a successful openid-connect cycle and provides
 /// the caller with a database backed Identity etc.
 /// The check/create is done in a transation, if any of that fails, you'll get an error back
+#[tracing::instrument(skip_all)]
 pub async fn login_upsert(
     conn: &mut AsyncPgConnection,
     oidc_handle: &str,

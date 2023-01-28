@@ -19,6 +19,7 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
+#[tracing::instrument(skip(db_url))]
 pub fn apply_migrations_sync(db_url: &str) -> diesel::migration::Result<()> {
     use diesel::{Connection, PgConnection};
     let mut conn = PgConnection::establish(db_url)?;

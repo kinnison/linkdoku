@@ -6,6 +6,7 @@ use crate::models;
 
 use super::{ActivityError, ActivityResult};
 
+#[tracing::instrument(skip_all)]
 pub async fn update(
     conn: &mut AsyncPgConnection,
     actor: &str,

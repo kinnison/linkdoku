@@ -12,6 +12,7 @@ use crate::{
 
 use super::{ActivityError, ActivityResult};
 
+#[tracing::instrument(skip_all)]
 pub async fn create(
     conn: &mut AsyncPgConnection,
     actor: &str,
@@ -61,6 +62,7 @@ pub async fn create(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn into_api_object(
     conn: &mut AsyncPgConnection,
     actor: Option<&str>,
@@ -109,6 +111,7 @@ pub async fn into_api_object(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn lookup(
     conn: &mut AsyncPgConnection,
     role: &str,
@@ -135,6 +138,7 @@ pub async fn lookup(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_metadata(
     conn: &mut AsyncPgConnection,
     user: &str,
@@ -162,6 +166,7 @@ pub async fn update_metadata(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn update_state(
     conn: &mut AsyncPgConnection,
     user: &str,
@@ -203,6 +208,7 @@ pub async fn update_state(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn add_state(
     conn: &mut AsyncPgConnection,
     user: &str,
@@ -236,6 +242,7 @@ pub async fn add_state(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn set_visibility(
     conn: &mut crate::Connection,
     user: &str,
@@ -262,6 +269,7 @@ pub async fn set_visibility(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn set_state_visibility(
     conn: &mut crate::Connection,
     user: &str,
@@ -298,6 +306,7 @@ pub async fn set_state_visibility(
         .await
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn edit_puzzle_tags(
     conn: &mut AsyncPgConnection,
     user: &str,

@@ -27,6 +27,8 @@ pub struct Configuration {
     pub base_url: Url,
     pub redirect_url: String,
     pub cookie_secret: String,
+    pub sentry_dsn: Option<String>,
+    pub sentry_env: Option<String>,
     pub openid: LinkedHashMap<String, OpenIDProvider>,
 }
 
@@ -60,6 +62,18 @@ impl Configuration {
         info!("Listen on {}", self.port);
         info!("Base URL is {}", self.base_url);
         info!("Connect to database on {}", self.safe_database_url());
+        info!(
+            "Sentry DSN is {}",
+            if self.sentry_dsn.is_some() {
+                "SET"
+            } else {
+                "UNSET"
+            }
+        );
+        info!(
+            "Sentry Environment: {}",
+            self.sentry_env.as_deref().unwrap_or("DEFAULT")
+        );
         info!("OpenID connect return url: {}", self.redirect_url);
         info!(
             "Cookie secret key: {}",

@@ -2,15 +2,20 @@
 //!
 //!
 
+use std::convert::identity;
+
 use axum::Router;
 use clap::Parser;
-use git_testament::git_testament;
+use git_testament::{git_testament, render_testament};
+use sentry::{integrations::tower::*, IntoDsn};
+use tower::ServiceBuilder;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
     LatencyUnit,
 };
 use tracing::{info, Level};
+use tracing_subscriber::{prelude::*, EnvFilter};
 
 use crate::state::BackendState;
 
@@ -25,15 +30,25 @@ git_testament!(VERSION);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    let filter_layer = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new("info"))
+        .unwrap();
+
     // Detect if we're running inside the scaleway cloud, if so, we want a simpler logging format
-    if std::env::var("SCW_PUBLIC_KEY").is_ok() {
-        tracing_subscriber::fmt()
+    let fmt_layer = if std::env::var("SCW_PUBLIC_KEY").is_ok() {
+        tracing_subscriber::fmt::layer()
             .without_time()
             .with_ansi(false)
-            .init();
+            .boxed()
     } else {
-        tracing_subscriber::fmt::init();
-    }
+        tracing_subscriber::fmt::layer().boxed()
+    };
+
+    tracing_subscriber::Registry::default()
+        .with(filter_layer)
+        .with(fmt_layer)
+        .with(sentry::integrations::tracing::layer())
+        .init();
 
     info!("Starting up Linkdoku {VERSION}");
 
@@ -53,6 +68,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     let config = config::load_configuration(&cli).expect("Unable to load configuration");
     config.show();
 
+    let _guard = sentry::init(sentry::ClientOptions {
+        dsn: config
+            .sentry_dsn
+            .as_deref()
+            .map(IntoDsn::into_dsn)
+            .and_then(Result::ok)
+            .and_then(identity),
+        release: Some(VERSION.commit.to_string().into()),
+        traces_sample_rate: 1.0,
+        environment: config.sentry_env.clone().map(|s| s.into()),
+        ..Default::default()
+    });
+
     // Request migrations
     info!("Applying pending database migrations...");
     database::apply_migrations_sync(config.database_url.as_str())?;
@@ -69,6 +97,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
         .nest("/api", api::router())
         .fallback(spa::spa_handler)
         .layer(CookieManagerLayer::new())
+        .layer({
+            ServiceBuilder::new()
+                .layer(NewSentryLayer::new_from_top())
+                .layer(SentryHttpLayer::with_transaction())
+        })
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

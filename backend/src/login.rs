@@ -59,6 +59,7 @@ impl std::ops::Deref for Providers {
     }
 }
 
+#[tracing::instrument(skip(config))]
 pub async fn load_providers(
     config: &Configuration,
 ) -> Result<Providers, Box<dyn Error + Send + Sync + 'static>> {

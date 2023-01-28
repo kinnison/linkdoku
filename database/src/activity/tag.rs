@@ -8,6 +8,7 @@ use crate::models;
 
 use super::ActivityResult;
 
+#[tracing::instrument(skip_all)]
 pub async fn list(
     conn: &mut AsyncPgConnection,
     pattern: &str,

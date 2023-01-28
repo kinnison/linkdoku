@@ -48,6 +48,7 @@ impl Identity {
     ///
     /// If there was no identity with the given handle, we return Ok(None)
     /// to signal that nothing went wrong, but there was no such identity.
+    #[tracing::instrument(skip_all, name = "Identity::from_handle")]
     pub async fn from_handle(
         conn: &mut AsyncPgConnection,
         handle: &str,
@@ -63,6 +64,7 @@ impl Identity {
     /// Retrieve an identity from the database with the given UUID
     ///
     /// If there was no identity with the given handle, you get Ok(None)
+    #[tracing::instrument(skip_all, name = "Identity::from_uuid")]
     pub async fn from_uuid(conn: &mut AsyncPgConnection, uuid: &str) -> QueryResult<Option<Self>> {
         use crate::schema::identity::dsl;
         dsl::identity
@@ -74,6 +76,7 @@ impl Identity {
 
     /// Create an identity, inserting it into the database, will error if the
     /// given OIDC handle already exists
+    #[tracing::instrument(skip_all, name = "Identity::create")]
     pub async fn create(
         conn: &mut AsyncPgConnection,
         oidc_handle: &str,
@@ -95,6 +98,7 @@ impl Identity {
     }
 
     /// Update this identity with new data
+    #[tracing::instrument(skip_all, name = "Identity::update")]
     pub async fn update(
         &self,
         conn: &mut AsyncPgConnection,
@@ -112,6 +116,7 @@ impl Identity {
     }
 
     /// Retrieve the roles for this identity
+    #[tracing::instrument(skip_all, name = "Identity::roles")]
     pub async fn roles(&self, conn: &mut AsyncPgConnection) -> QueryResult<Vec<Role>> {
         Role::by_owner(conn, &self.uuid).await
     }
@@ -138,6 +143,7 @@ pub struct NewRole<'a> {
 
 impl Role {
     /// Retrieve a role by uuid
+    #[tracing::instrument(skip_all, name = "Role::by_uuid")]
     pub async fn by_uuid(
         conn: &mut AsyncPgConnection,
         role_uuid: &str,
@@ -147,6 +153,7 @@ impl Role {
     }
 
     /// Retrieve a role by short name
+    #[tracing::instrument(skip_all, name = "Role::by_short_name")]
     pub async fn by_short_name(
         conn: &mut AsyncPgConnection,
         role_name: &str,
@@ -159,6 +166,7 @@ impl Role {
     }
 
     /// Retrieve roles owned by a given identity
+    #[tracing::instrument(skip_all, name = "Role::by_owner")]
     pub async fn by_owner(
         conn: &mut AsyncPgConnection,
         owner_uuid: &str,
@@ -168,6 +176,7 @@ impl Role {
     }
 
     /// Create a new role
+    #[tracing::instrument(skip_all, name = "Role::create")]
     pub async fn create(
         conn: &mut AsyncPgConnection,
         uuid: &str,
@@ -192,6 +201,7 @@ impl Role {
 
     /// Are we permitted to edit this role?
     ///
+    #[tracing::instrument(skip_all, name = "Role::can_modify")]
     pub async fn can_modify(
         &self,
         _conn: &mut AsyncPgConnection,
@@ -202,6 +212,7 @@ impl Role {
     }
 
     /// Save this role
+    #[tracing::instrument(skip_all, name = "Role::save")]
     pub async fn save(&self, conn: &mut AsyncPgConnection) -> QueryResult<()> {
         use crate::schema::role;
         diesel::update(role::table)
@@ -218,6 +229,7 @@ impl Role {
     }
 
     /// Retrieve the puzzles which are published to this role
+    #[tracing::instrument(skip_all, name = "Role::visible_puzzles")]
     pub async fn visible_puzzles(
         &self,
         conn: &mut AsyncPgConnection,
@@ -249,6 +261,7 @@ impl Role {
 
     /// This role's short name is available if either no other role has it,
     /// or the name is unchanged.
+    #[tracing::instrument(skip_all, name = "Role::short_name_available")]
     pub async fn short_name_available(&self, conn: &mut AsyncPgConnection) -> QueryResult<bool> {
         use crate::schema::role::dsl::*;
         let count: i64 = role
@@ -285,6 +298,7 @@ pub struct NewPuzzle<'a> {
 }
 
 impl Puzzle {
+    #[tracing::instrument(skip_all, name = "Puzzle::by_uuid")]
     pub async fn by_uuid(
         conn: &mut AsyncPgConnection,
         puzzle_uuid: &str,
@@ -297,6 +311,7 @@ impl Puzzle {
             .optional()
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::by_short_name")]
     pub async fn by_short_name(
         conn: &mut AsyncPgConnection,
         owning_role: &str,
@@ -310,6 +325,7 @@ impl Puzzle {
             .optional()
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::create")]
     pub async fn create(
         conn: &mut AsyncPgConnection,
         uuid: &str,
@@ -334,6 +350,7 @@ impl Puzzle {
             .await
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::can_be_seen")]
     pub async fn can_be_seen(
         &self,
         conn: &mut AsyncPgConnection,
@@ -352,6 +369,7 @@ impl Puzzle {
         }
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::update_metadata")]
     pub async fn update_metadata(
         &self,
         conn: &mut AsyncPgConnection,
@@ -368,6 +386,7 @@ impl Puzzle {
             .await
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::can_edit")]
     pub async fn can_edit(&self, conn: &mut AsyncPgConnection, user: &str) -> QueryResult<bool> {
         // We're permitted to edit this puzzle *iff* the given user has access to the owning role
         let user = match Identity::from_uuid(conn, user).await? {
@@ -387,6 +406,7 @@ impl Puzzle {
         }
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::set_visibility")]
     pub async fn set_visibility(
         &self,
         conn: &mut AsyncPgConnection,
@@ -402,6 +422,7 @@ impl Puzzle {
             .await
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::get_tags")]
     pub async fn get_tags(&self, conn: &mut AsyncPgConnection) -> QueryResult<Vec<String>> {
         use crate::schema::puzzle_tag::dsl;
 
@@ -436,6 +457,7 @@ pub struct NewPuzzleState<'a> {
 }
 
 impl Puzzle {
+    #[tracing::instrument(skip_all, name = "Puzzle::all_states")]
     pub async fn all_states(&self, conn: &mut AsyncPgConnection) -> QueryResult<Vec<PuzzleState>> {
         use crate::schema::puzzle_state::dsl::*;
         puzzle_state
@@ -445,6 +467,7 @@ impl Puzzle {
             .await
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::add_state")]
     pub async fn add_state(
         &self,
         conn: &mut AsyncPgConnection,
@@ -470,6 +493,7 @@ impl Puzzle {
 }
 
 impl PuzzleState {
+    #[tracing::instrument(skip_all, name = "PuzzleState::can_be_seen")]
     pub async fn can_be_seen(
         &self,
         conn: &mut AsyncPgConnection,
@@ -493,6 +517,7 @@ impl PuzzleState {
         }
     }
 
+    #[tracing::instrument(skip_all, name = "PuzzleState::by_uuid")]
     pub async fn by_uuid(conn: &mut AsyncPgConnection, uuid: &str) -> QueryResult<Option<Self>> {
         use crate::schema::puzzle_state::dsl;
 
@@ -503,6 +528,7 @@ impl PuzzleState {
             .optional()
     }
 
+    #[tracing::instrument(skip_all, name = "PuzzleState::update")]
     pub async fn update(
         &self,
         conn: &mut AsyncPgConnection,
@@ -523,6 +549,7 @@ impl PuzzleState {
             .map(|_| ())
     }
 
+    #[tracing::instrument(skip_all, name = "PuzzleState::set_visibility")]
     pub async fn set_visibility(
         &self,
         conn: &mut AsyncPgConnection,
@@ -566,6 +593,7 @@ static TAG_CACHE_BY_PATTERN: Mutex<BTreeMap<String, Vec<Arc<Tag>>>> =
     Mutex::const_new(BTreeMap::new());
 
 impl Tag {
+    #[tracing::instrument(skip_all, name = "Tag::by_uuid")]
     pub async fn by_uuid(conn: &mut AsyncPgConnection, uuid: &str) -> QueryResult<Option<Self>> {
         if let Some(tag) = TAG_CACHE.lock().await.get(uuid) {
             info!("Cached tag {uuid} found");
@@ -576,6 +604,7 @@ impl Tag {
         dsl::tag.find(uuid).first(conn).await.optional()
     }
 
+    #[tracing::instrument(skip_all, name = "Tag::create")]
     pub async fn create(
         conn: &mut AsyncPgConnection,
         name: &str,
@@ -600,6 +629,7 @@ impl Tag {
             .await
     }
 
+    #[tracing::instrument(skip_all, name = "Tag::get_all")]
     pub async fn get_all(conn: &mut AsyncPgConnection, pattern: &str) -> QueryResult<Vec<Self>> {
         use crate::schema::tag::dsl;
 
@@ -635,6 +665,7 @@ pub struct NewPuzzleTag<'a> {
 }
 
 impl Puzzle {
+    #[tracing::instrument(skip_all, name = "Puzzle::add_tag")]
     pub async fn add_tag(&self, conn: &mut AsyncPgConnection, tag: &str) -> QueryResult<()> {
         use crate::schema::puzzle_tag::dsl;
 
@@ -651,6 +682,7 @@ impl Puzzle {
             .map(|_| ())
     }
 
+    #[tracing::instrument(skip_all, name = "Puzzle::remove_tag")]
     pub async fn remove_tag(&self, conn: &mut AsyncPgConnection, tag: &str) -> QueryResult<()> {
         use crate::schema::puzzle_tag::dsl;
 

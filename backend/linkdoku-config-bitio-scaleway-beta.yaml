@@ -22,6 +22,10 @@ redirect_url: "https://beta.linkdoku.net/-/complete-login"
 # Database URL for bit-io's beta database
 database_url: "posgres://linkdoku-beta"
 
+# Sentry configuration
+# sentry_dsn: ... provide via environment
+sentry_env: beta
+
 openid:
   google:
     icon: mdi-google

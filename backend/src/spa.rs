@@ -56,6 +56,7 @@ async fn find_linkdoku_svg() -> String {
     unreachable!()
 }
 
+#[tracing::instrument]
 async fn serve_file(filename: &str) -> Response {
     if let Some(file) = SPA_FILES.get_file(filename) {
         // Okay, we have the file, let's handle returning this asset
@@ -79,6 +80,7 @@ async fn serve_file(filename: &str) -> Response {
     }
 }
 
+#[tracing::instrument(skip(base, login))]
 async fn ssr_render(
     uri: Uri,
     query: HashMap<String, String>,
