@@ -336,11 +336,13 @@ impl LinkdokuAPI {
         &self,
         puzzle: impl Into<String>,
         visibility: objects::Visibility,
+        in_view_state: Option<impl Into<String>>,
     ) -> APIResult<public::puzzle::set_visibility::Response> {
         let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::set_visibility::URI);
         let req = public::puzzle::set_visibility::Request {
             puzzle: puzzle.into(),
             visibility,
+            in_view_state: in_view_state.map(Into::into),
         };
         self.make_api_call(uri, None, Some(req)).await
     }

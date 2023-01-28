@@ -248,6 +248,7 @@ pub async fn set_visibility(
     user: &str,
     puzzle: &str,
     visibility: objects::Visibility,
+    in_view_state: Option<&str>,
 ) -> ActivityResult<models::Puzzle> {
     conn.build_transaction()
         .run(|txn| {
@@ -259,6 +260,28 @@ pub async fn set_visibility(
 
                 if !puzzle.can_edit(txn, user).await? {
                     return Err(ActivityError::PermissionDenied);
+                }
+
+                if matches!(puzzle.visibility, Visibility::Restricted)
+                    && !matches!(visibility, common::objects::Visibility::Restricted)
+                {
+                    // We're derestricting the puzzle, so we should ensure there's at least one
+                    // visible state
+                    let states = puzzle.all_states(txn).await?;
+                    if states
+                        .iter()
+                        .filter(|s| !matches!(s.visibility, Visibility::Restricted))
+                        .count()
+                        == 0
+                    {
+                        if let Some(state) =
+                            in_view_state.and_then(|s| states.iter().find(|state| state.uuid == s))
+                        {
+                            state.set_visibility(txn, visibility.into()).await?;
+                        } else {
+                            return Err(ActivityError::InvalidInput);
+                        }
+                    }
                 }
 
                 let puzzle = puzzle.set_visibility(txn, visibility.into()).await?;

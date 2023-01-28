@@ -527,15 +527,20 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             let toaster = toaster.clone();
             let puzzle_data = puzzle_data.clone();
             let acting = state_setter_acting.setter();
+            let state = display_state.uuid.clone();
             move |visibility| {
                 let api = api.clone();
                 let puzzle = puzzle.clone();
                 let toaster = toaster.clone();
                 let puzzle_data = puzzle_data.clone();
                 let acting = acting.clone();
+                let state = state.clone();
                 acting.set(true);
                 spawn_local(async move {
-                    match api.set_puzzle_visibility(&puzzle, visibility).await {
+                    match api
+                        .set_puzzle_visibility(&puzzle, visibility, Some(state))
+                        .await
+                    {
                         Ok(puzz) => {
                             info!("Hmm, puzzle visibility is now {:?}", puzz.visibility);
                             puzzle_data.refresh(&puzzle, puzz);
@@ -599,7 +604,6 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             state_setter_acting: bool,
         ) -> Html {
             let cb = if (has == vis)
-                || (is_puzzle && visible_states == 0)
                 || (!is_puzzle && visible_states == 1 && vis == Visibility::Restricted)
             {
                 None

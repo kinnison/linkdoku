@@ -191,6 +191,7 @@ async fn set_puzzle_visibility(
         &logged_in.identity().uuid,
         &req.puzzle,
         req.visibility,
+        req.in_view_state.as_deref(),
     )
     .await
     {

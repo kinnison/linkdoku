@@ -92,6 +92,7 @@ pub mod set_visibility {
     pub struct Request {
         pub puzzle: String,
         pub visibility: objects::Visibility,
+        pub in_view_state: Option<String>,
     }
 
     pub type Response = objects::Puzzle;
