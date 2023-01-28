@@ -6,7 +6,7 @@ use std::convert::identity;
 
 use axum::Router;
 use clap::Parser;
-use git_testament::{git_testament, render_testament};
+use git_testament::git_testament;
 use sentry::{integrations::tower::*, IntoDsn};
 use tower::ServiceBuilder;
 use tower_cookies::CookieManagerLayer;
@@ -101,16 +101,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
             ServiceBuilder::new()
                 .layer(NewSentryLayer::new_from_top())
                 .layer(SentryHttpLayer::with_transaction())
-        })
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                .on_response(
-                    DefaultOnResponse::new()
-                        .level(Level::INFO)
-                        .latency_unit(LatencyUnit::Millis),
-                ),
-        );
+                .layer(
+                    TraceLayer::new_for_http()
+                        .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                        .on_response(
+                            DefaultOnResponse::new()
+                                .level(Level::INFO)
+                                .latency_unit(LatencyUnit::Millis),
+                        ),
+                )
+        });
 
     // and provide all the state to it
     let port = config.port;

@@ -80,7 +80,7 @@ async fn serve_file(filename: &str) -> Response {
     }
 }
 
-#[tracing::instrument(skip(base, login))]
+#[tracing::instrument(skip(base, login, userinfo))]
 async fn ssr_render(
     uri: Uri,
     query: HashMap<String, String>,
@@ -112,14 +112,26 @@ async fn ssr_render(
     let body = yew::ServerRenderer::<ServerApp>::with_props({
         let uri = uri.path().to_string();
         let base = base.clone();
-        move || ServerAppProps {
-            uri,
-            query,
-            base: base.into(),
-            login,
-            userinfo,
-            header_writer,
-            linkdoku_svg_asset: linkdoku_svg_asset.into(),
+        let span = sentry::configure_scope(|scope| {
+            scope
+                .get_span()
+                .map(|span| span.start_child("ssr.render", &uri))
+        });
+        move || {
+            let span = span.clone();
+            sentry::configure_scope(|scope| {
+                scope.set_span(span.clone().map(sentry::TransactionOrSpan::Span));
+            });
+            ServerAppProps {
+                uri,
+                query,
+                base: base.into(),
+                login,
+                userinfo,
+                header_writer,
+                linkdoku_svg_asset: linkdoku_svg_asset.into(),
+                span,
+            }
         }
     })
     .render()

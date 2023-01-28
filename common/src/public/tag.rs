@@ -5,7 +5,7 @@ pub mod list {
 
     pub const URI: &str = "/tag/list";
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Request {
         pub pattern: String,
     }

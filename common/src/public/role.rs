@@ -8,7 +8,7 @@ pub mod update {
 
     pub const URI: &str = "/role/update";
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Request {
         pub uuid: String,
         pub short_name: String,
@@ -24,7 +24,7 @@ pub mod puzzles {
 
     pub const URI: &str = "/role/puzzles";
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Request {
         pub uuid: String,
     }

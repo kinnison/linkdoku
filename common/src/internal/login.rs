@@ -7,7 +7,7 @@ pub mod providers {
 
     pub const URI: &str = "/login/providers";
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Provider {
         pub name: String,
         pub icon: String,
@@ -21,12 +21,12 @@ pub mod begin {
 
     pub const URI: &str = "/login/begin";
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Request {
         pub provider: String,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub enum Response {
         LoggedIn,
         Continue(String),
@@ -38,7 +38,7 @@ pub mod complete {
 
     pub const URI: &str = "/login/complete";
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Request {
         pub state: String,
         pub code: Option<String>,

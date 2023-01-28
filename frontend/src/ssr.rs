@@ -12,6 +12,7 @@ use bounce::{
 };
 use common::public::userinfo::UserInfo;
 use frontend_core::{make_title, BaseProvider};
+use sentry_core::Span;
 use yew::prelude::*;
 use yew_router::{
     history::{AnyHistory, History, MemoryHistory},
@@ -20,7 +21,7 @@ use yew_router::{
 
 use crate::Root;
 
-#[derive(Clone, PartialEq, Properties)]
+#[derive(Properties)]
 pub struct ServerAppProps {
     pub uri: String,
     pub query: HashMap<String, String>,
@@ -29,6 +30,27 @@ pub struct ServerAppProps {
     pub userinfo: Option<UserInfo>,
     pub header_writer: StaticWriter,
     pub linkdoku_svg_asset: AttrValue,
+    pub span: Option<Span>,
+}
+
+impl PartialEq for ServerAppProps {
+    fn eq(&self, other: &Self) -> bool {
+        self.uri == other.uri
+            && self.query == other.query
+            && self.base == other.base
+            && self.login == other.login
+            && self.userinfo == other.userinfo
+            && self.header_writer == other.header_writer
+            && self.linkdoku_svg_asset == other.linkdoku_svg_asset
+    }
+}
+
+impl Drop for ServerAppProps {
+    fn drop(&mut self) {
+        if let Some(span) = self.span.take() {
+            span.finish();
+        }
+    }
 }
 
 #[function_component(ServerApp)]

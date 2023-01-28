@@ -12,7 +12,6 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use tokio::sync::Mutex;
-use tracing::info;
 
 use crate::utils;
 
@@ -596,7 +595,6 @@ impl Tag {
     #[tracing::instrument(skip_all, name = "Tag::by_uuid")]
     pub async fn by_uuid(conn: &mut AsyncPgConnection, uuid: &str) -> QueryResult<Option<Self>> {
         if let Some(tag) = TAG_CACHE.lock().await.get(uuid) {
-            info!("Cached tag {uuid} found");
             return Ok(Some(tag.as_ref().clone()));
         }
         use crate::schema::tag::dsl;
@@ -634,7 +632,6 @@ impl Tag {
         use crate::schema::tag::dsl;
 
         if let Some(tags) = TAG_CACHE_BY_PATTERN.lock().await.get(pattern) {
-            info!("Cached tag list for pattern '{pattern}' found");
             return Ok(tags.iter().map(|t| t.as_ref().clone()).collect());
         }
 

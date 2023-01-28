@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub const URI: &str = "/logout";
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
     pub redirect_to: String,
 }

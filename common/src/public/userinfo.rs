@@ -15,7 +15,7 @@ pub struct UserInfo {
     pub default_role: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
     pub info: Option<UserInfo>,
 }

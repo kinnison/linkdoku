@@ -87,6 +87,7 @@ impl LinkdokuAPI {
         Url::parse(&combined).expect("Unable to construct API url?")
     }
 
+    #[tracing::instrument(skip(self, api, query_params), fields(api=%api))]
     async fn make_api_call<IN, OUT>(
         &self,
         mut api: Url,
@@ -94,26 +95,38 @@ impl LinkdokuAPI {
         body: Option<IN>,
     ) -> APIResult<OUT>
     where
-        IN: Serialize,
-        OUT: DeserializeOwned,
+        IN: Serialize + std::fmt::Debug,
+        OUT: DeserializeOwned + std::fmt::Debug,
     {
         api.query_pairs_mut()
             .clear()
             .extend_pairs(query_params)
             .finish();
-        let requestbuilder = if let Some(body) = body {
+        let mut requestbuilder = if let Some(body) = body {
             self.client.post(api).json(&body)
         } else {
             self.client.get(api)
         };
 
-        let request = if let Some(login) = &self.login {
-            requestbuilder.header(COOKIE, format!("login={}", login))
-        } else {
-            requestbuilder
+        #[cfg(feature = "ssr")]
+        {
+            if let Some(trace_data) = sentry_core::configure_scope(|scope| {
+                scope.get_span().map(|span| span.get_trace_context())
+            }) {
+                requestbuilder = requestbuilder.header(
+                    "sentry-trace",
+                    format!("{}-{}", trace_data.trace_id, trace_data.span_id),
+                );
+            }
         }
-        .build()
-        .map_err(|e| APIError::ClientIssue(e.to_string()))?;
+
+        if let Some(login) = &self.login {
+            requestbuilder = requestbuilder.header(COOKIE, format!("login={}", login));
+        }
+
+        let request = requestbuilder
+            .build()
+            .map_err(|e| APIError::ClientIssue(e.to_string()))?;
 
         let response = self
             .client
@@ -131,12 +144,14 @@ impl LinkdokuAPI {
             .map_err(|e| APIError::ClientIssue(e.to_string()))?
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn login_providers(&self) -> APIResult<login::providers::Response> {
         let uri = self.compute_uri(INTERNAL_SEGMENT, login::providers::URI);
 
         self.make_api_call(uri, None, NO_BODY).await
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn start_login(&self, provider: &str) -> APIResult<login::begin::Response> {
         let body = login::begin::Request {
             provider: provider.into(),
@@ -145,6 +160,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(body)).await
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn complete_login(
         &self,
         state: &str,
@@ -160,22 +176,26 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(body)).await
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn get_scaffold(&self) -> APIResult<scaffold::Response> {
         let uri = self.compute_uri(PUBLIC_SEGMENT, scaffold::URI);
         self.make_api_call(uri, None, NO_BODY).await
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn get_userinfo(&self) -> APIResult<userinfo::Response> {
         let uri = self.compute_uri(PUBLIC_SEGMENT, userinfo::URI);
         self.make_api_call(uri, None, NO_BODY).await
     }
 
+    #[tracing::instrument(skip(self))]
     pub async fn logout(&self) -> APIResult<logout::Response> {
         let uri = self.compute_uri(INTERNAL_SEGMENT, logout::URI);
         self.make_api_call(uri, None, EMPTY_BODY).await
     }
 
-    pub(crate) async fn get_generic_obj<T: DeserializeOwned>(
+    #[tracing::instrument(skip(self))]
+    pub(crate) async fn get_generic_obj<T: DeserializeOwned + std::fmt::Debug>(
         &self,
         kind: &str,
         uuid: &str,
@@ -184,7 +204,8 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, NO_BODY).await
     }
 
-    pub(crate) async fn get_generic_obj_by_name<T: DeserializeOwned>(
+    #[tracing::instrument(skip(self))]
+    pub(crate) async fn get_generic_obj_by_name<T: DeserializeOwned + std::fmt::Debug>(
         &self,
         kind: &str,
         name: &str,
@@ -193,6 +214,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, NO_BODY).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn update_role(
         &self,
         uuid: impl Into<String>,
@@ -214,6 +236,7 @@ impl LinkdokuAPI {
         .await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn published_puzzle_list(
         &self,
         role_uuid: impl Into<String>,
@@ -225,6 +248,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn create_puzzle(
         &self,
         owner: impl Into<String>,
@@ -249,6 +273,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn lookup_puzzle(
         &self,
         role: impl Into<String>,
@@ -262,6 +287,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn update_puzzle_metadata(
         &self,
         puzzle: impl Into<String>,
@@ -277,6 +303,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn update_puzzle_state(
         &self,
         puzzle: impl Into<String>,
@@ -290,6 +317,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn add_puzzle_state(
         &self,
         puzzle: impl Into<String>,
@@ -303,6 +331,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn set_puzzle_visibility(
         &self,
         puzzle: impl Into<String>,
@@ -316,6 +345,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn set_puzzle_state_visibility(
         &self,
         puzzle: impl Into<String>,
@@ -331,6 +361,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn edit_puzzle_tags(
         &self,
         puzzle: impl Into<String>,
@@ -346,6 +377,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn find_tags(
         &self,
         pattern: impl Into<String>,
@@ -357,6 +389,7 @@ impl LinkdokuAPI {
         self.make_api_call(uri, None, Some(req)).await
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn try_expand_tinyurl(
         &self,
         slug: impl Into<String>,

@@ -111,6 +111,7 @@ pub mod axum_link {
     {
         type Rejection = (StatusCode, String);
 
+        #[tracing::instrument(name = "acquire_connection", skip_all)]
         async fn from_request_parts(
             _parts: &mut Parts,
             state: &S,
