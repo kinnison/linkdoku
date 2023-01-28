@@ -1,7 +1,7 @@
 //! This is the structural API object which is
 //! acquired when you use_apiprovider()
 
-use std::{hash::Hash, sync::Arc};
+use std::{hash::Hash, rc::Rc, sync::Arc};
 
 use common::{
     internal::{self, login, logout, INTERNAL_SEGMENT},
@@ -13,7 +13,7 @@ use reqwest::{header::COOKIE, Client, StatusCode, Url};
 use serde::{de::DeserializeOwned, Serialize};
 use yew::prelude::*;
 
-use crate::backend::APIContents;
+use crate::{backend::APIContents, ObjectCache};
 
 use frontend_core::LinkdokuBase;
 
@@ -22,6 +22,7 @@ pub struct LinkdokuAPI {
     client: Arc<Client>,
     base: AttrValue,
     login: Option<AttrValue>,
+    cache: Rc<ObjectCache>,
 }
 
 impl PartialEq for LinkdokuAPI {
@@ -53,6 +54,7 @@ pub fn use_apiprovider() -> LinkdokuAPI {
         client: client.client,
         base: (*base.uri).clone(),
         login: base.login.as_ref().map(|v| (**v).clone()),
+        cache: Rc::clone(&client.cache),
     }
 }
 
@@ -388,7 +390,13 @@ impl LinkdokuAPI {
         let req = public::tag::list::Request {
             pattern: pattern.into(),
         };
-        self.make_api_call(uri, None, Some(req)).await
+        let tags: Vec<objects::Tag> = self.make_api_call(uri, None, Some(req)).await?;
+
+        for tag in &tags {
+            self.cache.insert(&tag.uuid, Rc::new(Ok(tag.clone())));
+        }
+
+        Ok(tags)
     }
 
     #[tracing::instrument(skip_all)]
