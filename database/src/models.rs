@@ -637,6 +637,7 @@ impl Tag {
 
         let tags: Vec<Self> = dsl::tag
             .filter(dsl::name.ilike(format!("%{pattern}%")))
+            .order_by(dsl::name.asc())
             .get_results(conn)
             .await?;
 
