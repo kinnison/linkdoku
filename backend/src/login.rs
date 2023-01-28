@@ -321,12 +321,15 @@ async fn handle_login_continue(
             }
         };
 
-        return Json::from(Ok(userinfo::UserInfo {
-            uuid: user.identity.uuid.clone(),
-            display_name: user.identity.display_name.clone(),
-            gravatar_hash: user.identity.gravatar_hash.clone(),
-            roles: roles.into_iter().map(|role| role.uuid).collect(),
-            default_role: user.identity.default_role_uuid(),
+        return Json::from(Ok(complete::Response {
+            userinfo: userinfo::UserInfo {
+                uuid: user.identity.uuid.clone(),
+                display_name: user.identity.display_name.clone(),
+                gravatar_hash: user.identity.gravatar_hash.clone(),
+                roles: roles.into_iter().map(|role| role.uuid).collect(),
+                default_role: user.identity.default_role_uuid(),
+            },
+            is_first_login: false,
         }));
     }
     if let Some(setup) = flow.flow.as_ref() {
@@ -426,7 +429,7 @@ async fn handle_login_continue(
                         "{:x}",
                         md5::compute(email.as_deref().unwrap_or(subject.as_str()))
                     );
-                    let (identity, roles) = match activity::login::login_upsert(
+                    let (identity, roles, new) = match activity::login::login_upsert(
                         &mut db,
                         &subject,
                         &gravatar_hash,
@@ -440,7 +443,7 @@ async fn handle_login_continue(
                         }
                     };
                     // Prepare the flow
-                    let ret = userinfo::UserInfo {
+                    let userinfo = userinfo::UserInfo {
                         uuid: identity.uuid.clone(),
                         display_name: identity.display_name.clone(),
                         gravatar_hash,
@@ -449,7 +452,10 @@ async fn handle_login_continue(
                     };
                     flow.user = Some(LoginFlowUserData { identity });
                     set_login_flow_status(&cookies, &flow).await;
-                    Json::from(Ok(ret))
+                    Json::from(Ok(complete::Response {
+                        userinfo,
+                        is_first_login: new,
+                    }))
                 }
                 Err(e) => {
                     // Failed to exchange the token, return something

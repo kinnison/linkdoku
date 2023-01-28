@@ -16,7 +16,7 @@ pub async fn login_upsert(
     oidc_handle: &str,
     gravatar_hash: &str,
     display_name: &str,
-) -> QueryResult<(models::Identity, Vec<models::Role>)> {
+) -> QueryResult<(models::Identity, Vec<models::Role>, bool)> {
     conn.build_transaction()
         .run(|conn| {
             Box::pin(async move {
@@ -51,7 +51,7 @@ pub async fn login_upsert(
                 } else {
                     models::Role::by_owner(conn, &identity.uuid).await?
                 };
-                Ok((identity, roles))
+                Ok((identity, roles, new))
             })
         })
         .await

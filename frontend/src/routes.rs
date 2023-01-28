@@ -130,16 +130,21 @@ fn login_flow() -> Html {
                         {
                             Ok(response) => {
                                 // Hurrah, logged in OK, so let's report that
+                                let cached_role = response.userinfo.default_role.clone();
                                 login_status_dispatch.dispatch(LoginStatusAction::LoggedIn {
-                                    uuid: response.uuid,
-                                    display_name: response.display_name,
-                                    gravatar_hash: response.gravatar_hash,
-                                    roles: response.roles,
-                                    default_role: response.default_role,
+                                    uuid: response.userinfo.uuid,
+                                    display_name: response.userinfo.display_name,
+                                    gravatar_hash: response.userinfo.gravatar_hash,
+                                    roles: response.userinfo.roles,
+                                    default_role: response.userinfo.default_role,
                                 });
                                 toaster
                                     .toast(Toast::new("You are now logged in").with_lifetime(2000));
-                                nav.replace(&Route::Home);
+                                if response.is_first_login {
+                                    nav.replace(&Route::EditRole { role: cached_role })
+                                } else {
+                                    nav.replace(&Route::Home);
+                                }
                             }
                             Err(e) => {
                                 // TODO: Toast this?

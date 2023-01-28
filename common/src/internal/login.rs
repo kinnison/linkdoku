@@ -36,6 +36,8 @@ pub mod begin {
 pub mod complete {
     use serde::{Deserialize, Serialize};
 
+    use crate::public::userinfo::UserInfo;
+
     pub const URI: &str = "/login/complete";
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -46,5 +48,9 @@ pub mod complete {
     }
 
     // Either we succeed, in which case the cookie is the side-effect, or we return an error
-    pub type Response = crate::public::userinfo::UserInfo;
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Response {
+        pub userinfo: UserInfo,
+        pub is_first_login: bool,
+    }
 }
