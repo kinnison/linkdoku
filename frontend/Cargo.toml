@@ -25,7 +25,7 @@ web-sys = "0.3.60"
 bounce = { version = "0.6", features = ["helmet"] }
 tracing = { version = "0.1.37", features = ["log"] }
 puzzleutils = { path = "../puzzleutils" }
-stylist = { version = "0.11", features = ["yew"] }
+stylist = { version = "0.12", features = ["yew"] }
 sentry-core = { version = "*", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
