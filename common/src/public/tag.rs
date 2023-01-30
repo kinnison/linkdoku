@@ -3,6 +3,8 @@
 pub mod list {
     use serde::{Deserialize, Serialize};
 
+    use crate::objects::Tag;
+
     pub const URI: &str = "/tag/list";
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -10,5 +12,8 @@ pub mod list {
         pub pattern: String,
     }
 
-    pub type Response = Vec<crate::objects::Tag>;
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Response {
+        pub tags: Vec<Tag>,
+    }
 }

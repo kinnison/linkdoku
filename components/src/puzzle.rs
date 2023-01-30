@@ -1,7 +1,10 @@
 //! Puzzle related components
 
 use apiprovider::{use_apiprovider, use_cached_value};
-use common::objects::{self, Visibility};
+use common::{
+    objects::{self, Visibility},
+    public::role::puzzles,
+};
 use frontend_core::{component::icon::*, Route};
 use yew::{prelude::*, suspense::*};
 use yew_router::prelude::*;
@@ -43,7 +46,7 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
             if let Some(role) = &props.role {
                 api.published_puzzle_list(role.as_str()).await
             } else {
-                Ok(vec![])
+                Ok(puzzles::Response { puzzles: vec![] })
             }
         }
     })?;
@@ -61,7 +64,7 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
         }
     };
 
-    let list = list.iter().map(|s| {
+    let list = list.puzzles.iter().map(|s| {
         html! {
             <Link<Route> to={Route::ViewPuzzle { puzzle: s.clone() }} classes="panel-block">
                 <PuzzleListEntry puzzle={s.clone()} />

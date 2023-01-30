@@ -713,7 +713,9 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 move |()| {
                     spawn_local(async move {
                         match api.find_tags(filter.as_str()).await {
-                            Ok(tags) => setter.set(tags.into_iter().map(|tag| tag.uuid).collect()),
+                            Ok(tags) => {
+                                setter.set(tags.tags.into_iter().map(|tag| tag.uuid).collect())
+                            }
                             Err(e) => {
                                 toaster.toast(
                                     Toast::new(format!("Unable to find tags: {e}"))
@@ -745,7 +747,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 let toaster = toaster.clone();
                 spawn_local(async move {
                     match api.find_tags(value).await {
-                        Ok(tags) => setter.set(tags.into_iter().map(|tag| tag.uuid).collect()),
+                        Ok(tags) => setter.set(tags.tags.into_iter().map(|tag| tag.uuid).collect()),
                         Err(e) => {
                             toaster.toast(
                                 Toast::new(format!("Unable to find tags: {e}"))

@@ -16,31 +16,25 @@ async fn update_role(
     mut db: Connection,
     cookies: PrivateCookies,
     Json(req): Json<public::role::update::Request>,
-) -> Json<APIResult<public::role::update::Response>> {
+) -> APIResult<public::role::update::Response> {
     let flow = cookies.get_login_flow_status().await;
     let user = if let Some(uuid) = flow.user_uuid() {
         uuid
     } else {
-        return Json::from(Err(APIError::PermissionDenied));
+        return Err(APIError::PermissionDenied);
     };
 
-    let mut role = match models::Role::by_uuid(&mut db, &req.uuid).await {
-        Ok(Some(r)) => r,
-        Ok(None) => return Json::from(Err(APIError::ObjectNotFound)),
-        Err(e) => return Json::from(Err(APIError::DatabaseError(e.to_string()))),
-    };
+    let mut role = models::Role::by_uuid(&mut db, &req.uuid)
+        .await
+        .map_err(|e| APIError::DatabaseError(e.to_string()))?
+        .ok_or(APIError::ObjectNotFound)?;
 
-    role.short_name = match clean_short_name(&req.short_name, false) {
-        Ok(short_name) => short_name,
-        Err(reason) => return Json::from(Err(APIError::BadShortName(reason))),
-    };
+    role.short_name = clean_short_name(&req.short_name, false).map_err(APIError::BadShortName)?;
     role.display_name = req.display_name;
     role.description = req.description;
 
     if RESERVED_ROLE_NAMES.iter().any(|&v| v == role.short_name) {
-        return Json::from(Err(APIError::BadShortName(
-            BadShortNameReason::ReservedWord,
-        )));
+        return Err(APIError::BadShortName(BadShortNameReason::ReservedWord));
     }
 
     activity::role::update(&mut db, user, &role)
@@ -53,33 +47,27 @@ async fn update_role(
             display_name: role.display_name,
             description: role.description,
         })
-        .into()
 }
 
 async fn role_puzzles(
     mut db: Connection,
     cookies: PrivateCookies,
     Json(req): Json<public::role::puzzles::Request>,
-) -> Json<APIResult<public::role::puzzles::Response>> {
-    let role = match models::Role::by_uuid(&mut db, &req.uuid).await {
-        Ok(Some(r)) => r,
-        Ok(None) => return Json::from(Err(APIError::ObjectNotFound)),
-        Err(e) => return Json::from(Err(APIError::DatabaseError(e.to_string()))),
-    };
+) -> APIResult<public::role::puzzles::Response> {
+    let role = models::Role::by_uuid(&mut db, &req.uuid)
+        .await
+        .map_err(|e| APIError::DatabaseError(e.to_string()))?
+        .ok_or(APIError::ObjectNotFound)?;
 
     info!("Looking up puzzles belonging to {}", role.uuid);
 
     let logged_in = cookies.get_login_flow_status().await;
     let user = logged_in.user_uuid();
 
-    let puzzles = match role
+    let puzzles = role
         .visible_puzzles(&mut db, user)
         .await
-        .map_err(|e| APIError::DatabaseError(e.to_string()))
-    {
-        Err(e) => return Json::from(Err(e)),
-        Ok(puzzles) => puzzles,
-    };
+        .map_err(|e| APIError::DatabaseError(e.to_string()))?;
 
     info!("Found {} puzzles", puzzles.len());
 
@@ -91,14 +79,15 @@ async fn role_puzzles(
             .await
             .map_err(|e| APIError::DatabaseError(e.to_string()))
         {
-            Err(e) => return Json::from(Err(e)),
+            Err(e) => return Err(e),
             Ok(true) => ret.push(puzzle.uuid),
             Ok(false) => {}
         }
     }
 
     info!("Calling user can see {} of them", ret.len());
-    Ok(ret).into()
+
+    Ok(public::role::puzzles::Response { puzzles: ret })
 }
 
 pub fn public_router() -> Router<BackendState> {

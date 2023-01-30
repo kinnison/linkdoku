@@ -2,31 +2,21 @@
 
 // These are always rooted at PUBLIC_SEGMENT
 
-use axum::{extract::Path, routing::get, Json, Router};
+use axum::{extract::Path, routing::get, Router};
 use common::{objects, APIError, APIResult};
 use database::{activity, models, Connection};
 
 use crate::{login::PrivateCookies, state::BackendState};
 
-async fn get_role_by_uuid(
-    Path(uuid): Path<String>,
-    db: Connection,
-) -> Json<APIResult<objects::Role>> {
+async fn get_role_by_uuid(Path(uuid): Path<String>, db: Connection) -> APIResult<objects::Role> {
     get_role_(&uuid, db, false).await
 }
 
-async fn get_role_by_name(
-    Path(uuid): Path<String>,
-    db: Connection,
-) -> Json<APIResult<objects::Role>> {
+async fn get_role_by_name(Path(uuid): Path<String>, db: Connection) -> APIResult<objects::Role> {
     get_role_(&uuid, db, true).await
 }
 
-async fn get_role_(
-    item: &str,
-    mut db: Connection,
-    is_name: bool,
-) -> Json<APIResult<objects::Role>> {
+async fn get_role_(item: &str, mut db: Connection, is_name: bool) -> APIResult<objects::Role> {
     // Role data is always public, so there's no access control to be done here
     let res = if is_name {
         models::Role::by_short_name(&mut db, item).await
@@ -34,77 +24,60 @@ async fn get_role_(
         models::Role::by_uuid(&mut db, item).await
     };
 
-    let role = match res
+    let role = res
         .map_err(|e| APIError::DatabaseError(e.to_string()))
         .transpose()
-        .unwrap_or(Err(APIError::ObjectNotFound))
-    {
-        Ok(role) => role,
-        Err(e) => return Json::from(Err(e)),
-    };
+        .unwrap_or(Err(APIError::ObjectNotFound))?;
 
-    Json::from(Ok(objects::Role {
+    Ok(objects::Role {
         uuid: role.uuid,
         owner: role.owner,
         short_name: role.short_name,
         display_name: role.display_name,
         description: role.description,
-    }))
+    })
 }
 
 async fn get_puzzle(
     Path(uuid): Path<String>,
     mut db: Connection,
     cookies: PrivateCookies,
-) -> Json<APIResult<objects::Puzzle>> {
-    let puzzle = match models::Puzzle::by_uuid(&mut db, &uuid)
+) -> APIResult<objects::Puzzle> {
+    let puzzle = models::Puzzle::by_uuid(&mut db, &uuid)
         .await
         .map_err(|e| APIError::DatabaseError(e.to_string()))
         .transpose()
-        .unwrap_or(Err(APIError::ObjectNotFound))
-    {
-        Ok(puzzle) => puzzle,
-        Err(e) => return Json::from(Err(e)),
-    };
+        .unwrap_or(Err(APIError::ObjectNotFound))?;
     let flow = cookies.get_login_flow_status().await;
     let user = flow.user_uuid();
 
-    if !match puzzle
+    if !puzzle
         .can_be_seen(&mut db, user)
         .await
-        .map_err(|e| APIError::DatabaseError(e.to_string()))
+        .map_err(|e| APIError::DatabaseError(e.to_string()))?
     {
-        Ok(v) => v,
-        Err(e) => return Json::from(Err(e)),
-    } {
-        return Json::from(Err(APIError::ObjectNotFound));
+        return Err(APIError::ObjectNotFound);
     }
 
-    Json::from(
-        activity::puzzle::into_api_object(&mut db, user, puzzle)
-            .await
-            .map_err(|e| e.into()),
-    )
+    activity::puzzle::into_api_object(&mut db, user, puzzle)
+        .await
+        .map_err(|e| e.into())
 }
 
-async fn get_tag(Path(uuid): Path<String>, mut db: Connection) -> Json<APIResult<objects::Tag>> {
-    let tag = match models::Tag::by_uuid(&mut db, &uuid)
+async fn get_tag(Path(uuid): Path<String>, mut db: Connection) -> APIResult<objects::Tag> {
+    let tag = models::Tag::by_uuid(&mut db, &uuid)
         .await
         .map_err(|e| APIError::DatabaseError(e.to_string()))
         .transpose()
-        .unwrap_or(Err(APIError::ObjectNotFound))
-    {
-        Ok(tag) => tag,
-        Err(e) => return Json::from(Err(e)),
-    };
+        .unwrap_or(Err(APIError::ObjectNotFound))?;
 
-    Json::from(Ok(objects::Tag {
+    Ok(objects::Tag {
         uuid: tag.uuid,
         name: tag.name,
         colour: tag.colour,
         black_text: tag.black_text,
         description: tag.description,
-    }))
+    })
 }
 
 pub fn public_router() -> Router<BackendState> {

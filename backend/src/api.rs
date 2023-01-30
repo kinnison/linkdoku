@@ -26,64 +26,47 @@ mod tag;
 
 git_testament!(VERSION);
 
-async fn get_scaffold() -> Json<APIResult<scaffold::Response>> {
-    Json::from(Ok(scaffold::Response {
+async fn get_scaffold() -> APIResult<scaffold::Response> {
+    Ok(scaffold::Response {
         version: format!("{VERSION}"),
         version_hash: hash_version_info(&VERSION),
-    }))
+    })
 }
 
 async fn try_expand_tinyurl(
     cookies: PrivateCookies,
     Json(req): Json<internal::util::expand_tinyurl::Request>,
-) -> Json<APIResult<internal::util::expand_tinyurl::Response>> {
+) -> APIResult<internal::util::expand_tinyurl::Response> {
     let login_state = cookies.get_login_flow_status().await;
     if login_state.user().is_none() {
-        return Err(APIError::PermissionDenied).into();
+        return Err(APIError::PermissionDenied);
     }
 
-    let client = match Client::builder()
+    let client = Client::builder()
         .redirect(Policy::none())
         .build()
-        .map_err(|e| APIError::Generic(format!("Unable to build HTTP client: {e}")))
-    {
-        Ok(c) => c,
-        Err(e) => return Err(e).into(),
-    };
+        .map_err(|e| APIError::Generic(format!("Unable to build HTTP client: {e}")))?;
 
     let url = format!("https://tinyurl.com/{}", req.slug);
 
-    let response = match client
+    let response = client
         .get(url)
         .send()
         .await
-        .map_err(|e| APIError::Generic(format!("Unable to run HTTP get: {e}")))
-    {
-        Ok(r) => r,
-        Err(e) => return Err(e).into(),
-    };
+        .map_err(|e| APIError::Generic(format!("Unable to run HTTP get: {e}")))?;
 
-    let url = match response
+    let url = response
         .headers()
         .get(LOCATION)
         .and_then(|v| v.to_str().ok())
-        .ok_or_else(|| APIError::Generic("Did not get a redirect?".into()))
-    {
-        Ok(u) => u,
-        Err(e) => return Err(e).into(),
-    };
+        .ok_or_else(|| APIError::Generic("Did not get a redirect?".into()))?;
 
-    let fpuzz = match fpuzzles::extract(url)
-        .ok_or_else(|| APIError::Generic("Unable to extract fpuzzles data".into()))
-    {
-        Ok(f) => f,
-        Err(e) => return Err(e).into(),
-    };
+    let fpuzz = fpuzzles::extract(url)
+        .ok_or_else(|| APIError::Generic("Unable to extract fpuzzles data".into()))?;
 
     Ok(internal::util::expand_tinyurl::Response {
         replacement: fpuzzles::encode(&fpuzz),
     })
-    .into()
 }
 
 fn public_router() -> Router<BackendState> {

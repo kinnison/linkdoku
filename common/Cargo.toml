@@ -11,3 +11,7 @@ serde_json = "1.0.91"
 thiserror = "1.0.38"
 git-testament = "0.2"
 md5 = "0.7"
+axum = { version = "*", optional = true }
+
+[features]
+backend = ["dep:axum"]

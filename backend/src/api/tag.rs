@@ -10,13 +10,10 @@ use crate::state::BackendState;
 async fn list_tags(
     mut db: Connection,
     Json(req): Json<public::tag::list::Request>,
-) -> Json<APIResult<public::tag::list::Response>> {
-    let tags = match activity::tag::list(&mut db, &req.pattern).await {
-        Ok(tags) => tags,
-        Err(e) => return Json::from(Err(e.into())),
-    };
+) -> APIResult<public::tag::list::Response> {
+    let tags = activity::tag::list(&mut db, &req.pattern).await?;
 
-    Json::from(Ok(tags))
+    Ok(public::tag::list::Response { tags })
 }
 
 pub fn public_router() -> Router<BackendState> {

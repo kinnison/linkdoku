@@ -14,6 +14,8 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+#[cfg(feature = "backend")]
+mod impls;
 pub mod internal;
 pub mod objects;
 pub mod public;
@@ -64,6 +66,31 @@ pub enum APIError {
 // Every API call possible will return APIResult<Response>
 // where the response is the response type
 pub type APIResult<T> = std::result::Result<T, APIError>;
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum APIOutcome<T> {
+    Success(T),
+    Error(APIError),
+}
+
+impl<T> From<APIResult<T>> for APIOutcome<T> {
+    fn from(value: APIResult<T>) -> Self {
+        match value {
+            Ok(v) => APIOutcome::Success(v),
+            Err(e) => APIOutcome::Error(e),
+        }
+    }
+}
+
+impl<T> From<APIOutcome<T>> for APIResult<T> {
+    fn from(value: APIOutcome<T>) -> Self {
+        match value {
+            APIOutcome::Success(v) => Ok(v),
+            APIOutcome::Error(e) => Err(e),
+        }
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "kebab-case")]

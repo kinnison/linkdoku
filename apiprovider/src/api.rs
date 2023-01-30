@@ -7,7 +7,7 @@ use common::{
     internal::{self, login, logout, INTERNAL_SEGMENT},
     objects,
     public::{self, scaffold, userinfo, PUBLIC_SEGMENT},
-    APIError, APIResult,
+    APIError, APIOutcome, APIResult,
 };
 use reqwest::{header::COOKIE, Client, StatusCode, Url};
 use serde::{de::DeserializeOwned, Serialize};
@@ -138,12 +138,14 @@ impl LinkdokuAPI {
         if response.status() == StatusCode::NOT_FOUND {
             return Err(APIError::ObjectNotFound);
         }
-        response
+
+        let outcome: APIOutcome<OUT> = response
             .error_for_status()
             .map_err(|e| APIError::ClientIssue(e.to_string()))?
             .json()
             .await
-            .map_err(|e| APIError::ClientIssue(e.to_string()))?
+            .map_err(|e| APIError::ClientIssue(e.to_string()))?;
+        outcome.into()
     }
 
     #[tracing::instrument(skip(self))]
@@ -390,9 +392,9 @@ impl LinkdokuAPI {
         let req = public::tag::list::Request {
             pattern: pattern.into(),
         };
-        let tags: Vec<objects::Tag> = self.make_api_call(uri, None, Some(req)).await?;
+        let tags: public::tag::list::Response = self.make_api_call(uri, None, Some(req)).await?;
 
-        for tag in &tags {
+        for tag in &tags.tags {
             self.cache.insert(&tag.uuid, Rc::new(Ok(tag.clone())));
         }
 

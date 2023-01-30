@@ -13,7 +13,10 @@ pub mod providers {
         pub icon: String,
     }
 
-    pub type Response = Vec<Provider>;
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Response {
+        pub providers: Vec<Provider>,
+    }
 }
 
 pub mod begin {

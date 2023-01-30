@@ -29,5 +29,8 @@ pub mod puzzles {
         pub uuid: String,
     }
 
-    pub type Response = Vec<String>;
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Response {
+        pub puzzles: Vec<String>,
+    }
 }

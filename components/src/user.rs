@@ -240,6 +240,7 @@ pub fn login_buttons_inner() -> HtmlResult {
 
     let mut buttons = Vec::new();
     for (prov, bclass) in p
+        .providers
         .iter()
         .zip(std::iter::once("is-primary").chain(std::iter::repeat("is-link")))
     {

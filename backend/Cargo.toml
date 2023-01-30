@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.6.1", features = ["http2", "macros"] }
-common = { version = "0.1.0", path = "../common" }
+common = { version = "0.1.0", path = "../common", features = ["backend"] }
 config = "0.13.3"
 cookie = "0.16.2"
 database = { version = "0.1.0", path = "../database" }

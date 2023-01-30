@@ -204,12 +204,12 @@ async fn set_login_flow_status(cookies: &PrivateCookies, login: &LoginFlowStatus
 async fn handle_userinfo(
     cookies: PrivateCookies,
     mut db: database::Connection,
-) -> Json<APIResult<userinfo::Response>> {
+) -> APIResult<userinfo::Response> {
     let flow = login_flow_status(&cookies).await;
 
     match flow.user() {
         Some(user) => match user.identity.roles(&mut db).await {
-            Ok(roles) => Json::from(Ok(userinfo::Response {
+            Ok(roles) => Ok(userinfo::Response {
                 info: Some(userinfo::UserInfo {
                     uuid: user.identity.uuid.clone(),
                     display_name: user.identity.display_name.clone(),
@@ -217,33 +217,33 @@ async fn handle_userinfo(
                     roles: roles.into_iter().map(|role| role.uuid).collect(),
                     default_role: user.identity.default_role_uuid(),
                 }),
-            })),
-            Err(e) => Json::from(Err(APIError::DatabaseError(e.to_string()))),
+            }),
+            Err(e) => Err(APIError::DatabaseError(e.to_string())),
         },
-        None => Json::from(Ok(userinfo::Response { info: None })),
+        None => Ok(userinfo::Response { info: None }),
     }
 }
 
-async fn handle_logout(cookies: PrivateCookies) -> Json<APIResult<logout::Response>> {
+async fn handle_logout(cookies: PrivateCookies) -> APIResult<logout::Response> {
     let mut flow = login_flow_status(&cookies).await;
     flow.flow = None;
     flow.user = None;
     set_login_flow_status(&cookies, &flow).await;
-    Json::from(Ok(logout::Response {
+    Ok(logout::Response {
         redirect_to: "/".into(),
-    }))
+    })
 }
 
-async fn handle_providers(
-    State(providers): State<Providers>,
-) -> Json<APIResult<providers::Response>> {
-    Json::from(Ok(providers
-        .iter()
-        .map(|(s, prov)| providers::Provider {
-            name: s.clone(),
-            icon: prov.icon.clone(),
-        })
-        .collect::<Vec<_>>()))
+async fn handle_providers(State(providers): State<Providers>) -> APIResult<providers::Response> {
+    Ok(providers::Response {
+        providers: providers
+            .iter()
+            .map(|(s, prov)| providers::Provider {
+                name: s.clone(),
+                icon: prov.icon.clone(),
+            })
+            .collect::<Vec<_>>(),
+    })
 }
 
 async fn handle_start_auth(
@@ -251,16 +251,16 @@ async fn handle_start_auth(
     State(providers): State<Providers>,
     State(config): State<ConfigState>,
     Json(request): Json<begin::Request>,
-) -> Json<APIResult<begin::Response>> {
+) -> APIResult<begin::Response> {
     let mut flow = login_flow_status(&cookies).await;
     // First up, if we're already logged in, just redirect the user to the root of the app
     if flow.user.is_some() {
-        return Json::from(Ok(begin::Response::LoggedIn));
+        return Ok(begin::Response::LoggedIn);
     }
     if let Some(setup) = flow.flow.as_ref() {
         if setup.provider == request.provider {
             // We already have a login flow in progress, so redirect the user again
-            return Json::from(Ok(begin::Response::Continue(setup.url.to_string())));
+            return Ok(begin::Response::Continue(setup.url.to_string()));
         }
     }
     if let Some(provider_data) = providers.get(&request.provider) {
@@ -297,10 +297,10 @@ async fn handle_start_auth(
 
         set_login_flow_status(&cookies, &flow).await;
 
-        Json::from(Ok(begin::Response::Continue(url.to_string())))
+        Ok(begin::Response::Continue(url.to_string()))
     } else {
         // Selected provider was not available, let's go again
-        Json::from(Err(APIError::UnknownLoginProvider(request.provider)))
+        Err(APIError::UnknownLoginProvider(request.provider))
     }
 }
 
@@ -310,18 +310,18 @@ async fn handle_login_continue(
     State(providers): State<Providers>,
     State(config): State<ConfigState>,
     Json(params): Json<complete::Request>,
-) -> Json<APIResult<complete::Response>> {
+) -> APIResult<complete::Response> {
     let mut flow = login_flow_status(&cookies).await;
     // First up, if we're already logged in, just redirect the user to the root of the app
     if let Some(user) = &flow.user {
         let roles = match user.identity.roles(&mut db).await {
             Ok(roles) => roles,
             Err(e) => {
-                return Json::from(Err(APIError::DatabaseError(e.to_string())));
+                return Err(APIError::DatabaseError(e.to_string()));
             }
         };
 
-        return Json::from(Ok(complete::Response {
+        return Ok(complete::Response {
             userinfo: userinfo::UserInfo {
                 uuid: user.identity.uuid.clone(),
                 display_name: user.identity.display_name.clone(),
@@ -330,7 +330,7 @@ async fn handle_login_continue(
                 default_role: user.identity.default_role_uuid(),
             },
             is_first_login: false,
-        }));
+        });
     }
     if let Some(setup) = flow.flow.as_ref() {
         // Flow is in progress, so let's check the state first
@@ -338,13 +338,13 @@ async fn handle_login_continue(
             // State value is bad, so clean up and BAD_REQUEST
             flow.flow = None;
             set_login_flow_status(&cookies, &flow).await;
-            return Json::from(Err(APIError::BadLoginStateToken));
+            return Err(APIError::BadLoginStateToken);
         }
         if let Some(error) = params.error {
             tracing::error!("Error in flow: {}", error);
             flow.flow = None;
             set_login_flow_status(&cookies, &flow).await;
-            return Json::from(Err(APIError::LoginFlowError(error)));
+            return Err(APIError::LoginFlowError(error));
         }
         let code = params.code.as_deref().unwrap();
         tracing::info!("Trying to transact code: {}", code);
@@ -368,7 +368,7 @@ async fn handle_login_continue(
                             tracing::error!("Failed to get id_token");
                             flow.flow = None;
                             set_login_flow_status(&cookies, &flow).await;
-                            return Json::from(Err(APIError::NoIdentityToken));
+                            return Err(APIError::NoIdentityToken);
                         }
                     };
                     let claims = match id_token.claims(&client.id_token_verifier(), &setup.nonce) {
@@ -377,7 +377,7 @@ async fn handle_login_continue(
                             tracing::error!("Failed to verify id_token: {:?}", e);
                             flow.flow = None;
                             set_login_flow_status(&cookies, &flow).await;
-                            return Json::from(Err(APIError::BadIdentityToken));
+                            return Err(APIError::BadIdentityToken);
                         }
                     };
                     let uinfo: UserInfoClaims<EmptyAdditionalClaims, CoreGenderClaim> = match {
@@ -387,9 +387,9 @@ async fn handle_login_continue(
                                 tracing::error!("Failed to acquire user info: {e:?}");
                                 flow.flow = None;
                                 set_login_flow_status(&cookies, &flow).await;
-                                return Json::from(Err(APIError::LoginFlowError(
+                                return Err(APIError::LoginFlowError(
                                     "Unable to create user info request".into(),
-                                )));
+                                ));
                             }
                         }
                     }
@@ -401,9 +401,9 @@ async fn handle_login_continue(
                             tracing::error!("Failed to acquire user info: {e:?}");
                             flow.flow = None;
                             set_login_flow_status(&cookies, &flow).await;
-                            return Json::from(Err(APIError::LoginFlowError(
+                            return Err(APIError::LoginFlowError(
                                 "Unable to acquire user info".into(),
-                            )));
+                            ));
                         }
                     };
                     // Okay, at this point we *are* logged in, so let's prepare our data
@@ -439,7 +439,7 @@ async fn handle_login_continue(
                     {
                         Ok(identity) => identity,
                         Err(e) => {
-                            return Json::from(Err(APIError::DatabaseError(e.to_string())));
+                            return Err(APIError::DatabaseError(e.to_string()));
                         }
                     };
                     // Prepare the flow
@@ -452,28 +452,28 @@ async fn handle_login_continue(
                     };
                     flow.user = Some(LoginFlowUserData { identity });
                     set_login_flow_status(&cookies, &flow).await;
-                    Json::from(Ok(complete::Response {
+                    Ok(complete::Response {
                         userinfo,
                         is_first_login: new,
-                    }))
+                    })
                 }
                 Err(e) => {
                     // Failed to exchange the token, return something
                     tracing::error!("Failed exchanging codes: {:?}", e);
                     flow.flow = None;
                     set_login_flow_status(&cookies, &flow).await;
-                    Json::from(Err(APIError::LoginCodeExchangeFailed))
+                    Err(APIError::LoginCodeExchangeFailed)
                 }
             }
         } else {
             let mut flow = login_flow_status(&cookies).await;
             flow.flow = None;
             set_login_flow_status(&cookies, &flow).await;
-            Json::from(Err(APIError::UnknownLoginProvider(setup.provider.clone())))
+            Err(APIError::UnknownLoginProvider(setup.provider.clone()))
         }
     } else {
         // No login in progress, redirect user to root
-        Json::from(Err(APIError::LoginFlowError("No login in progess".into())))
+        Err(APIError::LoginFlowError("No login in progess".into()))
     }
 }
 
