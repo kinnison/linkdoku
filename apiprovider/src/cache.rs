@@ -38,6 +38,7 @@ macro_rules! cacheable {
 cacheable!(Role, "role");
 cacheable!(Puzzle, "puzzle");
 cacheable!(Tag, "tag");
+cacheable!(PuzzleMetadata, "puzzle-metadata");
 
 #[hook]
 pub fn use_puzzle_lookup(

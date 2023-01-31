@@ -101,3 +101,19 @@ pub struct Tag {
     pub black_text: bool,
     pub description: String,
 }
+
+/// Puzzle metadata is returned from things like "List all puzzles for this role"
+///
+/// The metadata is enough to render the puzzle list, which means that we do not
+/// need to then go and preload all the puzzle data, which while it means moving
+/// from the puzzle list to the puzzle page might take a round-trip, the puzzle
+/// list can be loaded in one fell-swoop without needing to also compute the full
+/// puzzle states visible to the caller.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PuzzleMetadata {
+    pub uuid: String,
+    pub display_name: String,
+    pub short_name: String,
+    pub visibility: Visibility,
+    pub updated_at: String,
+}

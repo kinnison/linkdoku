@@ -26,6 +26,7 @@ macro_rules! into_resp {
 into_resp!(crate::objects::Puzzle);
 into_resp!(crate::objects::Role);
 into_resp!(crate::objects::Tag);
+into_resp!(crate::objects::PuzzleMetadata);
 
 into_resp!(crate::internal::login::begin::Response);
 into_resp!(crate::internal::login::complete::Response);

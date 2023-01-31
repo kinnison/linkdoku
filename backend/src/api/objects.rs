@@ -5,6 +5,7 @@
 use axum::{extract::Path, routing::get, Router};
 use common::{objects, APIError, APIResult};
 use database::{activity, models, Connection};
+use time::format_description::well_known::Iso8601;
 
 use crate::{login::PrivateCookies, state::BackendState};
 
@@ -80,10 +81,44 @@ async fn get_tag(Path(uuid): Path<String>, mut db: Connection) -> APIResult<obje
     })
 }
 
+async fn get_puzzle_metadata(
+    Path(uuid): Path<String>,
+    mut db: Connection,
+    cookies: PrivateCookies,
+) -> APIResult<objects::PuzzleMetadata> {
+    let flow = cookies.get_login_flow_status().await;
+    let user = flow.user_uuid();
+
+    let puzzle = models::Puzzle::by_uuid(&mut db, &uuid)
+        .await
+        .map_err(|e| APIError::DatabaseError(e.to_string()))
+        .transpose()
+        .unwrap_or(Err(APIError::ObjectNotFound))?;
+    if !puzzle
+        .can_be_seen(&mut db, user)
+        .await
+        .map_err(|e| APIError::DatabaseError(e.to_string()))?
+    {
+        return Err(APIError::ObjectNotFound);
+    }
+
+    Ok(objects::PuzzleMetadata {
+        uuid: puzzle.uuid,
+        display_name: puzzle.display_name,
+        short_name: puzzle.short_name,
+        visibility: puzzle.visibility.into(),
+        updated_at: puzzle
+            .updated_at
+            .format(&Iso8601::DEFAULT)
+            .map_err(|e| APIError::Generic(e.to_string()))?,
+    })
+}
+
 pub fn public_router() -> Router<BackendState> {
     Router::new()
         .route("/role/by-uuid/:uuid", get(get_role_by_uuid))
         .route("/role/by-name/:uuid", get(get_role_by_name))
         .route("/puzzle/by-uuid/:uuid", get(get_puzzle))
         .route("/tag/by-uuid/:uuid", get(get_tag))
+        .route("/puzzle-metadata/by-uuid/:uuid)", get(get_puzzle_metadata))
 }
