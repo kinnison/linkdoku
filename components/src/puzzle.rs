@@ -64,10 +64,10 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
         }
     };
 
-    let list = list.puzzles.iter().map(|s| {
+    let list = list.puzzles.iter().map(|meta| {
         html! {
-            <Link<Route> to={Route::ViewPuzzle { puzzle: s.clone() }} classes="panel-block">
-                <PuzzleListEntry puzzle={s.clone()} />
+            <Link<Route> to={Route::ViewPuzzle { puzzle: meta.uuid.clone() }} classes="panel-block">
+                <PuzzleListEntry puzzle={meta.uuid.clone()} />
             </Link<Route>>
         }
     });
@@ -98,7 +98,7 @@ pub fn puzzle_list_entry(props: &PuzzleListEntryProps) -> Html {
 
 #[function_component(PuzzleListEntryInner)]
 fn puzzle_list_entry_inner(props: &PuzzleListEntryProps) -> HtmlResult {
-    let puzzle = use_cached_value::<objects::Puzzle>(props.puzzle.clone())?;
+    let puzzle = use_cached_value::<objects::PuzzleMetadata>(props.puzzle.clone())?;
 
     let puzzle = match puzzle.as_ref() {
         Err(_) => {

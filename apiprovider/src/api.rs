@@ -249,7 +249,13 @@ impl LinkdokuAPI {
         let req = public::role::puzzles::Request {
             uuid: role_uuid.into(),
         };
-        self.make_api_call(uri, None, Some(req)).await
+        let ret: public::role::puzzles::Response = self.make_api_call(uri, None, Some(req)).await?;
+
+        for pm in &ret.puzzles {
+            self.cache.insert(&pm.uuid, Rc::new(Ok(pm.clone())));
+        }
+
+        Ok(ret)
     }
 
     #[tracing::instrument(skip_all)]

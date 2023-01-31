@@ -6,6 +6,7 @@ use database::{
     activity::{self},
     models, Connection,
 };
+use time::format_description::well_known::Iso8601;
 use tracing::info;
 
 use crate::{login::PrivateCookies, state::BackendState};
@@ -80,7 +81,16 @@ async fn role_puzzles(
             .map_err(|e| APIError::DatabaseError(e.to_string()))
         {
             Err(e) => return Err(e),
-            Ok(true) => ret.push(puzzle.uuid),
+            Ok(true) => ret.push(objects::PuzzleMetadata {
+                uuid: puzzle.uuid,
+                display_name: puzzle.display_name,
+                short_name: puzzle.short_name,
+                visibility: puzzle.visibility.into(),
+                updated_at: puzzle
+                    .updated_at
+                    .format(&Iso8601::DEFAULT)
+                    .map_err(|e| APIError::Generic(e.to_string()))?,
+            }),
             Ok(false) => {}
         }
     }

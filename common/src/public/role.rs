@@ -22,6 +22,8 @@ pub mod update {
 pub mod puzzles {
     use serde::{Deserialize, Serialize};
 
+    use crate::objects;
+
     pub const URI: &str = "/role/puzzles";
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -31,6 +33,6 @@ pub mod puzzles {
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Response {
-        pub puzzles: Vec<String>,
+        pub puzzles: Vec<objects::PuzzleMetadata>,
     }
 }
