@@ -9,6 +9,9 @@ use frontend_core::{
     component::{icon::*, utility::*},
     use_route_url, Route, ShortcutRoute,
 };
+use tutorials::{
+    tutorial, TutorialAnchor, TutorialAnchorPosition::TutorialTop, TutorialController, TutorialData,
+};
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
 use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender};
@@ -35,6 +38,16 @@ pub fn pages_role_render(props: &RolePageProps) -> Html {
     }
 }
 
+tutorial! {
+    ViewPuzzleTutorial,
+    name: "This is the name of the role, for example it might be the name of the person who set these puzzles.",
+    description: "Information about this role is shown here",
+    puzzle_list: "The puzzles that this role has created can be found here",
+    permalink: "You can click here to copy a link to this page which won't change",
+    shortcutlink: "You can click here to copy a nicer shortcut link, but this might change",
+    edit: "You can click here to edit this role"
+}
+
 #[function_component(RolePageInner)]
 fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
     let user_info = use_context::<LoginStatus>().unwrap();
@@ -58,50 +71,81 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
         _ => false,
     };
 
+    let mut tutorial = ViewPuzzleTutorial::default();
+
+    let edit_tutorial_node = use_node_ref();
     let edit_link = if can_edit {
+        tutorial.edit(edit_tutorial_node.clone());
         html! {
-            <Link<Route> to={Route::EditRole{role: props.role.to_string()}}>
-                <Tooltip content={"Edit role"} alignment={TooltipAlignment::Bottom}>
-                    <Icon icon={RoleEditIcon} size={IconSize::Medium} />
-                </Tooltip>
-            </Link<Route>>
+            <TutorialAnchor noderef={edit_tutorial_node}>
+                <Link<Route> to={Route::EditRole{role: props.role.to_string()}}>
+                    <Tooltip content={"Edit role"} alignment={TooltipAlignment::Bottom}>
+                        <Icon icon={RoleEditIcon} size={IconSize::Medium} />
+                    </Tooltip>
+                </Link<Route>>
+            </TutorialAnchor>
         }
     } else {
         html! {}
     };
 
+    let perma_link_node = use_node_ref();
+    tutorial.permalink(perma_link_node.clone());
     let perma_link = {
         let permalink = Route::ViewRole {
             role: raw_role.uuid.clone(),
         };
         let permalink = use_route_url(&permalink);
         html! {
-            <Tooltip content={"Copy permalink to role"} alignment={TooltipAlignment::Bottom}>
-                <CopyButton content={permalink} size={IconSize::Medium}/>
-            </Tooltip>
+            <TutorialAnchor noderef={perma_link_node}>
+                <Tooltip content={"Copy permalink to role"} alignment={TooltipAlignment::Bottom}>
+                    <CopyButton content={permalink} size={IconSize::Medium}/>
+                </Tooltip>
+            </TutorialAnchor>
         }
     };
 
+    let shortcut_link_node = use_node_ref();
+    tutorial.shortcutlink(shortcut_link_node.clone());
     let shortcut_link = {
         let shortlink = ShortcutRoute::RoleShortcut {
             role: raw_role.short_name.clone(),
         };
         let shortlink = use_route_url(&shortlink);
         html! {
-            <Tooltip content={"Copy shortcut to role"} alignment={TooltipAlignment::Bottom}>
-                <CopyButton content={shortlink} icon={RoleNiceLinkIcon} size={IconSize::Medium}/>
-            </Tooltip>
+            <TutorialAnchor noderef={shortcut_link_node}>
+                <Tooltip content={"Copy shortcut to role"} alignment={TooltipAlignment::Bottom}>
+                    <CopyButton content={shortlink} icon={RoleNiceLinkIcon} size={IconSize::Medium}/>
+                </Tooltip>
+            </TutorialAnchor>
         }
     };
 
+    let name_node = use_node_ref();
+    tutorial.name(name_node.clone());
+    let description_node = use_node_ref();
+    tutorial.description(description_node.clone());
+    let puzzle_list_node = use_node_ref();
+    tutorial.puzzle_list(puzzle_list_node.clone());
     Ok(html! {
         <>
+            <TutorialController tutorial={TutorialData::from(tutorial)} />
             <Title value={format!("{} - Role", raw_role.display_name)} />
-            <h1 class={"title"}>{format!("{} ({}) ", raw_role.display_name, raw_role.short_name)}{perma_link}{shortcut_link}{edit_link}</h1>
+            <h1 class={"title"}>
+                <TutorialAnchor noderef={name_node}>
+                    {format!("{} ({}) ", raw_role.display_name, raw_role.short_name)}
+                </TutorialAnchor>
+                {" "}
+                {perma_link}{shortcut_link}{edit_link}
+            </h1>
             <hr width={"40%"} />
-            <MarkdownRender markdown={raw_role.description.clone()} />
+            <TutorialAnchor noderef={description_node} position={TutorialTop}>
+                <MarkdownRender markdown={raw_role.description.clone()} />
+            </TutorialAnchor>
             <hr width={"40%"} />
-            <PuzzleList role={raw_role.uuid.clone()} />
+            <TutorialAnchor noderef={puzzle_list_node} position={TutorialTop}>
+                <PuzzleList role={raw_role.uuid.clone()} />
+            </TutorialAnchor>
         </>
     })
 }

@@ -17,6 +17,7 @@ yew-toastrack = { path = "../yew-toastrack" }
 yew-markdown = { path = "../yew-markdown" }
 yew-bulma-tabs = { path = "../yew-bulma-tabs" }
 yew-paginator = { path = "../yew-paginator" }
+tutorials = { path = "../tutorials" }
 yew = "0.20"
 yew-router = "0.17.0"
 serde = { version = "1.0.151", features = ["derive"] }

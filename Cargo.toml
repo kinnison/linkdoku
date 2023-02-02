@@ -12,6 +12,7 @@ members = [
     "yew-markdown",
     "puzzleutils",
     "yew-paginator",
+    "tutorials",
 ]
 
 [patch.crates-io]
