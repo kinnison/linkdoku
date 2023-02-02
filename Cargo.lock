@@ -217,7 +217,6 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
- "tutorials",
  "url",
  "yew",
 ]

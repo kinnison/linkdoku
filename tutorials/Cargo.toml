@@ -9,6 +9,3 @@ edition = "2021"
 yew = "0.20.0"
 web-sys = "0.3.61"
 gloo = "0.8.0"
-
-[features]
-ssr = ["yew/ssr"]

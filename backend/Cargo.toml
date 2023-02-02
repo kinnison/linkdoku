@@ -12,7 +12,6 @@ config = "0.13.3"
 cookie = "0.16.2"
 database = { version = "0.1.0", path = "../database" }
 frontend = { path = "../frontend", features = ["ssr"] }
-tutorials = { path = "../tutorials", features = ["ssr"] }
 include_dir = "0.7.3"
 lazy_static = "1.4.0"
 md5 = "0.7.0"
