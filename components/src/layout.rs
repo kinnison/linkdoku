@@ -73,15 +73,15 @@ fn main_menu_render() -> Html {
                     <Role uuid={r.clone()} active={i == 0} onclick={view_role}/>
                 });
             }
+
+            blocks.push(html! {
+                <Link<Route> to={Route::CreatePuzzle} classes={"panel-block"}>
+                    <Icon class={"panel-icon"} icon={PuzzleAddIcon}/>
+                    {"Create Puzzle"}
+                </Link<Route>>
+            });
         }
     };
-
-    blocks.push(html! {
-        <Link<Route> to={Route::CreatePuzzle} classes={"panel-block"}>
-            <Icon class={"panel-icon"} icon={PuzzleAddIcon}/>
-            {"Create Puzzle"}
-        </Link<Route>>
-    });
 
     html! {
         <div class={"panel"}>
