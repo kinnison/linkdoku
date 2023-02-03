@@ -55,7 +55,7 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
         Ok(list) => list,
         Err(e) => {
             toaster.toast(
-                Toast::new(format!("Failure fetching puzzle list: {}", e))
+                Toast::new(format!("Failure fetching puzzle list: {e}"))
                     .with_level(ToastLevel::Warning)
                     .with_lifetime(5000),
             );

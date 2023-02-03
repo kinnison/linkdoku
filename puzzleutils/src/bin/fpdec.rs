@@ -9,7 +9,7 @@ fn main() {
         if let Some(data) = fpuzzles::extract(&puzzle) {
             println!("{}", serde_json::to_string(&data).unwrap());
         } else {
-            eprintln!("BAD: {}", puzzle);
+            eprintln!("BAD: {puzzle}");
         }
     }
 }

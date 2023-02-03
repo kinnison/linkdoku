@@ -54,13 +54,13 @@ pub fn transform_markdown(grid: &PuzzleState, req: TransformRequest) -> Transfor
                                     <a href={ue.url.clone()} title={title.clone()}>{content}</a>
                                 })
                             } else {
-                                error(format!("URL index out of range: {}", num))
+                                error(format!("URL index out of range: {num}"))
                             }
                         } else {
-                            error(format!("Use of {} in non-URLs form puzzle state", url))
+                            error(format!("Use of {url} in non-URLs form puzzle state"))
                         }
                     }
-                    _ => error(format!("Bad number in `url-{}`", maybe_idx)),
+                    _ => error(format!("Bad number in `url-{maybe_idx}`")),
                 }
             } else if let Some(maybe_idx) = url.strip_prefix("puzzle-") {
                 match maybe_idx.parse::<usize>() {
@@ -78,13 +78,13 @@ pub fn transform_markdown(grid: &PuzzleState, req: TransformRequest) -> Transfor
                                     <span>{"This would be a puzzle link to "} {ue}{". "} {content}</span>
                                 })
                             } else {
-                                error(format!("Puzzle index out of range: {}", num))
+                                error(format!("Puzzle index out of range: {num}"))
                             }
                         } else {
-                            error(format!("Use of {} in non-pack form puzzle state", url))
+                            error(format!("Use of {url} in non-pack form puzzle state"))
                         }
                     }
-                    _ => error(format!("Bad number in `puzzle-{}`", maybe_idx)),
+                    _ => error(format!("Bad number in `puzzle-{maybe_idx}`")),
                 }
             } else {
                 match url.as_str() {
@@ -123,14 +123,13 @@ pub fn transform_markdown(grid: &PuzzleState, req: TransformRequest) -> Transfor
                                     };
                                     let link = match url.as_str() {
                                         "fpuzzles" => {
-                                            format!("http://f-puzzles.com/?load={}", data_str)
+                                            format!("http://f-puzzles.com/?load={data_str}")
                                         }
                                         "sudokupad" => {
-                                            format!("https://sudokupad.app/fpuzzles{}", data_str)
+                                            format!("https://sudokupad.app/fpuzzles{data_str}")
                                         }
                                         "beta-sudokupad" | "sudokupad-beta" => format!(
-                                            "https://beta.sudokupad.app/fpuzzles{}",
-                                            data_str,
+                                            "https://beta.sudokupad.app/fpuzzles{data_str}",
                                         ),
                                         _ => unreachable!(),
                                     };
@@ -142,12 +141,11 @@ pub fn transform_markdown(grid: &PuzzleState, req: TransformRequest) -> Transfor
                             }
                         } else {
                             error(format!(
-                                "Use of `{}` in a non-fpuzzles form puzzle state",
-                                url
+                                "Use of `{url}` in a non-fpuzzles form puzzle state"
                             ))
                         }
                     }
-                    _ => error(format!("Unknown special link: `{}`", url)),
+                    _ => error(format!("Unknown special link: `{url}`")),
                 }
             }
         }

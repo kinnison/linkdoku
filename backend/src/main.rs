@@ -117,7 +117,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     let app = app.with_state(BackendState::new(cli, config, pool, providers));
 
     info!("Launching server on port {port}");
-    axum::Server::bind(&format!("0.0.0.0:{}", port).parse().unwrap())
+    axum::Server::bind(&format!("0.0.0.0:{port}").parse().unwrap())
         .serve(app.into_make_service())
         .await?;
 

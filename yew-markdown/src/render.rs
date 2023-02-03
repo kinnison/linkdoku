@@ -160,7 +160,7 @@ pub fn render_markdown_block(props: &MarkdownRenderProps) -> Html {
                                 }
                             } else {
                                 html! {
-                                    <ol start={format!("{}", start)}>{content}</ol>
+                                    <ol start={format!("{start}")}>{content}</ol>
                                 }
                             }
                         } else {
@@ -198,7 +198,7 @@ pub fn render_markdown_block(props: &MarkdownRenderProps) -> Html {
                     }
                     Tag::Link(linktype, url, title) => {
                         let url = match linktype {
-                            LinkType::Email => format!("mailto:{}", url),
+                            LinkType::Email => format!("mailto:{url}"),
                             _ => url.into_string(),
                         };
                         let title = title.into_string();

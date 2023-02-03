@@ -48,7 +48,7 @@ fn establish_connection(url: &str) -> BoxFuture<ConnectionResult<AsyncPgConnecti
             .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
         tokio::spawn(async move {
             if let Err(e) = connection.await {
-                eprintln!("connection error: {}", e);
+                eprintln!("connection error: {e}");
             }
         });
         AsyncPgConnection::try_from(client).await

@@ -433,8 +433,8 @@ fn toast(props: &ToastProps) -> Html {
         ];
         let time_left = lifetime.saturating_sub(props.age);
         let percent = format!("{}%", (time_left * 100) / lifetime);
-        let age = format!("{}", time_left);
-        let lifetime = format!("{}", lifetime);
+        let age = format!("{time_left}");
+        let lifetime = format!("{lifetime}");
         html! {
             <progress class={classes} value={age} max={lifetime}>{percent}</progress>
         }

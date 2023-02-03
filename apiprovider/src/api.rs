@@ -123,7 +123,7 @@ impl LinkdokuAPI {
         }
 
         if let Some(login) = &self.login {
-            requestbuilder = requestbuilder.header(COOKIE, format!("login={}", login));
+            requestbuilder = requestbuilder.header(COOKIE, format!("login={login}"));
         }
 
         let request = requestbuilder
