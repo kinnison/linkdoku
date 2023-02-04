@@ -72,3 +72,28 @@ macro_rules! tutorial {
     }
 
 }
+
+#[macro_export]
+macro_rules! use_tutorial_node {
+    ($tutorial:ident . $part:ident) => {{
+        struct TutorialNodeSetter<T> {
+            tutorial: T,
+        };
+        impl<T> ::yew::functional::Hook for TutorialNodeSetter<T>
+        where
+            T: FnOnce(NodeRef),
+        {
+            type Output = ::yew::NodeRef;
+            fn run(self, ctx: &mut ::yew::functional::HookContext) -> Self::Output {
+                let node = ::yew::functional::Hook::run(use_node_ref(), ctx);
+                (self.tutorial)(node.clone());
+                node
+            }
+        }
+        TutorialNodeSetter {
+            tutorial: |node| {
+                $tutorial.$part(node);
+            },
+        }
+    }};
+}

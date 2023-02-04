@@ -10,7 +10,8 @@ use frontend_core::{
     use_route_url, Route, ShortcutRoute,
 };
 use tutorials::{
-    tutorial, TutorialAnchor, TutorialAnchorPosition::TutorialTop, TutorialController, TutorialData,
+    tutorial, use_tutorial_node, TutorialAnchor, TutorialAnchorPosition::TutorialTop,
+    TutorialController, TutorialData,
 };
 use web_sys::HtmlInputElement;
 use yew::{platform::spawn_local, prelude::*};
@@ -89,8 +90,8 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
         html! {}
     };
 
-    let perma_link_node = use_node_ref();
-    tutorial.permalink(perma_link_node.clone());
+    let perma_link_node = use_tutorial_node!(tutorial.permalink);
+
     let perma_link = {
         let permalink = Route::ViewRole {
             role: raw_role.uuid.clone(),
@@ -105,8 +106,8 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
         }
     };
 
-    let shortcut_link_node = use_node_ref();
-    tutorial.shortcutlink(shortcut_link_node.clone());
+    let shortcut_link_node = use_tutorial_node!(tutorial.shortcutlink);
+
     let shortcut_link = {
         let shortlink = ShortcutRoute::RoleShortcut {
             role: raw_role.short_name.clone(),
@@ -121,12 +122,10 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
         }
     };
 
-    let name_node = use_node_ref();
-    tutorial.name(name_node.clone());
-    let description_node = use_node_ref();
-    tutorial.description(description_node.clone());
-    let puzzle_list_node = use_node_ref();
-    tutorial.puzzle_list(puzzle_list_node.clone());
+    let name_node = use_tutorial_node!(tutorial.name);
+    let description_node = use_tutorial_node!(tutorial.description);
+    let puzzle_list_node = use_tutorial_node!(tutorial.puzzle_list);
+
     Ok(html! {
         <>
             <TutorialController tutorial={TutorialData::from(tutorial)} />
@@ -139,11 +138,11 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
                 {perma_link}{shortcut_link}{edit_link}
             </h1>
             <hr width={"40%"} />
-            <TutorialAnchor noderef={description_node} position={TutorialTop}>
+            <TutorialAnchor noderef={description_node} position={TutorialTop} class="is-block">
                 <MarkdownRender markdown={raw_role.description.clone()} />
             </TutorialAnchor>
             <hr width={"40%"} />
-            <TutorialAnchor noderef={puzzle_list_node} position={TutorialTop}>
+            <TutorialAnchor noderef={puzzle_list_node} position={TutorialTop} class="is-block">
                 <PuzzleList role={raw_role.uuid.clone()} />
             </TutorialAnchor>
         </>
@@ -163,6 +162,13 @@ pub fn pages_role_edit(props: &RolePageProps) -> Html {
     }
 }
 
+tutorial!(
+    EditRoleTutorial,
+    short_name: "The short name is used in shortcut URLs and is shown on the view-role page",
+    display_name: "The display name is used on the view-role page and on puzzle pages",
+    description: "You can write in a description of your role here.  This could be a short bio and may contain links to other websites"
+);
+
 #[function_component(RoleEditPageInner)]
 fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
     let user_info = use_context::<LoginStatus>().unwrap();
@@ -171,6 +177,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
     let short_name_ref = use_node_ref();
     let display_name_ref = use_node_ref();
     let api = use_apiprovider();
+    let mut tutorial = EditRoleTutorial::default();
 
     let raw_role = match cached_role.as_ref() {
         Err(e) => {
@@ -298,6 +305,10 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
         }
     });
 
+    let short_name_tutorial = use_tutorial_node!(tutorial.short_name);
+    let display_name_tutorial = use_tutorial_node!(tutorial.display_name);
+    let description_tutorial = use_tutorial_node!(tutorial.description);
+
     Ok(html! {
         <>
             <Title value={format!("Edit Role - {}", raw_role.display_name)} />
@@ -306,8 +317,10 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                     {"Short name"}
                 </label>
                 <div class="control">
-                    <input ref={short_name_ref} class={"input"} type={"text"} placeholder={"Role's Short Name"}
-                           value={(*short_name).clone()} onchange={short_name_changed} oninput={short_name_updated}/>
+                    <TutorialAnchor noderef={short_name_tutorial} class="is-block">
+                        <input ref={short_name_ref} class={"input"} type={"text"} placeholder={"Role's Short Name"}
+                               value={(*short_name).clone()} onchange={short_name_changed} oninput={short_name_updated}/>
+                    </TutorialAnchor>
                  </div>
             </div>
             <div class={"field"}>
@@ -315,8 +328,10 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                     {"Display name"}
                 </label>
                 <div class={"control"}>
-                    <input ref={display_name_ref} class={"input"} type={"text"} placeholder={"Role's Display Name"}
-                           value={(*display_name).clone()} onchange={display_name_changed} oninput={display_name_updated}/>
+                    <TutorialAnchor noderef={display_name_tutorial} class="is-block">
+                        <input ref={display_name_ref} class={"input"} type={"text"} placeholder={"Role's Display Name"}
+                               value={(*display_name).clone()} onchange={display_name_changed} oninput={display_name_updated}/>
+                    </TutorialAnchor>
                 </div>
             </div>
             <div class={"field"}>
@@ -324,7 +339,9 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                     {"Description (Markdown)"}
                 </label>
                 <div class={"control"}>
-                    <MarkdownEditor initial={(*description).clone()} onchange={markdown_updated}/>
+                    <TutorialAnchor noderef={description_tutorial} position={TutorialTop} class="is-block">
+                        <MarkdownEditor initial={(*description).clone()} onchange={markdown_updated}/>
+                    </TutorialAnchor>
                 </div>
             </div>
             <div class={"field is-grouped"}>
@@ -336,6 +353,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                     </button>
                 </div>
             </div>
+            <TutorialController tutorial={TutorialData::from(tutorial)} />
         </>
     })
 }

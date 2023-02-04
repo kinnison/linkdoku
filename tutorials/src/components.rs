@@ -140,7 +140,7 @@ pub use TutorialAnchorPosition::*;
 pub struct TutorialAnchorProps {
     pub noderef: NodeRef,
     pub children: Children,
-    pub classes: Option<AttrValue>,
+    pub class: Option<AttrValue>,
     #[prop_or_default]
     pub position: TutorialAnchorPosition,
 }
@@ -148,13 +148,13 @@ pub struct TutorialAnchorProps {
 #[function_component(TutorialAnchor)]
 pub fn tutorial_anchor_render(props: &TutorialAnchorProps) -> Html {
     let popover_classes = classes!(
-        props.classes.as_ref().map(|v| v.to_string()),
+        props.class.as_ref().map(|v| v.to_string()),
         "popover",
         "is-not-popover-hover",
         props.position.class(),
     );
     let trigger_classes = classes!(
-        props.classes.as_ref().map(|v| v.to_string()),
+        props.class.as_ref().map(|v| v.to_string()),
         "popover-trigger"
     );
     html! {
