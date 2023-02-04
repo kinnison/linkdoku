@@ -1,0 +1,294 @@
+@import "scss/variables";
+@import "scss/position";
+
+.popover {
+    position: relative;
+    display: inline-block;
+
+    .popover-content {
+        z-index: 99999;
+        position: absolute;
+        display: inline-block;
+        opacity: 0;
+        visibility: hidden;
+        font-size: $size-7;
+        padding: .4rem .8rem;
+        color: $popover-color;
+        background-color: $popover-background-color;
+        border-radius: $popover-radius;
+        box-shadow: $popover-shadow;
+        width: max-content;
+        max-width: $popover-max-width;
+
+        &::before {
+            position: absolute;
+            content: '';
+            border-style: solid;
+            pointer-events: none;
+            height: 0;
+            width: 0;
+            top: 100%;
+            left: 50%;
+            border-color: transparent;
+            border-bottom-color: $popover-background-color;
+            border-left-color: $popover-background-color;
+            border-width: 0.4rem;
+            margin-left: -0.4rem;
+            margin-top: -0.4rem;
+            transform-origin: center;
+            box-shadow: $popover-caret-shadow;
+        }
+    }
+
+    // Show popover on hover
+    &:hover {
+        .popover-content {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    // Disable showing the popover on hover
+    &:hover.is-not-popover-hover {
+        .popover-content {
+            opacity: 0;
+            visibility: hidden;
+        }
+    }
+
+    // Show popover when the trigger element is focused
+    .popover-trigger:focus ~ .popover-content {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    // Show popover programmatically
+    &.is-popover-active {
+        .popover-content {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+    }
+
+    // Default to top position
+    @include top;
+
+    // Position
+
+    &.is-popover-top {
+        @include top;
+    }
+
+    &.is-popover-right {
+        @include right;
+    }
+
+    &.is-popover-bottom {
+        @include bottom;
+    }
+
+    &.is-popover-left {
+        @include left;
+    }
+
+    // Responsive position
+    // https://bulma.io/documentation/overview/responsiveness/#breakpoints
+
+    @include mobile {
+        &.is-popover-top-mobile {
+            @include top;
+        }
+
+        &.is-popover-right-mobile {
+            @include right;
+        }
+
+        &.is-popover-bottom-mobile {
+            @include bottom;
+        }
+
+        &.is-popover-left-mobile {
+            @include left;
+        }
+    }
+
+    @include tablet {
+        &.is-popover-top-tablet {
+            @include top;
+        }
+
+        &.is-popover-right-tablet {
+            @include right;
+        }
+
+        &.is-popover-bottom-tablet {
+            @include bottom;
+        }
+
+        &.is-popover-left-tablet {
+            @include left;
+        }
+    }
+
+    @include tablet-only {
+        &.is-popover-top-tablet-only {
+            @include top;
+        }
+
+        &.is-popover-right-tablet-only {
+            @include right;
+        }
+
+        &.is-popover-bottom-tablet-only {
+            @include bottom;
+        }
+
+        &.is-popover-left-tablet-only {
+            @include left;
+        }
+    }
+
+    @include touch {
+        &.is-popover-top-touch {
+            @include top;
+        }
+
+        &.is-popover-right-touch {
+            @include right;
+        }
+
+        &.is-popover-bottom-touch {
+            @include bottom;
+        }
+
+        &.is-popover-left-touch {
+            @include left;
+        }
+    }
+
+    @include desktop {
+        &.is-popover-top-desktop {
+            @include top;
+        }
+
+        &.is-popover-right-desktop {
+            @include right;
+        }
+
+        &.is-popover-bottom-desktop {
+            @include bottom;
+        }
+
+        &.is-popover-left-desktop {
+            @include left;
+        }
+    }
+
+    @include desktop-only {
+        &.is-popover-top-desktop-only {
+            @include top;
+        }
+
+        &.is-popover-right-desktop-only {
+            @include right;
+        }
+
+        &.is-popover-bottom-desktop-only {
+            @include bottom;
+        }
+
+        &.is-popover-left-desktop-only {
+            @include left;
+        }
+    }
+
+    @include until-widescreen {
+        &.is-popover-top-until-widescreen {
+            @include top;
+        }
+
+        &.is-popover-right-until-widescreen {
+            @include right;
+        }
+
+        &.is-popover-bottom-until-widescreen {
+            @include bottom;
+        }
+
+        &.is-popover-left-until-widescreen {
+            @include left;
+        }
+    }
+
+    @include widescreen {
+        &.is-popover-top-widescreen {
+            @include top;
+        }
+
+        &.is-popover-right-widescreen {
+            @include right;
+        }
+
+        &.is-popover-bottom-widescreen {
+            @include bottom;
+        }
+
+        &.is-popover-left-widescreen {
+            @include left;
+        }
+    }
+
+    @include widescreen-only {
+        &.is-popover-top-widescreen-only {
+            @include top;
+        }
+
+        &.is-popover-right-widescreen-only {
+            @include right;
+        }
+
+        &.is-popover-bottom-widescreen-only {
+            @include bottom;
+        }
+
+        &.is-popover-left-widescreen-only {
+            @include left;
+        }
+    }
+
+    @include until-fullhd {
+        &.is-popover-top-until-fullhd {
+            @include top;
+        }
+
+        &.is-popover-right-until-fullhd {
+            @include right;
+        }
+
+        &.is-popover-bottom-until-fullhd {
+            @include bottom;
+        }
+
+        &.is-popover-left-until-fullhd {
+            @include left;
+        }
+    }
+
+    @include fullhd {
+        &.is-popover-top-fullhd {
+            @include top;
+        }
+
+        &.is-popover-right-fullhd {
+            @include right;
+        }
+
+        &.is-popover-bottom-fullhd {
+            @include bottom;
+        }
+
+        &.is-popover-left-fullhd {
+            @include left;
+        }
+    }
+}
