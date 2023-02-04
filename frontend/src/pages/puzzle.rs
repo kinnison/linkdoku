@@ -1502,7 +1502,7 @@ fn fpuzzles_renderer(props: &FPuzzlesDataRender) -> Html {
                     </div>
                 </div>
             </div>
-            <div class={"tile notification is-4"}>
+            <div class={"tile notification is-4 has-background-white"}>
                 <object type={"image/svg+xml"} data={fpuzzles::grid_url(&props.data)} class={obj_style}/>
             </div>
         </div>
