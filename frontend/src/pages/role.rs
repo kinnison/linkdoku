@@ -39,7 +39,7 @@ pub fn pages_role_render(props: &RolePageProps) -> Html {
 }
 
 tutorial! {
-    ViewPuzzleTutorial,
+    ViewRoleTutorial,
     name: "This is the name of the role, for example it might be the name of the person who set these puzzles.",
     description: "Information about this role is shown here",
     puzzle_list: "The puzzles that this role has created can be found here",
@@ -71,7 +71,7 @@ fn pages_role_render_inner(props: &RolePageProps) -> HtmlResult {
         _ => false,
     };
 
-    let mut tutorial = ViewPuzzleTutorial::default();
+    let mut tutorial = ViewRoleTutorial::default();
 
     let edit_tutorial_node = use_node_ref();
     let edit_link = if can_edit {
