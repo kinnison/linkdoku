@@ -7,6 +7,8 @@ RUN rustup target add wasm32-unknown-unknown
 RUN cargo install trunk
 RUN cargo install wasm-bindgen-cli
 RUN cargo install wasm-opt
+RUN cargo install grass
+RUN cargo install css-minifier
 
 RUN mkdir -p /build
 
@@ -14,6 +16,7 @@ FROM base-builder as builder
 
 COPY ./ /build/
 
+RUN (cd /build/css; make)
 RUN (cd /build/frontend; trunk build --release index.html)
 RUN (cd /build/backend; cargo build --release)
 
