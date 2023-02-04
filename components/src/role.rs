@@ -62,14 +62,9 @@ fn role_widget_inner(props: &RoleProps) -> HtmlResult {
 
     let role_classes = {
         let mut ret = if active {
-            classes!(
-                "box",
-                "has-background-primary-light",
-                "is-shadowless",
-                "p-1"
-            )
+            classes!("box", "is-role-box", "is-shadowless", "p-1")
         } else {
-            classes!("block")
+            classes!("box", "is-secondary-role-box", "is-shadowless", "p-1")
         };
         ret.push(role_style);
         if props.onclick.is_some() {

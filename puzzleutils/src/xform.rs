@@ -153,7 +153,7 @@ pub fn transform_markdown(grid: &PuzzleState, req: TransformRequest) -> Transfor
             if url == "grid" {
                 if let PuzzleData::FPuzzles(grid) = &grid.data {
                     Some(html! {
-                        <img src={crate::fpuzzles::grid_url(grid)} style={"width: 50vh; height: 50vh;"} />
+                        <img class="has-background-white" src={crate::fpuzzles::grid_url(grid)} style={"width: 50vh; height: 50vh;"} />
                     })
                 } else {
                     error("Use of ![grid] in a non-fpuzzles puzzle state".to_string())
