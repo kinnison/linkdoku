@@ -5,7 +5,9 @@ all: dark.min.css light.min.css
 %.min.css: %.css
 	css-minifier -i $< -o $@
 
-%.css: %.sass mixins.sass linkdoku-bits.sass
+ALL_SASS := $(shell find . -name "*.scss" -o -name "*.sass")
+
+%.css: %.sass $(ALL_SASS)
 	grass $< $@
 
 clean:
