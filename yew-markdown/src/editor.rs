@@ -15,6 +15,7 @@ pub struct MarkdownEditorProps {
     pub initial: AttrValue,
     pub onchange: Option<Callback<AttrValue>>,
     pub transformer: Option<Transformer>,
+    pub help: Option<AttrValue>,
 }
 
 #[function_component(MarkdownEditor)]
@@ -60,11 +61,20 @@ pub fn markdown_editor(props: &MarkdownEditorProps) -> Html {
         })
     };
 
+    let help_tab = props.help.as_ref().map(|help| {
+        html_nested! {
+            <TabContent title={"Markdown Help"}>
+                <MarkdownRender markdown={help.clone()} />
+            </TabContent>
+        }
+    });
+
     html! {
         <Tabbed default={"Write"}>
             <TabContent title={"Write"}>
                 <textarea ref={editor} onchange={onchange} oninput={oninput} class={"textarea is-family-code"} value={(*markdown).clone()} />
             </TabContent>
+            {help_tab}
             <TabContent title={"Preview"}>
                 <MarkdownRender markdown={(*markdown).clone()} transformer={props.transformer.clone()} />
             </TabContent>

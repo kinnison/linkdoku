@@ -21,7 +21,9 @@ use yew_paginator::Paginator;
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
-use crate::{routes::core_frontend_route_switch, util_components::Title};
+use crate::{
+    help_texts::PUZZLE_DESCRIPTION, routes::core_frontend_route_switch, util_components::Title,
+};
 
 // Shortcut redirector
 //
@@ -1434,7 +1436,7 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
             <div class="field">
                 <label class="label">{"Description"}</label>
                 <div class="control">
-                    <MarkdownEditor initial={props.state.description.clone()} onchange={onchange} transformer={transformer}/>
+                    <MarkdownEditor initial={props.state.description.clone()} onchange={onchange} transformer={transformer} help={PUZZLE_DESCRIPTION}/>
                 </div>
             </div>
         });

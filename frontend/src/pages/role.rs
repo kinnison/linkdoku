@@ -19,7 +19,9 @@ use yew_markdown::{editor::MarkdownEditor, render::MarkdownRender};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
-use crate::{routes::core_frontend_route_switch, util_components::Title};
+use crate::{
+    help_texts::ROLE_DESCRIPTION, routes::core_frontend_route_switch, util_components::Title,
+};
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct RolePageProps {
@@ -340,7 +342,7 @@ fn role_page_edit_inner(props: &RolePageProps) -> HtmlResult {
                 </label>
                 <div class={"control"}>
                     <TutorialAnchor noderef={description_tutorial} position={TutorialTop} class="is-block">
-                        <MarkdownEditor initial={(*description).clone()} onchange={markdown_updated}/>
+                        <MarkdownEditor initial={(*description).clone()} onchange={markdown_updated} help={ROLE_DESCRIPTION}/>
                     </TutorialAnchor>
                 </div>
             </div>

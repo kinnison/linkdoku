@@ -22,6 +22,8 @@ pub mod routes;
 
 pub(crate) mod util_components;
 
+pub(crate) mod help_texts;
+
 #[cfg(feature = "ssr")]
 pub mod ssr;
 
