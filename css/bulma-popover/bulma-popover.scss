@@ -19,6 +19,7 @@
         box-shadow: $popover-shadow;
         width: max-content;
         max-width: $popover-max-width;
+        border: 1px solid $popover-color;
 
         &::before {
             position: absolute;
@@ -30,8 +31,8 @@
             top: 100%;
             left: 50%;
             border-color: transparent;
-            border-bottom-color: $popover-background-color;
-            border-left-color: $popover-background-color;
+            border-bottom-color: $popover-color;
+            border-left-color: $popover-color;
             border-width: 0.4rem;
             margin-left: -0.4rem;
             margin-top: -0.4rem;
