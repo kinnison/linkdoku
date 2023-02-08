@@ -3,6 +3,10 @@
 
 #[macro_export]
 macro_rules! tutorial {
+    ($name:ident, $( $id:ident: $text:expr ),* ,) => {
+        $crate::tutorial!($name, $($id: $text),*);
+    };
+
     ($name:ident, $( $id:ident: $text:expr ),*) => {
         $crate::tutorial!(@build_struct ($($id),*) -> {struct $name });
 
