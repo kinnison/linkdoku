@@ -13,6 +13,7 @@ use puzzleutils::{fpuzzles, xform::transform_markdown};
 use serde_json::Value;
 use stylist::yew::{styled_component, use_style};
 use tracing::info;
+use tutorials::{tutorial, use_tutorial_node, TutorialAnchor, TutorialController, TutorialData};
 use web_sys::{HtmlInputElement, Url};
 use yew::{platform::spawn_local, prelude::*, virtual_dom::VChild};
 use yew_bulma_tabs::*;
@@ -942,6 +943,18 @@ const DEFAULT_FPUZZLES_DESCRIPTION: &str = r"
 * [beta-sudokupad]
 ";
 
+tutorial!(
+    CreatePuzzleTutorial,
+    role: "You can select which of your roles this puzzle belongs to here",
+    puzzle_data: "You can choose which kind of puzzle data goes here",
+    fpuzzles_url: "Enter a URL to an fpuzzles puzzle (or puzzle string) here.  You can also put a tinyurl in here if you already have one.",
+    fpuzzles_data: "If you enter valid data, the decoded puzzle will show here",
+    description: "Write the description of your puzzle here",
+    short_name: "The short name of your puzzle will be used in shortcut links",
+    display_name: "This is the title (display name) for your puzzle",
+    create_button: "Once you are ready, click here to create your puzzle",
+);
+
 #[function_component(CreatePuzzlePage)]
 pub fn create_puzzle_page_render() -> Html {
     let nav = use_navigator().unwrap();
@@ -949,6 +962,7 @@ pub fn create_puzzle_page_render() -> Html {
     let user_info = use_context::<LoginStatus>().unwrap();
     let toaster = use_toaster();
     let api = use_apiprovider();
+    let mut tutorial = CreatePuzzleTutorial::default();
 
     let state = loc.state();
 
@@ -993,9 +1007,14 @@ pub fn create_puzzle_page_render() -> Html {
             }
         });
 
+        let owner_ref = use_tutorial_node!(tutorial.role);
         fields.push(html! {
             <div class="field">
-                <label class="label">{"Owning role"}</label>
+                <label class="label">
+                    <TutorialAnchor noderef={owner_ref}>
+                        {"Owning role"}
+                    </TutorialAnchor>
+                </label>
                 {for roles}
             </div>
         });
@@ -1028,8 +1047,20 @@ pub fn create_puzzle_page_render() -> Html {
                 nav.replace_with_state(&Route::CreatePuzzle, state);
             }
         });
+        let pd_ref = use_tutorial_node!(tutorial.puzzle_data);
+        let fp_ref = use_tutorial_node!(tutorial.fpuzzles_url);
+        let fpd_ref = use_tutorial_node!(tutorial.fpuzzles_data);
+        let disp_ref = use_tutorial_node!(tutorial.description);
+
         fields.push(html! {
-            <PuzzleStateEditor state_change={onchange} state={state.initial_state.clone()} />
+            <PuzzleStateEditor
+                state_change={onchange}
+                state={state.initial_state.clone()}
+                puzzle_data_ref={pd_ref}
+                fpuzzles_data_ref={fp_ref}
+                fpuzzles_data_show_ref={fpd_ref}
+                description_ref={disp_ref}
+            />
         })
     }
 
@@ -1062,9 +1093,13 @@ pub fn create_puzzle_page_render() -> Html {
             }
         });
 
+        let sn_ref = use_tutorial_node!(tutorial.short_name);
+
         fields.push(html! {
             <div class="field">
-                <label class="label">{"Puzzle short-name"}</label>
+                <TutorialAnchor noderef={sn_ref}>
+                    <label class="label">{"Puzzle short-name"}</label>
+                </TutorialAnchor>
                 <div class="control">
                     <input ref={input_ref} class="input" type="text" placeholder="Puzzle short name" onchange={onchange} oninput={oninput} value={state.short_name.clone()}/>
                 </div>
@@ -1101,9 +1136,13 @@ pub fn create_puzzle_page_render() -> Html {
             }
         });
 
+        let dn_ref = use_tutorial_node!(tutorial.display_name);
+
         fields.push(html! {
             <div class="field">
-                <label class="label">{"Puzzle display-name"}</label>
+                <TutorialAnchor noderef={dn_ref}>
+                    <label class="label">{"Puzzle display-name"}</label>
+                </TutorialAnchor>
                 <div class="control">
                     <input ref={input_ref} class="input" type="text" placeholder="Puzzle display name" onchange={onchange} oninput={oninput} value={state.display_name.clone()}/>
                 </div>
@@ -1163,16 +1202,20 @@ pub fn create_puzzle_page_render() -> Html {
             }
         });
 
+        let cb_ref = use_tutorial_node!(tutorial.create_button);
+
         fields.push(html! {
             <div class={"field is-grouped"}>
-                <div class="control">
-                    <button class="button is-primary" disabled={!could_create || *submitting} onclick={try_submit}>
-                        <span class={"icon-text"}>
-                            <Icon icon={if *submitting { SpinnerIcon } else { SubmitFormIcon } }/>
-                            <span>{if could_create { "Create puzzle" } else { "Missing inputs" } }</span>
-                        </span>
-                    </button>
-                </div>
+                <TutorialAnchor noderef={cb_ref}>
+                    <div class="control">
+                        <button class="button is-primary" disabled={!could_create || *submitting} onclick={try_submit}>
+                            <span class={"icon-text"}>
+                                <Icon icon={if *submitting { SpinnerIcon } else { SubmitFormIcon } }/>
+                                <span>{if could_create { "Create puzzle" } else { "Missing inputs" } }</span>
+                            </span>
+                        </button>
+                    </div>
+                </TutorialAnchor>
             </div>
         });
     }
@@ -1192,6 +1235,7 @@ pub fn create_puzzle_page_render() -> Html {
                 <Title value="Create puzzle" />
                 <h1 class="title">{"Creating a puzzle"}</h1>
                 {for fields.into_iter()}
+                <TutorialController tutorial={TutorialData::from(tutorial)} />
             </MainPageLayout>
         },
     }
@@ -1201,6 +1245,10 @@ pub fn create_puzzle_page_render() -> Html {
 struct PuzzleStateEditorProps {
     state: PuzzleState,
     state_change: Callback<PuzzleState>,
+    puzzle_data_ref: Option<NodeRef>,
+    fpuzzles_data_ref: Option<NodeRef>,
+    fpuzzles_data_show_ref: Option<NodeRef>,
+    description_ref: Option<NodeRef>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -1364,14 +1412,18 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
         editors.push(html_nested! {
             <TabContent title={EditorKind::FPuzzles.title()}>
                 <div class="field">
-                    <label class="label">{"Link to puzzle, or puzzle string"}</label>
+                    <TutorialAnchor noderef={props.fpuzzles_data_ref.clone()}>
+                        <label class="label">{"Link to puzzle, or puzzle string"}</label>
+                    </TutorialAnchor>
                     <div class="control has-icons-left">
                         <input ref={input_ref} class="input" type="text" placeholder="http://f-puzzles.com/?load=......" onchange={onchanged} oninput={oninput} value={fpuzzles_memory.to_string()}/>
                         <Icon size={IconSize::Small} icon={SimpleLinkIcon} class="icon is-left" />
                     </div>
                 </div>
                 <div class="field">
-                    <label class="label">{"Decoded puzzle"}</label>
+                    <TutorialAnchor noderef={props.fpuzzles_data_show_ref.clone()}>
+                        <label class="label">{"Decoded puzzle"}</label>
+                    </TutorialAnchor>
                     <div class="control">
                         {content_rendered}
                     </div>
@@ -1410,7 +1462,9 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
         });
         fields.push(html! {
             <div class="field">
-                <label class="label">{"Puzzle data"}</label>
+                <TutorialAnchor noderef={props.puzzle_data_ref.clone()}>
+                    <label class="label">{"Puzzle data"}</label>
+                </TutorialAnchor>
                 <div class="control">
                     <Tabbed default={editor_kind.title()} tabchanged={tabchanged}>
                         {for editors.into_iter()}
@@ -1434,7 +1488,9 @@ fn puzzle_state_editor_render(props: &PuzzleStateEditorProps) -> Html {
 
         fields.push(html! {
             <div class="field">
-                <label class="label">{"Description"}</label>
+                <TutorialAnchor noderef={props.description_ref.clone()}>
+                    <label class="label">{"Description"}</label>
+                </TutorialAnchor>
                 <div class="control">
                     <MarkdownEditor initial={props.state.description.clone()} onchange={onchange} transformer={transformer} help={PUZZLE_DESCRIPTION}/>
                 </div>
