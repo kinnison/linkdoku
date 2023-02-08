@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use web_sys::Element;
+use web_sys::{Element, ScrollIntoViewOptions, ScrollBehavior, ScrollLogicalPosition};
 use yew::prelude::*;
 
 use crate::{data::TutorialDataNode, TutorialData};
@@ -57,7 +57,11 @@ fn tutorial_controller_inner_render(props: &TutorialControllerInnerProps) -> Htm
                 let node: Element = data.node().cast().unwrap();
                 let parent = node.parent_element().unwrap();
                 parent.class_list().add_1("is-popover-active").unwrap();
-                node.scroll_into_view();
+                let mut opts = ScrollIntoViewOptions::new();
+                opts.behavior(ScrollBehavior::Smooth);
+                opts.block(ScrollLogicalPosition::Nearest);
+                opts.inline(ScrollLogicalPosition::Start);
+                parent.scroll_into_view_with_scroll_into_view_options(&opts)
             }
             if abandon {
                 tutorial.abandon();
