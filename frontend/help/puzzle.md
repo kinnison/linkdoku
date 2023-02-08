@@ -23,3 +23,24 @@ use the following special syntax to help you to make your puzzle description mor
   on the respective solving websites.
 
 If you have suggestions for other convenient special syntax, please let us know.
+
+---
+
+If you have no better idea for your puzzle's description and it has fpuzzles data, then
+you can use the recommended default of:
+
+```markdown
+## Rules
+
+[rules]
+
+## Grid preview
+
+![grid]
+
+## Play this puzzle
+
+- [fpuzzles]
+- [sudokupad]
+- [beta-sudokupad]
+```
