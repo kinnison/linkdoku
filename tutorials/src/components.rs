@@ -138,7 +138,7 @@ pub use TutorialAnchorPosition::*;
 
 #[derive(Properties, PartialEq)]
 pub struct TutorialAnchorProps {
-    pub noderef: NodeRef,
+    pub noderef: Option<NodeRef>,
     pub children: Children,
     pub class: Option<AttrValue>,
     #[prop_or_default]
@@ -157,12 +157,18 @@ pub fn tutorial_anchor_render(props: &TutorialAnchorProps) -> Html {
         props.class.as_ref().map(|v| v.to_string()),
         "popover-trigger"
     );
-    html! {
-        <div class={popover_classes}>
-            <div class={trigger_classes}>
-                {for props.children.clone()}
+    if props.noderef.is_some() {
+        html! {
+            <div class={popover_classes}>
+                <div class={trigger_classes}>
+                    {for props.children.clone()}
+                </div>
+                <div ref={props.noderef.clone().unwrap()} class="popover-content" />
             </div>
-            <div ref={props.noderef.clone()} class="popover-content" />
-        </div>
+        }
+    } else {
+        html! {
+            {for props.children.clone()}
+        }
     }
 }
