@@ -68,11 +68,12 @@ $button-disabled-background-color: $grey-light;
 
 //$control-height: 2.5em;
 
-$input-color: $grey-darker;
-$input-icon-color: $grey;
+$input-background-color: $grey-darker;
+$input-color: $grey-light;
+$input-icon-color: $grey-lighter;
 $input-icon-active-color: $input-color;
 $input-hover-color: $grey-light;
-$input-disabled-background-color: $grey-light;
+$input-disabled-background-color: $grey-dark;
 $input-disabled-border: $grey-lighter;
 
 $table-color: $text;
