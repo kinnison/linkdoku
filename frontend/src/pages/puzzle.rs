@@ -102,6 +102,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
     let user_info = use_context::<LoginStatus>().unwrap();
     let puzzle_data = use_cached_value::<objects::Puzzle>(props.puzzle.clone())?;
     let toaster = use_toaster();
+    let nav = use_navigator().unwrap();
 
     let puzzle = match puzzle_data.as_ref() {
         Err(e) => {
@@ -864,11 +865,20 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
 
     let page_body = match *state {
         ViewPuzzleState::Viewing => {
+            let goto_owner = Callback::from({
+                let role = Route::ViewRole {
+                    role: puzzle.owner.clone(),
+                };
+                move |_| {
+                    nav.push(&role);
+                }
+            });
             html! {
                 <>
                     {ogtags}
                     <Title value={puzzle.display_name.clone()} />
                     <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{editor_buttons}{state_buttons}</h1>
+                    <Role uuid={puzzle.owner.clone()} onclick={goto_owner}/>
                     <hr width={"40%"} />
                     <TagSet tags={puzzle.tags.clone()} />
                     <hr width={"40%"} />
