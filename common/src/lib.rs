@@ -61,6 +61,9 @@ pub enum APIError {
     /// Login flow produced a bad identity token
     #[error("OIDP returned a bad identity token")]
     BadIdentityToken,
+    /// Unable to create puzzle shortcut for some reason
+    #[error("Cannot create puzzle shortcut")]
+    CannotCreatePuzzleShortcut,
 }
 
 // Every API call possible will return APIResult<Response>

@@ -23,6 +23,7 @@ mod api;
 mod cli;
 mod config;
 mod login;
+mod redirectors;
 mod spa;
 mod state;
 
@@ -95,6 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     // Build the app router
     let app = Router::new()
         .nest("/api", api::router())
+        .nest("/", redirectors::router())
         .fallback(spa::spa_handler)
         .layer(CookieManagerLayer::new())
         .layer({
