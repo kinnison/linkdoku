@@ -79,7 +79,11 @@ macro_rules! tutorial {
 
 #[macro_export]
 macro_rules! use_tutorial_node {
-    ($tutorial:ident . $part:ident) => {{
+    ($tutorial:ident . $part:ident) => {
+        $crate::use_tutorial_node!($tutorial.$part, true)
+    };
+
+    ($tutorial:ident . $part:ident, $register:expr) => {{
         struct TutorialNodeSetter<T> {
             tutorial: T,
         };
@@ -96,7 +100,9 @@ macro_rules! use_tutorial_node {
         }
         TutorialNodeSetter {
             tutorial: |node| {
-                $tutorial.$part(node);
+                if $register {
+                    $tutorial.$part(node);
+                }
             },
         }
     }};
