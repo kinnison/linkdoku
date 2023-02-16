@@ -97,12 +97,30 @@ enum ViewPuzzleState {
     EditingTags,
 }
 
+tutorial! {
+    ViewPuzzleTutorial,
+    name: "This is the name of the puzzle",
+    permalink: "Click here to copy a link to this puzzle which won't change",
+    shortcut: "Click here to copy a nicer link to this puzzle which may change",
+    metadata: "Click here to edit the puzzle metadata (eg. name)",
+    tags: "Click here to edit the puzzle's tags",
+    editstate: "Click here to edit the current state of the puzzle",
+    addstate: "Click here to add a new copy of the current state of the puzzle",
+    puzzlerestricted: "Click here to restrict the puzzle, so that others cannot see it",
+    puzzlepublic: "Click here to make the puzzle public, allowing people to see it if they have a link",
+    puzzlepublished: "Click here to publish the puzzle, making it show up on your role page and the front page",
+    staterestricted: "Click here to make this state restricted, so that others cannot see it",
+    statepublic: "Click here to make this state public so that others can see it",
+    statepublished: "Click here to publish this state, meaning it will tend to be shown by default for this puzzle",
+}
+
 #[function_component(PuzzlePageInner)]
 fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
     let user_info = use_context::<LoginStatus>().unwrap();
     let puzzle_data = use_cached_value::<objects::Puzzle>(props.puzzle.clone())?;
     let toaster = use_toaster();
     let nav = use_navigator().unwrap();
+    let mut tutorial = ViewPuzzleTutorial::default();
 
     let puzzle = match puzzle_data.as_ref() {
         Err(e) => {
@@ -135,15 +153,18 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         _ => false,
     };
 
+    let permalink_node = use_tutorial_node!(tutorial.permalink);
     let perma_link = {
         let permalink = Route::ViewPuzzle {
             puzzle: puzzle.uuid.clone(),
         };
         let permalink = use_route_url(&permalink);
         html! {
-            <Tooltip content={"Copy permalink to puzzle"} alignment={TooltipAlignment::Bottom}>
-                <CopyButton content={permalink} size={IconSize::Medium}/>
-            </Tooltip>
+            <TutorialAnchor noderef={permalink_node}>
+                <Tooltip content={"Copy permalink to puzzle"} alignment={TooltipAlignment::Bottom}>
+                    <CopyButton content={permalink} size={IconSize::Medium}/>
+                </Tooltip>
+            </TutorialAnchor>
         }
     };
 
@@ -155,11 +176,14 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         use_route_url(&shortlink)
     };
 
+    let shortcut_node = use_tutorial_node!(tutorial.shortcut);
     let shortcut_link = {
         html! {
-            <Tooltip content={"Copy shortcut to puzzle"} alignment={TooltipAlignment::Bottom}>
-                <CopyButton content={short_url.clone()} icon={PuzzleNiceLinkIcon} size={IconSize::Medium}/>
-            </Tooltip>
+            <TutorialAnchor noderef={shortcut_node}>
+                <Tooltip content={"Copy shortcut to puzzle"} alignment={TooltipAlignment::Bottom}>
+                    <CopyButton content={short_url.clone()} icon={PuzzleNiceLinkIcon} size={IconSize::Medium}/>
+                </Tooltip>
+            </TutorialAnchor>
         }
     };
 
@@ -453,6 +477,11 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
 
     let edit_tags_list = use_state_eq(|| puzzle.tags.clone());
 
+    let edit_metadata_ref = use_tutorial_node!(tutorial.metadata, can_edit);
+    let edit_state_ref = use_tutorial_node!(tutorial.editstate, can_edit);
+    let add_state_ref = use_tutorial_node!(tutorial.addstate, can_edit);
+    let edit_tags_ref = use_tutorial_node!(tutorial.tags, can_edit);
+
     let editor_buttons = if can_edit {
         let edit_puzzle_click = Callback::from({
             let viewstate_setter = state.setter();
@@ -490,26 +519,34 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
 
         html! {
             <>
-                <Tooltip content={"Edit puzzle metadata"} alignment={TooltipAlignment::Bottom}>
-                    <span class="has-text-link">
-                        <Icon icon={PuzzleEditMetadataIcon} onclick={edit_puzzle_click} size={IconSize::Medium} />
-                    </span>
-                </Tooltip>
-                <Tooltip content={"Edit puzzle's tags"} alignment={TooltipAlignment::Bottom}>
-                    <span class="has-text-link">
-                        <Icon icon={PuzzleEditTagsIcon} onclick={edit_tags_click} size={IconSize::Medium} />
-                    </span>
-                </Tooltip>
-                <Tooltip content={"Edit current puzzle state"} alignment={TooltipAlignment::Bottom}>
-                    <span class="has-text-link">
-                        <Icon icon={PuzzleStateEditIcon} onclick={edit_state_click} size={IconSize::Medium} />
-                    </span>
-                </Tooltip>
-                <Tooltip content={"Copy current puzzle state as new state"} alignment={TooltipAlignment::Bottom}>
-                    <span class="has-text-link">
-                        <Icon icon={PuzzleStateAddIcon} onclick={add_state_click} size={IconSize::Medium} />
-                    </span>
-                </Tooltip>
+                <TutorialAnchor noderef={edit_metadata_ref}>
+                    <Tooltip content={"Edit puzzle metadata"} alignment={TooltipAlignment::Bottom}>
+                        <span class="has-text-link">
+                            <Icon icon={PuzzleEditMetadataIcon} onclick={edit_puzzle_click} size={IconSize::Medium} />
+                        </span>
+                    </Tooltip>
+                </TutorialAnchor>
+                <TutorialAnchor noderef={edit_tags_ref}>
+                    <Tooltip content={"Edit puzzle's tags"} alignment={TooltipAlignment::Bottom}>
+                        <span class="has-text-link">
+                            <Icon icon={PuzzleEditTagsIcon} onclick={edit_tags_click} size={IconSize::Medium} />
+                        </span>
+                    </Tooltip>
+                </TutorialAnchor>
+                <TutorialAnchor noderef={edit_state_ref}>
+                    <Tooltip content={"Edit current puzzle state"} alignment={TooltipAlignment::Bottom}>
+                        <span class="has-text-link">
+                            <Icon icon={PuzzleStateEditIcon} onclick={edit_state_click} size={IconSize::Medium} />
+                        </span>
+                    </Tooltip>
+                </TutorialAnchor>
+                <TutorialAnchor noderef={add_state_ref}>
+                    <Tooltip content={"Copy current puzzle state as new state"} alignment={TooltipAlignment::Bottom}>
+                        <span class="has-text-link">
+                            <Icon icon={PuzzleStateAddIcon} onclick={add_state_click} size={IconSize::Medium} />
+                        </span>
+                    </Tooltip>
+                </TutorialAnchor>
             </>
         }
     } else {
@@ -524,6 +561,13 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             .count();
 
         let state_setter_acting = use_state_eq(|| false);
+
+        let puzzle_restricted_ref = use_tutorial_node!(tutorial.puzzlerestricted, can_edit);
+        let puzzle_public_ref = use_tutorial_node!(tutorial.puzzlepublic, can_edit);
+        let puzzle_published_ref = use_tutorial_node!(tutorial.puzzlepublished, can_edit);
+        let state_restricted_ref = use_tutorial_node!(tutorial.staterestricted, can_edit);
+        let state_public_ref = use_tutorial_node!(tutorial.statepublic, can_edit);
+        let state_published_ref = use_tutorial_node!(tutorial.statepublished, can_edit);
 
         let set_puzzle_visibility = Callback::from({
             let api = use_apiprovider();
@@ -598,6 +642,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             }
         });
 
+        #[allow(clippy::too_many_arguments)]
         fn make_button(
             has: Visibility,
             vis: Visibility,
@@ -606,6 +651,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             cb: &Callback<Visibility>,
             visible_states: usize,
             state_setter_acting: bool,
+            tutorial_node: NodeRef,
         ) -> Html {
             let cb = if (has == vis)
                 || (!is_puzzle && visible_states == 1 && vis == Visibility::Restricted)
@@ -668,23 +714,25 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
             let cb = if state_setter_acting { None } else { cb };
 
             html! {
-                <Tooltip content={tip_text} alignment={TooltipAlignment::Bottom}>
-                    <span class={icon_class}>
-                        <Icon icon={icon} onclick={cb} size={IconSize::Medium} />
-                    </span>
-                </Tooltip>
+                <TutorialAnchor noderef={tutorial_node}>
+                    <Tooltip content={tip_text} alignment={TooltipAlignment::Bottom}>
+                        <span class={icon_class}>
+                            <Icon icon={icon} onclick={cb} size={IconSize::Medium} />
+                        </span>
+                    </Tooltip>
+                </TutorialAnchor>
             }
         }
 
         if can_edit {
             html! {
                 <>
-                    {make_button(puzzle.visibility, Visibility::Restricted, PuzzleRestrictedIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting)}
-                    {make_button(puzzle.visibility, Visibility::Public, PuzzlePublicIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting)}
-                    {make_button(puzzle.visibility, Visibility::Published, PuzzlePublishedIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting)}
-                    {make_button(display_state.visibility, Visibility::Restricted, PuzzleStateRestrictedIcon, false, &set_state_visibility, visible_states, *state_setter_acting)}
-                    {make_button(display_state.visibility, Visibility::Public, PuzzleStatePublicIcon, false, &set_state_visibility, visible_states, *state_setter_acting)}
-                    {make_button(display_state.visibility, Visibility::Published, PuzzleStatePublishedIcon, false, &set_state_visibility, visible_states, *state_setter_acting)}
+                    {make_button(puzzle.visibility, Visibility::Restricted, PuzzleRestrictedIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting, puzzle_restricted_ref)}
+                    {make_button(puzzle.visibility, Visibility::Public, PuzzlePublicIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting, puzzle_public_ref)}
+                    {make_button(puzzle.visibility, Visibility::Published, PuzzlePublishedIcon, true, &set_puzzle_visibility, visible_states, *state_setter_acting, puzzle_published_ref,)}
+                    {make_button(display_state.visibility, Visibility::Restricted, PuzzleStateRestrictedIcon, false, &set_state_visibility, visible_states, *state_setter_acting, state_restricted_ref)}
+                    {make_button(display_state.visibility, Visibility::Public, PuzzleStatePublicIcon, false, &set_state_visibility, visible_states, *state_setter_acting, state_public_ref)}
+                    {make_button(display_state.visibility, Visibility::Published, PuzzleStatePublishedIcon, false, &set_state_visibility, visible_states, *state_setter_acting, state_published_ref)}
                 </>
             }
         } else {
@@ -863,6 +911,7 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
         }
     };
 
+    let title_node = use_tutorial_node!(tutorial.name);
     let page_body = match *state {
         ViewPuzzleState::Viewing => {
             let goto_owner = Callback::from({
@@ -877,7 +926,10 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
                 <>
                     {ogtags}
                     <Title value={puzzle.display_name.clone()} />
-                    <h1 class="title">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}{perma_link}{shortcut_link}{editor_buttons}{state_buttons}</h1>
+                    <h1 class="title">
+                        <TutorialAnchor noderef={title_node}>{format!("{} ({})", puzzle.display_name, puzzle.short_name)}</TutorialAnchor>
+                        {perma_link}{shortcut_link}{editor_buttons}{state_buttons}
+                    </h1>
                     <Role uuid={puzzle.owner.clone()} onclick={goto_owner}/>
                     <hr width={"40%"} />
                     <TagSet tags={puzzle.tags.clone()} />
@@ -932,7 +984,12 @@ fn view_puzzle_inner(props: &PuzzlePageProps) -> HtmlResult {
 
     drop(toaster);
 
-    Ok(page_body)
+    Ok(html! {
+        <>
+            {page_body}
+            <TutorialController tutorial={TutorialData::from(tutorial)} />
+        </>
+    })
 }
 
 // Editors
