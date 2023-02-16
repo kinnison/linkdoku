@@ -112,6 +112,7 @@ pub struct Tag {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PuzzleMetadata {
     pub uuid: String,
+    pub owner: String,
     pub display_name: String,
     pub short_name: String,
     pub visibility: Visibility,

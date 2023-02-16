@@ -131,3 +131,15 @@ pub mod edit_tags {
 
     pub type Response = objects::Puzzle;
 }
+
+pub mod recent_published {
+    use crate::objects;
+
+    use serde::{Deserialize, Serialize};
+    pub const URI: &str = "/puzzle/recent-published";
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    pub struct Response {
+        pub puzzles: Vec<objects::PuzzleMetadata>,
+    }
+}

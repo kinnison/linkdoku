@@ -39,3 +39,4 @@ into_resp!(crate::public::role::puzzles::Response);
 into_resp!(crate::public::tag::list::Response);
 into_resp!(crate::public::userinfo::Response);
 into_resp!(crate::public::scaffold::Response);
+into_resp!(crate::public::puzzle::recent_published::Response);

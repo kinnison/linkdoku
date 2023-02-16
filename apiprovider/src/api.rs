@@ -416,4 +416,19 @@ impl LinkdokuAPI {
         let req = internal::util::expand_tinyurl::Request { slug: slug.into() };
         self.make_api_call(uri, None, Some(req)).await
     }
+
+    #[tracing::instrument(skip_all)]
+    pub async fn recently_published_puzzles(
+        &self,
+    ) -> APIResult<public::puzzle::recent_published::Response> {
+        let uri = self.compute_uri(PUBLIC_SEGMENT, public::puzzle::recent_published::URI);
+        let response: public::puzzle::recent_published::Response =
+            self.make_api_call(uri, None, NO_BODY).await?;
+
+        for pmeta in &response.puzzles {
+            self.cache.insert(&pmeta.uuid, Rc::new(Ok(pmeta.clone())));
+        }
+
+        Ok(response)
+    }
 }

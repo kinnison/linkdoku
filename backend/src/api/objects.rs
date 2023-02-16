@@ -104,6 +104,7 @@ async fn get_puzzle_metadata(
 
     Ok(objects::PuzzleMetadata {
         uuid: puzzle.uuid,
+        owner: puzzle.owner,
         display_name: puzzle.display_name,
         short_name: puzzle.short_name,
         visibility: puzzle.visibility.into(),

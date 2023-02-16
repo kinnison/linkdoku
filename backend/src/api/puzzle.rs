@@ -1,8 +1,12 @@
 //! Puzzle APIs
 
-use axum::{routing::post, Json, Router};
-use common::{clean_short_name, public::puzzle, APIError, APIResult};
+use axum::{
+    routing::{get, post},
+    Json, Router,
+};
+use common::{clean_short_name, objects, public::puzzle, APIError, APIResult};
 use database::{activity, Connection};
+use time::format_description::well_known::Iso8601;
 use tracing::info;
 
 use crate::{login::PrivateCookies, state::BackendState};
@@ -223,6 +227,33 @@ async fn edit_puzzle_tags(
         .map_err(|e| e.into())
 }
 
+async fn get_puzzle_recent_published(
+    mut db: Connection,
+) -> APIResult<puzzle::recent_published::Response> {
+    let puzzles = database::models::Puzzle::get_recent_published(&mut db)
+        .await
+        .map_err(|e| APIError::DatabaseError(e.to_string()))?;
+
+    let puzzles = puzzles
+        .into_iter()
+        .map(|puzz| {
+            Ok(objects::PuzzleMetadata {
+                uuid: puzz.uuid,
+                owner: puzz.owner,
+                display_name: puzz.display_name,
+                short_name: puzz.short_name,
+                visibility: puzz.visibility.into(),
+                updated_at: puzz
+                    .updated_at
+                    .format(&Iso8601::DEFAULT)
+                    .map_err(|e| APIError::Generic(e.to_string()))?,
+            })
+        })
+        .collect::<APIResult<_>>()?;
+
+    Ok(puzzle::recent_published::Response { puzzles })
+}
+
 pub fn public_router() -> Router<BackendState> {
     Router::new()
         .route(puzzle::create::URI, post(create_puzzle))
@@ -236,4 +267,8 @@ pub fn public_router() -> Router<BackendState> {
             post(set_puzzle_state_visibility),
         )
         .route(puzzle::edit_tags::URI, post(edit_puzzle_tags))
+        .route(
+            puzzle::recent_published::URI,
+            get(get_puzzle_recent_published),
+        )
 }

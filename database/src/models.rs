@@ -431,6 +431,18 @@ impl Puzzle {
             .get_results(conn)
             .await
     }
+
+    #[tracing::instrument(skip_all, name = "Puzzle::get_recent_published")]
+    pub async fn get_recent_published(conn: &mut AsyncPgConnection) -> QueryResult<Vec<Self>> {
+        use crate::schema::puzzle::dsl as pdsl;
+
+        pdsl::puzzle
+            .filter(pdsl::visibility.eq(Visibility::Published))
+            .order_by(pdsl::updated_at.desc())
+            .limit(10)
+            .get_results(conn)
+            .await
+    }
 }
 
 #[derive(Queryable)]

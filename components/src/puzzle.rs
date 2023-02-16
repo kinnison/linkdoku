@@ -3,18 +3,20 @@
 use apiprovider::{use_apiprovider, use_cached_value};
 use common::{
     objects::{self, Visibility},
-    public::role::puzzles,
+    APIResult,
 };
 use frontend_core::{component::icon::*, Route};
 use yew::{prelude::*, suspense::*};
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
-use crate::utils::NiceDate;
+use crate::{role::Role, utils::NiceDate};
 
 #[derive(Properties, PartialEq, Clone)]
 pub struct PuzzleListProps {
     pub role: Option<AttrValue>,
+    #[prop_or_default]
+    pub show_role: bool,
 }
 
 #[function_component(PuzzleList)]
@@ -40,14 +42,14 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
     let toaster = use_toaster();
     let nav = use_navigator().unwrap();
 
-    let list = use_future({
+    let list: UseFutureHandle<APIResult<Vec<objects::PuzzleMetadata>>> = use_future({
         let props = props.clone();
         move || async move {
-            if let Some(role) = &props.role {
-                api.published_puzzle_list(role.as_str()).await
+            Ok(if let Some(role) = &props.role {
+                api.published_puzzle_list(role.as_str()).await?.puzzles
             } else {
-                Ok(puzzles::Response { puzzles: vec![] })
-            }
+                api.recently_published_puzzles().await?.puzzles
+            })
         }
     })?;
 
@@ -64,10 +66,10 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
         }
     };
 
-    let list = list.puzzles.iter().map(|meta| {
+    let list = list.iter().map(|meta| {
         html! {
             <Link<Route> to={Route::ViewPuzzle { puzzle: meta.uuid.clone() }} classes="panel-block">
-                <PuzzleListEntry puzzle={meta.uuid.clone()} />
+                <PuzzleListEntry puzzle={meta.uuid.clone()} show_role={props.show_role}/>
             </Link<Route>>
         }
     });
@@ -83,6 +85,7 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
 #[derive(Properties, PartialEq)]
 pub struct PuzzleListEntryProps {
     pub puzzle: AttrValue,
+    pub show_role: bool,
 }
 
 #[function_component(PuzzleListEntry)]
@@ -91,13 +94,14 @@ pub fn puzzle_list_entry(props: &PuzzleListEntryProps) -> Html {
 
     html! {
         <Suspense fallback={fallback}>
-            <PuzzleListEntryInner puzzle={props.puzzle.clone()} />
+            <PuzzleListEntryInner puzzle={props.puzzle.clone()} show_role={props.show_role}/>
         </Suspense>
     }
 }
 
 #[function_component(PuzzleListEntryInner)]
 fn puzzle_list_entry_inner(props: &PuzzleListEntryProps) -> HtmlResult {
+    let nav = use_navigator().unwrap();
     let puzzle = use_cached_value::<objects::PuzzleMetadata>(props.puzzle.clone())?;
 
     let puzzle = match puzzle.as_ref() {
@@ -114,11 +118,27 @@ fn puzzle_list_entry_inner(props: &PuzzleListEntryProps) -> HtmlResult {
         Visibility::Published => PuzzlePublishedIcon,
     };
 
+    let owner_onclick = use_callback(
+        move |_, r| {
+            nav.push(&Route::ViewRole { role: r.clone() });
+        },
+        puzzle.owner.clone(),
+    );
+
+    let role_column = if props.show_role {
+        Some(html! {
+            <div class="column is-narrow"><Role uuid={puzzle.owner.clone()} onclick={owner_onclick}/></div>
+        })
+    } else {
+        None
+    };
+
     Ok(html! {
         <>
             <Icon icon={icon} class="panel-icon"/>
             <div class="columns">
                 <div class="column is-clipped">{format!("{} ({})", puzzle.display_name, puzzle.short_name)}</div>
+                {role_column}
                 <div class="column is-narrow"><NiceDate date={puzzle.updated_at.clone()} /></div>
             </div>
         </>
