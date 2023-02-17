@@ -1,22 +1,17 @@
 //! Redirectors for Linkdoku
 //!
 
-use axum::{
-    extract::Path,
-    response::{IntoResponse, Redirect},
-    routing::get,
-    Router,
-};
+use axum::{extract::Path, response::Redirect, routing::get, Router};
 use common::{
     objects::{PuzzleData, Visibility},
-    APIError,
+    APIError, APIResult,
 };
 use database::{activity, models, Connection};
 use serde::Deserialize;
 
 use crate::{login::PrivateCookies, state::BackendState};
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 enum Redirector {
     #[serde(rename = "fpuzzles")]
     #[serde(alias = "f-puzzles")]
@@ -30,51 +25,44 @@ enum Redirector {
     BetaSudokupad,
 }
 
+#[tracing::instrument(skip(db, cookies))]
 async fn shortcut_puzzle_redirector(
     Path((role, puzzle, redir)): Path<(String, String, Redirector)>,
     mut db: Connection,
     cookies: PrivateCookies,
-) -> axum::response::Response {
+) -> APIResult<Redirect> {
     let logged_in = cookies.get_login_flow_status().await;
     let user = logged_in.user_uuid();
-    match activity::puzzle::lookup(&mut db, &role, &puzzle, user).await {
-        Ok(puzzle) => puzzle_redirector(Path((puzzle, redir)), db, cookies).await,
-        Err(e) => APIError::from(e).into_response(),
-    }
+    let puzzle = if role == "puzzle" {
+        puzzle
+    } else {
+        activity::puzzle::lookup(&mut db, &role, &puzzle, user).await?
+    };
+    puzzle_redirector(Path((puzzle, redir)), db, cookies).await
 }
 
+#[tracing::instrument(skip(db, cookies))]
 async fn puzzle_redirector(
     Path((puzzle, redir)): Path<(String, Redirector)>,
     mut db: Connection,
     cookies: PrivateCookies,
-) -> axum::response::Response {
+) -> APIResult<Redirect> {
     let logged_in = cookies.get_login_flow_status().await;
     let user = logged_in.user_uuid();
-    let puzzle = match models::Puzzle::by_uuid(&mut db, &puzzle)
+    let puzzle = models::Puzzle::by_uuid(&mut db, &puzzle)
         .await
         .map_err(|e| APIError::DatabaseError(e.to_string()))
         .transpose()
-        .unwrap_or(Err(APIError::ObjectNotFound))
-    {
-        Ok(puzzle) => puzzle,
-        Err(e) => return e.into_response(),
-    };
-
-    if !match puzzle
+        .unwrap_or(Err(APIError::ObjectNotFound))?;
+    if !puzzle
         .can_be_seen(&mut db, user)
         .await
-        .map_err(|e| APIError::DatabaseError(e.to_string()))
+        .map_err(|e| APIError::DatabaseError(e.to_string()))?
     {
-        Ok(b) => b,
-        Err(e) => return e.into_response(),
-    } {
-        return APIError::ObjectNotFound.into_response();
+        return Err(APIError::ObjectNotFound);
     }
 
-    let puzzle = match activity::puzzle::into_api_object(&mut db, user, puzzle).await {
-        Ok(puzzle) => puzzle,
-        Err(e) => return APIError::from(e).into_response(),
-    };
+    let puzzle = activity::puzzle::into_api_object(&mut db, user, puzzle).await?;
 
     // Now we get to determine the best state...
     let display_index = puzzle
@@ -106,9 +94,9 @@ async fn puzzle_redirector(
                     format!("https://beta.sudokupad.app/fpuzzles{fpuzzles_str}")
                 }
             };
-            Redirect::to(&url).into_response()
+            Ok(Redirect::to(&url))
         }
-        _ => APIError::CannotCreatePuzzleShortcut.into_response(),
+        _ => Err(APIError::CannotCreatePuzzleShortcut),
     }
 }
 
