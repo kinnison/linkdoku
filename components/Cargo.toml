@@ -16,6 +16,7 @@ gloo = "0.8.0"
 gloo-utils = { version = "*", features = ["serde"] }
 stylist = { version = "0.12", features = ["yew_integration"] }
 yew-toastrack = { path = "../yew-toastrack" }
+yew-markdown = { path = "../yew-markdown" }
 git-testament = "0.2"
 futures-util = "0.3"
 bounce = { version = "0.6", features = ["helmet"] }
@@ -24,3 +25,4 @@ web-sys = { version = "0.3.60", features = ["Navigator", "HtmlDivElement"] }
 js-sys = "0.3"
 wasm-bindgen = "0.2.83"
 serde = { version = "1", features = ["derive"] }
+md5 = "0.7"

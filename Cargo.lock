@@ -457,6 +457,7 @@ dependencies = [
  "gloo",
  "gloo-utils",
  "js-sys",
+ "md5",
  "serde",
  "stylist",
  "time",
@@ -464,6 +465,7 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "yew",
+ "yew-markdown",
  "yew-router",
  "yew-toastrack",
 ]

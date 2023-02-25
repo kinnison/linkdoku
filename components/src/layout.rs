@@ -11,6 +11,7 @@ use futures_util::stream::StreamExt;
 use git_testament::git_testament;
 use gloo::timers::future::IntervalStream;
 use yew::{platform::spawn_local, prelude::*};
+use yew_markdown::render::MarkdownRender;
 use yew_router::prelude::*;
 use yew_toastrack::{use_toaster, Toast, ToastLevel};
 
@@ -177,4 +178,59 @@ pub fn version_checker_render() -> Html {
     } else {
         html! {}
     }
+}
+
+#[derive(Properties, PartialEq)]
+pub struct ModalMarkdownProps {
+    pub title: AttrValue,
+    pub markdown: AttrValue,
+    pub buttons: Option<&'static [&'static str]>,
+    pub default_button: Option<usize>,
+    pub action: Callback<usize>,
+}
+
+#[function_component(ModalMarkdown)]
+pub fn modal_markdown_render(props: &ModalMarkdownProps) -> Html {
+    let default_idx = props
+        .default_button
+        .unwrap_or(0)
+        .clamp(0, props.buttons.map(|b| b.len() - 1).unwrap_or(0));
+    let buttons = props
+        .buttons
+        .unwrap_or(&["Dismiss"])
+        .iter()
+        .enumerate()
+        .map(|(i, button)| {
+            let button_class = if i == default_idx {
+                "button is-success"
+            } else {
+                "button"
+            };
+            let button_cb = props.action.clone();
+            let this_cb = Callback::from(move |_| button_cb.emit(i));
+            html! {
+                <button class={button_class} onclick={this_cb}>{button}</button>
+            }
+        });
+    html! {
+            <>
+                <Helmet>
+                    <html class="is-clipped" />
+                </Helmet>
+                <div class="modal is-active">
+                <div class="modal-background"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title">{&props.title}</p>
+                    </header>
+                    <section class="modal-card-body">
+                        <MarkdownRender markdown={&props.markdown} />
+                    </section>
+                    <footer class="modal-card-foot">
+                        {for buttons}
+                    </footer>
+                </div>
+            </div>
+    </>
+        }
 }

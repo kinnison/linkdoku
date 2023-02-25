@@ -5,6 +5,7 @@ use bounce::{
 };
 use components::{
     layout::VersionChecker,
+    modals::TermsAndConditions,
     user::{UserMenuNavbarItem, UserProvider},
 };
 use frontend_core::{
@@ -55,6 +56,7 @@ pub(crate) fn root_element() -> Html {
                         <meta charset="utf-8" />
                     </Helmet>
                     <VersionChecker />
+                    <TermsAndConditions />
                     <Navbar>
                         <UserMenuNavbarItem />
                     </Navbar>
