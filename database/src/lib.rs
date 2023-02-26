@@ -21,6 +21,7 @@ pub use axum_link::Connection;
 use futures::{future::BoxFuture, FutureExt};
 use lazy_static::lazy_static;
 use rustls::RootCertStore;
+use tokio_postgres_rustls::MakeRustlsConnect;
 use tracing::error;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
@@ -44,7 +45,7 @@ pub mod schema;
 pub type Pool = bb8::Pool<AsyncPgConnection>;
 
 lazy_static! {
-    static ref ROOT_STORE: RootCertStore = {
+    static ref MAKE_TLS_CONNECT: MakeRustlsConnect = {
         let mut store = RootCertStore::empty();
         store.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0.iter().map(|ta| {
             rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
@@ -53,19 +54,18 @@ lazy_static! {
                 ta.name_constraints,
             )
         }));
-        store
+        MakeRustlsConnect::new(
+            rustls::ClientConfig::builder()
+                .with_safe_defaults()
+                .with_root_certificates(store)
+                .with_no_client_auth(),
+        )
     };
 }
 
 fn establish_connection(url: &str) -> BoxFuture<ConnectionResult<AsyncPgConnection>> {
     (async {
-        let config = rustls::ClientConfig::builder()
-            .with_safe_defaults()
-            .with_root_certificates(ROOT_STORE.clone())
-            .with_no_client_auth();
-        let connector = tokio_postgres_rustls::MakeRustlsConnect::new(config);
-
-        let (client, connection) = tokio_postgres::connect(url, connector)
+        let (client, connection) = tokio_postgres::connect(url, MAKE_TLS_CONNECT.clone())
             .await
             .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
         tokio::spawn(async move {
