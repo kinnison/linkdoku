@@ -17,6 +17,12 @@ use diesel_async::{
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
+pub use axum_link::Connection;
+use futures::{future::BoxFuture, FutureExt};
+use lazy_static::lazy_static;
+use rustls::RootCertStore;
+use tracing::error;
+
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 #[tracing::instrument(skip(db_url))]
@@ -37,12 +43,28 @@ pub mod schema;
 
 pub type Pool = bb8::Pool<AsyncPgConnection>;
 
+lazy_static! {
+    static ref ROOT_STORE: RootCertStore = {
+        let mut store = RootCertStore::empty();
+        store.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0.iter().map(|ta| {
+            rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
+                ta.subject,
+                ta.spki,
+                ta.name_constraints,
+            )
+        }));
+        store
+    };
+}
+
 fn establish_connection(url: &str) -> BoxFuture<ConnectionResult<AsyncPgConnection>> {
     (async {
-        let builder = SslConnector::builder(SslMethod::tls())
-            .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
-        // builder.set_ca_file("/etc/ssl/certs/ca-certificates.crt");
-        let connector = MakeTlsConnector::new(builder.build());
+        let config = rustls::ClientConfig::builder()
+            .with_safe_defaults()
+            .with_root_certificates(ROOT_STORE.clone())
+            .with_no_client_auth();
+        let connector = tokio_postgres_rustls::MakeRustlsConnect::new(config);
+
         let (client, connection) = tokio_postgres::connect(url, connector)
             .await
             .map_err(|e| ConnectionError::BadConnection(e.to_string()))?;
@@ -139,9 +161,3 @@ pub mod axum_link {
         }
     }
 }
-
-pub use axum_link::Connection;
-use futures::{future::BoxFuture, FutureExt};
-use openssl::ssl::{SslConnector, SslMethod};
-use postgres_openssl::MakeTlsConnector;
-use tracing::error;
