@@ -15,6 +15,8 @@ use diesel_async::{
     pooled_connection::{bb8, AsyncDieselConnectionManager, PoolError},
     AsyncPgConnection,
 };
+
+#[cfg(feature = "migrations")]
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 pub use axum_link::Connection;
@@ -24,8 +26,10 @@ use rustls::RootCertStore;
 use tokio_postgres_rustls::MakeRustlsConnect;
 use tracing::error;
 
+#[cfg(feature = "migrations")]
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
+#[cfg(feature = "migrations")]
 #[tracing::instrument(skip(db_url))]
 pub fn apply_migrations_sync(db_url: &str) -> diesel::migration::Result<()> {
     use diesel::{Connection, PgConnection};

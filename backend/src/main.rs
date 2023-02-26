@@ -83,8 +83,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     });
 
     // Request migrations
-    info!("Applying pending database migrations...");
-    database::apply_migrations_sync(config.database_url.as_str())?;
+    #[cfg(feature = "migrations")]
+    {
+        info!("Applying pending database migrations...");
+        database::apply_migrations_sync(config.database_url.as_str())?;
+    }
 
     // Now prepare context/state we need to get going
     info!("Construct openid-connect providers");
