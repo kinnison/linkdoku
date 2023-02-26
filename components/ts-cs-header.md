@@ -12,9 +12,8 @@ to agree to these terms and conditions.
 # Licence terms for contributions
 
 Any content that is contributed to Linkdoku remains the property
-of the originator of the content. Unless they do so directly, this
-means that the author of puzzles remain the copyright holder, and ideas
-stated in comments belong to the person who made the comment.
+of the originator of the content. This means that the author of puzzles,
+comments, or other content, retain the copyright over that content.
 
 ## Accessing content
 
@@ -28,6 +27,7 @@ _you_ the right to redistribute it in any form.
 By posting any content onto Linkdoku you assert that you have the right
 to do so, either by way of being the author of the content, or else
 that you have received permission from the author of the content.
+
 In uploading any content, puzzle, comment, or otherwise, you are granting
 the Linkdoku project the right to retain and to re-publish the content,
 via the Linkdoku websites and APIs, given the above conditions.
