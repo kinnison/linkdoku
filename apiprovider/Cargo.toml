@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.60"
 yew = "0.20"
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", default-features = false, features = ["json"] }
 frontend-core = { path = "../frontend-core" }
 common = { path = "../common" }
 url = "2.3.1"
