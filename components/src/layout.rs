@@ -10,6 +10,7 @@ use frontend_core::{component::icon::*, Route};
 use futures_util::stream::StreamExt;
 use git_testament::git_testament;
 use gloo::timers::future::IntervalStream;
+use web_sys::Element;
 use yew::{platform::spawn_local, prelude::*};
 use yew_markdown::render::MarkdownRender;
 use yew_router::prelude::*;
@@ -191,6 +192,8 @@ pub struct ModalMarkdownProps {
 
 #[function_component(ModalMarkdown)]
 pub fn modal_markdown_render(props: &ModalMarkdownProps) -> Html {
+    let default_disabled = use_state_eq(|| true);
+    let disable_default = *default_disabled;
     let default_idx = props
         .default_button
         .unwrap_or(0)
@@ -207,11 +210,29 @@ pub fn modal_markdown_render(props: &ModalMarkdownProps) -> Html {
                 "button"
             };
             let button_cb = props.action.clone();
-            let this_cb = Callback::from(move |_| button_cb.emit(i));
+            let this_cb = if disable_default && i == default_idx {
+                None
+            } else {
+                Some(Callback::from(move |_| button_cb.emit(i)))
+            };
             html! {
-                <button class={button_class} onclick={this_cb}>{button}</button>
+                <button class={button_class} onclick={this_cb} disabled={disable_default && i == default_idx}>{button}</button>
             }
         });
+
+    let section_ref = use_node_ref();
+
+    let onscroll = use_callback(
+        |_ev, (node, state)| {
+            let element = node.cast::<Element>().unwrap();
+            if (element.scroll_height() - element.client_height() - element.scroll_top()).abs() < 1
+            {
+                state.set(false);
+            }
+        },
+        (section_ref.clone(), default_disabled),
+    );
+
     html! {
             <>
                 <Helmet>
@@ -219,11 +240,11 @@ pub fn modal_markdown_render(props: &ModalMarkdownProps) -> Html {
                 </Helmet>
                 <div class="modal is-active">
                 <div class="modal-background"></div>
-                <div class="modal-card">
+                <div class="modal-card" style="min-width: 50vw;">
                     <header class="modal-card-head">
                         <p class="modal-card-title">{&props.title}</p>
                     </header>
-                    <section class="modal-card-body">
+                    <section class="modal-card-body" onscroll={onscroll} ref={section_ref}>
                         <MarkdownRender markdown={&props.markdown} />
                     </section>
                     <footer class="modal-card-foot">
