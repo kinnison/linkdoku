@@ -225,7 +225,7 @@ pub fn modal_markdown_render(props: &ModalMarkdownProps) -> Html {
     let onscroll = use_callback(
         |_ev, (node, state)| {
             let element = node.cast::<Element>().unwrap();
-            if (element.scroll_height() - element.client_height() - element.scroll_top()).abs() < 1
+            if (element.scroll_height() - element.client_height() - element.scroll_top()).abs() < 10
             {
                 state.set(false);
             }
