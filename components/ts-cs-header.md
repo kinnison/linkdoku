@@ -9,6 +9,32 @@ to agree to these terms and conditions.
 > way through as this includes instructions on how to report problems
 > to us if any occur.**
 
+# Personal data and use of cookies and local storage on Linkdoku
+
+Whether you log into Linkdoku or not, the website will store which
+tutorials you've viewed and which of these terms and conditions you
+have agreed to. While popup messages are being displayed these are
+also stored in your browser.
+
+Finally, if you choose to log in to Linkdoku then a cookie
+will be stored in your browser which is encrypted and contains information
+from the identity provider you chose to use to log in with. A role will
+be created on the Linkdoku site which is initialised with the name that
+provider supplied to us, but which you can override at will.
+
+If you have any concerns about Linkdoku's storage of personally identifying
+data, please contact us at the enforcement address listed in the
+code of conduct below.
+
+## Right to be forgotten
+
+Because Linkdoku is, primarily, a service to allow people to store and
+retrieve Sudoku puzzles, the deletion of data is not a common action;
+however everyone has the right to be forgotten and if you feel that you
+no longer want any data associated with your account to be accessible
+via Linkdoku then please contact the enforcement address listed in the
+code of conduct below to request the removal of that data.
+
 # Licence terms for contributions
 
 Any content that is contributed to Linkdoku remains the property

@@ -8,7 +8,8 @@ use crate::layout::ModalMarkdown;
 
 const TERMS_AND_CONDITIONS: &str = concat!(
     include_str!("../ts-cs-header.md"),
-    include_str!("../../CODE_OF_CONDUCT.md")
+    include_str!("../../CODE_OF_CONDUCT.md"),
+    include_str!("../ts-cs-footer.md"),
 );
 const TS_CS_BUTTON_TITLES: &[&str] = &["Accept these terms", "Reject these terms"];
 
