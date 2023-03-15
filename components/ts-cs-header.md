@@ -26,6 +26,13 @@ If you have any concerns about Linkdoku's storage of personally identifying
 data, please contact us at the enforcement address listed in the
 code of conduct below.
 
+All of the above is considerd to be [strictly necessary][sn] to the operation of the
+Linkdoku website. While the GDPR does not require us to seek consent
+for such activity we feel it is worthwhile to be clear about what we
+are doing.
+
+[sn]: https://ico.org.uk/for-organisations/guide-to-pecr/guidance-on-the-use-of-cookies-and-similar-technologies/what-are-the-rules-on-cookies-and-similar-technologies/#rules9
+
 ## Right to be forgotten
 
 Because Linkdoku is, primarily, a service to allow people to store and

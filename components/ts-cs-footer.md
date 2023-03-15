@@ -6,7 +6,7 @@ By accepting these terms, you are:
 
 1. agreeing to be abide by the Linkdoku Code of Conduct,
 2. agreeing to the grant of rights to redistribute any content you contribute to Linkdoku,
-3. accepting that your browser will store cookies regarding the essential operation of the Linkdoku website.
+3. acknowledging that your browser will store cookies regarding the [essential operation][sn] of the Linkdoku website.
 
 In return, we (Linkdoku) undertake to never attempt to gather any
 data associated with individuals (aggregated or otherwise) with an
