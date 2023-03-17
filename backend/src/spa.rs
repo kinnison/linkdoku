@@ -4,7 +4,7 @@
 use std::{collections::HashMap, ffi::OsStr};
 
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::{StatusCode, Uri},
     response::{IntoResponse, Response},
 };
@@ -57,8 +57,9 @@ async fn find_linkdoku_svg() -> String {
 }
 
 #[tracing::instrument]
-async fn serve_file(filename: &str) -> Response {
-    if let Some(file) = SPA_FILES.get_file(filename) {
+pub async fn serve_file(Path(filename): Path<String>) -> Response {
+    info!("Serving {filename} from assets");
+    if let Some(file) = SPA_FILES.get_file(&filename) {
         // Okay, we have the file, let's handle returning this asset
         let file_ext = file.path().extension().unwrap_or_else(|| OsStr::new(""));
         let content_type = MIMETYPES
@@ -179,34 +180,30 @@ pub async fn spa_handler(
     // Basically the rule is, if the uri starts /assets/ then we serve content from SPA_FILES
     // Otherwise we're trying to SSR the index.html
 
-    if let Some(filename) = uri.path().strip_prefix("/assets/") {
-        serve_file(filename).await
-    } else {
-        let login_cookie = cookies.get("login");
-        let flow = login_flow_status(&privatecookies).await;
-        let userinfo = match flow.user() {
-            None => None,
-            Some(user) => match user.identity().roles(&mut db).await {
-                Ok(roles) => Some(UserInfo {
-                    uuid: user.identity().uuid.clone(),
-                    display_name: user.identity().display_name.clone(),
-                    gravatar_hash: user.identity().gravatar_hash.clone(),
-                    roles: roles.into_iter().map(|r| r.uuid).collect(),
-                    default_role: user.identity().default_role_uuid(),
-                }),
-                Err(e) => {
-                    warn!("Unable to read role data during SSR: {e:?}");
-                    None
-                }
-            },
-        };
-        ssr_render(
-            uri,
-            query,
-            &config.base_url,
-            login_cookie.as_ref().map(|cookie| cookie.value()),
-            userinfo,
-        )
-        .await
-    }
+    let login_cookie = cookies.get("login");
+    let flow = login_flow_status(&privatecookies).await;
+    let userinfo = match flow.user() {
+        None => None,
+        Some(user) => match user.identity().roles(&mut db).await {
+            Ok(roles) => Some(UserInfo {
+                uuid: user.identity().uuid.clone(),
+                display_name: user.identity().display_name.clone(),
+                gravatar_hash: user.identity().gravatar_hash.clone(),
+                roles: roles.into_iter().map(|r| r.uuid).collect(),
+                default_role: user.identity().default_role_uuid(),
+            }),
+            Err(e) => {
+                warn!("Unable to read role data during SSR: {e:?}");
+                None
+            }
+        },
+    };
+    ssr_render(
+        uri,
+        query,
+        &config.base_url,
+        login_cookie.as_ref().map(|cookie| cookie.value()),
+        userinfo,
+    )
+    .await
 }

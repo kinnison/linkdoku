@@ -4,13 +4,14 @@
 
 use std::convert::identity;
 
-use axum::Router;
+use axum::{routing::get, Router};
 use clap::Parser;
 use git_testament::git_testament;
 use sentry::{integrations::tower::*, IntoDsn};
 use tower::ServiceBuilder;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{
+    compression::CompressionLayer,
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
     LatencyUnit,
 };
@@ -100,12 +101,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     let app = Router::new()
         .nest("/api", api::router())
         .nest("/", redirectors::router())
+        .route("/assets/:filename", get(spa::serve_file))
         .fallback(spa::spa_handler)
         .layer(CookieManagerLayer::new())
         .layer({
             ServiceBuilder::new()
-                .layer(NewSentryLayer::new_from_top())
-                .layer(SentryHttpLayer::with_transaction())
                 .layer(
                     TraceLayer::new_for_http()
                         .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
@@ -115,6 +115,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
                                 .latency_unit(LatencyUnit::Millis),
                         ),
                 )
+                .layer(CompressionLayer::new())
+                .layer(NewSentryLayer::new_from_top())
+                .layer(SentryHttpLayer::with_transaction())
         });
 
     // and provide all the state to it
