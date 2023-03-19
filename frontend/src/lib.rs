@@ -48,6 +48,14 @@ pub fn App() -> Html {
 
 #[function_component(Root)]
 pub(crate) fn root_element() -> Html {
+    let tscsredisplay = use_state_eq(|| 0);
+    let tscsnum = *tscsredisplay;
+    let tscscallback = use_callback(
+        |_, bar| {
+            bar.set(**bar + 1);
+        },
+        tscsredisplay,
+    );
     html! {
         <LinkdokuAPIProvider>
             <UserProvider>
@@ -56,12 +64,12 @@ pub(crate) fn root_element() -> Html {
                         <meta charset="utf-8" />
                     </Helmet>
                     <VersionChecker />
-                    <TermsAndConditions />
+                    <TermsAndConditions redisplay_trigger={tscsnum}/>
                     <Navbar>
                         <UserMenuNavbarItem />
                     </Navbar>
                     <RouteSwitcher />
-                    <Footer />
+                    <Footer ontscsclick={tscscallback}/>
                 </ToastContainer>
             </UserProvider>
         </LinkdokuAPIProvider>

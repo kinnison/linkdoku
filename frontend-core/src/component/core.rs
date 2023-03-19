@@ -10,8 +10,13 @@ use crate::{use_asset_url, use_page_url, LinkdokuBase, Route};
 
 git_testament!(VERSION);
 
+#[derive(Properties, PartialEq)]
+pub struct FooterProps {
+    pub ontscsclick: Callback<()>,
+}
+
 #[function_component(Footer)]
-pub fn core_page_footer() -> Html {
+pub fn core_page_footer(props: &FooterProps) -> Html {
     html! {
         <footer class={"footer"}>
             <div class="content has-text-centered">
@@ -20,7 +25,11 @@ pub fn core_page_footer() -> Html {
                     <a href="https://github.com/kinnison/linkdoku">{"Linkdoku"}</a>
                     <Link<Route> to={Route::VersionInformation}>{format!(" {VERSION}")}</Link<Route>>
                     {" is licensed "}
-                    <a href="https://www.gnu.org/licenses/#AGPL">{" GNU Affero GPL Version 3"}</a>{"."}
+                    <a href="https://www.gnu.org/licenses/#AGPL">{" GNU Affero GPL Version 3"}</a>{". "}
+                    <a onclick={props.ontscsclick.reform(|_|())}>
+                        {"Re-display terms and conditions"}
+                    </a>
+
                 </p>
             </div>
         </footer>
