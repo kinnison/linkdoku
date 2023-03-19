@@ -11,16 +11,19 @@ to agree to these terms and conditions.
 
 # Personal data and use of cookies and local storage on Linkdoku
 
-Whether you log into Linkdoku or not, the website will store which
-tutorials you've viewed and which of these terms and conditions you
-have agreed to. While popup messages are being displayed these are
-also stored in your browser.
+By using the Linkdoku website whether you log in or not, the website
+will store _in your browser_ which of the tutorials you have viewed
+and which version of these terms and conditions you have agreed to.
+During the time that popup messages are being displayed, these are
+also stored in your browser. None of this is ever sent to a server.
 
-Finally, if you choose to log in to Linkdoku then a cookie
+However, if you choose to log in to Linkdoku then a cookie
 will be stored in your browser which is encrypted and contains information
 from the identity provider you chose to use to log in with. A role will
 be created on the Linkdoku site which is initialised with the name that
-provider supplied to us, but which you can override at will.
+provider supplied to us, but which you can override at will. This cookie is
+sent back to the server and used there to check access rights and log
+posting activity.
 
 If you have any concerns about Linkdoku's storage of personally identifying
 data, please contact us at the enforcement address listed in the
@@ -29,7 +32,10 @@ code of conduct below.
 All of the above is considerd to be [strictly necessary][sn] to the operation of the
 Linkdoku website. While the GDPR does not require us to seek consent
 for such activity we feel it is worthwhile to be clear about what we
-are doing.
+are doing. These terms and conditions are, in no sense, about seeking
+permission for the above. If in the future Linkdoku adds support for any
+not-strictly-necessary cookies then you will be presented with an independent
+opportunity to grant or refuse such cookies.
 
 [sn]: https://ico.org.uk/for-organisations/guide-to-pecr/guidance-on-the-use-of-cookies-and-similar-technologies/what-are-the-rules-on-cookies-and-similar-technologies/#rules9
 
@@ -62,8 +68,9 @@ to do so, either by way of being the author of the content, or else
 that you have received permission from the author of the content.
 
 In uploading any content, puzzle, comment, or otherwise, you are granting
-the Linkdoku project the right to retain and to re-publish the content,
-via the Linkdoku websites and APIs, given the above conditions.
+the Linkdoku project a worldwide non-exclusive licence to retain and to
+re-publish the content, via the Linkdoku websites and APIs, given the above
+conditions.
 
 > **Important:** If you believe that Linkdoku is distributing content which you own but
 > for which you did not grant the above then please treat that as a
