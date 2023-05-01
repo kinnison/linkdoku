@@ -29,6 +29,6 @@ COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/backend /lin
 COPY --from=builder /build/backend/linkdoku-config-bitio-scaleway-beta.yaml /linkdoku-config.yaml
 
 HEALTHCHECK --start-period=30s --interval=5m --timeout=15s \
-    CMD [ "/linkdoku --healthcheck" ]
+    CMD [ "/linkdoku", "--healthcheck" ]
 
 ENTRYPOINT [ "/linkdoku" ]
