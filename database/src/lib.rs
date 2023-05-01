@@ -16,9 +16,6 @@ use diesel_async::{
     AsyncPgConnection,
 };
 
-#[cfg(feature = "migrations")]
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-
 pub use axum_link::Connection;
 use futures::{future::BoxFuture, FutureExt};
 use lazy_static::lazy_static;
@@ -27,14 +24,27 @@ use tokio_postgres_rustls::MakeRustlsConnect;
 use tracing::error;
 
 #[cfg(feature = "migrations")]
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
-
-#[cfg(feature = "migrations")]
 #[tracing::instrument(skip(db_url))]
 pub fn apply_migrations_sync(db_url: &str) -> diesel::migration::Result<()> {
     use diesel::{Connection, PgConnection};
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+
     let mut conn = PgConnection::establish(db_url)?;
     conn.run_pending_migrations(MIGRATIONS)?;
+    Ok(())
+}
+
+#[cfg(feature = "async_migrations")]
+pub async fn apply_migrations_async(db_url: &str) -> diesel::migration::Result<()> {
+    use diesel_async_migrations::{embed_migrations, EmbeddedMigrations};
+
+    static MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+
+    let mut conn = establish_connection(db_url).await?;
+
+    MIGRATIONS.run_pending_migrations(&mut conn).await?;
     Ok(())
 }
 

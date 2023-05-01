@@ -13,6 +13,7 @@ diesel-async = { version = "0.2.0", features = ["postgres", "bb8"] }
 diesel_migrations = { optional = true, version = "2.0.0", features = [
     "postgres",
 ] }
+diesel_async_migrations = { git = "https://github.com/niroco/diesel_async_migrations", tag = "v0.9.0", optional = true }
 md5 = "0.7.0"
 serde = { version = "1.0.151", features = ["derive"] }
 serde_json = "1"
@@ -31,3 +32,4 @@ webpki-roots = "0.23"
 
 [features]
 migrations = ["diesel/postgres", "dep:diesel_migrations"]
+async_migrations = ["dep:diesel_async_migrations"]
