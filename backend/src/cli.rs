@@ -21,6 +21,10 @@ pub struct Cli {
     /// Port override
     #[arg(short, long, value_name = "PORT")]
     pub port: Option<u16>,
+
+    /// Perform a health check instead of becoming a server
+    #[arg(long)]
+    pub healthcheck: bool,
 }
 
 impl Cli {

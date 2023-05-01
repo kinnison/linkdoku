@@ -32,8 +32,10 @@ git_testament!(VERSION);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    let cli = cli::Cli::parse();
+
     let filter_layer = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info"))
+        .or_else(|_| EnvFilter::try_new(if cli.healthcheck { "error" } else { "info" }))
         .unwrap();
 
     // Detect if we're running inside the scaleway cloud, if so, we want a simpler logging format
@@ -54,7 +56,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
 
     info!("Starting up Linkdoku {VERSION}");
 
-    let cli = cli::Cli::parse();
     cli.show();
 
     if let Ok(port) = std::env::var("PORT") {
@@ -69,6 +70,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
 
     let config = config::load_configuration(&cli).expect("Unable to load configuration");
     config.show();
+
+    if cli.healthcheck {
+        // Health checking is basically run a request to the local port and check the result
+        let res = reqwest::get(format!(
+            "http://127.0.0.1:{port}/api{public}{scaffold}",
+            port = config.port,
+            public = common::public::PUBLIC_SEGMENT,
+            scaffold = common::public::scaffold::URI
+        ))
+        .await?;
+        let scaff: common::APIOutcome<common::public::scaffold::Response> = res.json().await?;
+        let scaff = match scaff {
+            common::APIOutcome::Success(scaff) => scaff,
+            common::APIOutcome::Error(e) => return Err(e.into()),
+        };
+        println!(
+            "Successful interaction with server running {} ({})",
+            scaff.version, scaff.version_hash
+        );
+        return Ok(());
+    }
 
     let _guard = sentry::init(sentry::ClientOptions {
         dsn: config
