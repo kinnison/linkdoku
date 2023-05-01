@@ -20,14 +20,14 @@ common = { path = "../common" }
 time = { version = "0.3", features = ["formatting"] }
 futures = "0.3"
 tokio-postgres = "0.7"
-tokio-postgres-rustls = "0.9"
-rustls = "0.20"
+tokio-postgres-rustls = "0.10"
+rustls = "0.21"
 tokio = "1"
 bb8 = "0.8"
 tracing = "*"
 rand = "0.8"
 lazy_static = "1.4"
-webpki-roots = "0.22.6"
+webpki-roots = "0.23"
 
 [features]
 migrations = ["diesel/postgres", "dep:diesel_migrations"]
