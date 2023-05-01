@@ -18,7 +18,7 @@ serde_json = "1"
 bounce = { version = "0.6" }
 tracing = { version = "0.1.37", features = ["log"] }
 state = "0.5"
-sentry-core = { version = "*", optional = true }
+sentry-core = { version = "0.31.0", optional = true }
 
 [features]
 ssr = ["yew/ssr", "bounce/ssr", "dep:sentry-core"]
