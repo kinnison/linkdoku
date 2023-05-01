@@ -86,8 +86,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>
     // Request migrations
     #[cfg(feature = "migrations")]
     {
-        info!("Applying pending database migrations...");
+        info!("Applying pending database migrations (sync)...");
         database::apply_migrations_sync(config.database_url.as_str())?;
+    }
+
+    #[cfg(feature = "async_migrations")]
+    {
+        info!("Applying pending database migrations (async)...");
+        database::apply_migrations_async(config.database_url.as_str()).await?;
     }
 
     // Now prepare context/state we need to get going

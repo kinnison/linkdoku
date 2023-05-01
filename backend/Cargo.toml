@@ -53,5 +53,6 @@ sentry = { version = "0.31.0", default-features = false, features = [
 ] }
 
 [features]
-default = ["migrations"]
+default = ["async_migrations"]
 migrations = ["database/migrations"]
+async_migrations = ["database/async_migrations"]

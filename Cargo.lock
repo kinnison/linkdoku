@@ -740,6 +740,7 @@ dependencies = [
  "common",
  "diesel",
  "diesel-async",
+ "diesel_async_migrations",
  "diesel_migrations",
  "futures",
  "lazy_static",
@@ -804,6 +805,18 @@ dependencies = [
  "scoped-futures",
  "tokio",
  "tokio-postgres",
+]
+
+[[package]]
+name = "diesel_async_migrations"
+version = "0.9.0"
+source = "git+https://github.com/niroco/diesel_async_migrations?tag=v0.9.0#c958d50979351d0f6e956b7af021b43be349b356"
+dependencies = [
+ "diesel",
+ "diesel-async",
+ "macros",
+ "scoped-futures",
+ "tracing",
 ]
 
 [[package]]
@@ -1795,6 +1808,15 @@ dependencies = [
 name = "lz-str"
 version = "0.1.0"
 source = "git+https://github.com/dclamage/lz-str-rs#ddd7a9aeee6a7601680de193f65cce3115de67ac"
+
+[[package]]
+name = "macros"
+version = "0.1.0"
+source = "git+https://github.com/niroco/diesel_async_migrations?tag=v0.9.0#c958d50979351d0f6e956b7af021b43be349b356"
+dependencies = [
+ "proc-macro2",
+ "quote",
+]
 
 [[package]]
 name = "match_cfg"
