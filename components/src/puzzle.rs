@@ -1,5 +1,7 @@
 //! Puzzle related components
 
+use std::rc::Rc;
+
 use apiprovider::{use_apiprovider, use_cached_value};
 use common::{
     objects::{self, Visibility},
@@ -42,16 +44,18 @@ fn puzzle_list_inner_render(props: &PuzzleListInnerProps) -> HtmlResult {
     let toaster = use_toaster();
     let nav = use_navigator().unwrap();
 
-    let list: UseFutureHandle<APIResult<Vec<objects::PuzzleMetadata>>> = use_future({
-        let props = props.clone();
-        move || async move {
-            Ok(if let Some(role) = &props.role {
-                api.published_puzzle_list(role.as_str()).await?.puzzles
-            } else {
-                api.recently_published_puzzles().await?.puzzles
-            })
-        }
-    })?;
+    let list: UseFutureHandle<APIResult<Vec<objects::PuzzleMetadata>>> = use_future_with_deps(
+        {
+            |role: Rc<Option<AttrValue>>| async move {
+                Ok(if let Some(role) = &*role {
+                    api.published_puzzle_list(role.as_str()).await?.puzzles
+                } else {
+                    api.recently_published_puzzles().await?.puzzles
+                })
+            }
+        },
+        props.role.clone(),
+    )?;
 
     let list = match list.as_ref() {
         Ok(list) => list,
