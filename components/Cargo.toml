@@ -19,7 +19,7 @@ yew-toastrack = { path = "../yew-toastrack" }
 yew-markdown = { path = "../yew-markdown" }
 git-testament = "0.2"
 futures-util = "0.3"
-bounce = { version = "0.6", features = ["helmet"] }
+bounce = { version = "0.6.1", features = ["helmet"] }
 time = { version = "0.3", features = ["parsing", "formatting"] }
 web-sys = { version = "0.3.60", features = ["Navigator", "HtmlDivElement"] }
 js-sys = "0.3"
