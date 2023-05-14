@@ -1,5 +1,7 @@
 FROM rust:latest AS base-builder
 
+RUN mkdir ~/.cargo && (echo "[registries.crates-io]"; echo 'protocol = "sparse"') > ~/.cargo/config.toml
+
 RUN rustup target add wasm32-unknown-unknown
 RUN rustup target add x86_64-unknown-linux-musl
 
@@ -19,7 +21,7 @@ FROM base-builder as builder
 
 COPY ./ /build/
 
-RUN (cd /build/css; make)
+RUN (cd /build/css; make clean; make)
 RUN (cd /build/frontend; trunk build --release index.html)
 RUN (cd /build/backend; cargo build --target=x86_64-unknown-linux-musl --release)
 
