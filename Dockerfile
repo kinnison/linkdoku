@@ -8,8 +8,6 @@ RUN rustup target add x86_64-unknown-linux-musl
 RUN cargo install trunk
 RUN cargo install wasm-bindgen-cli
 RUN cargo install wasm-opt
-RUN cargo install grass
-RUN cargo install css-minifier
 
 RUN apt update
 
@@ -21,9 +19,7 @@ FROM base-builder as builder
 
 COPY ./ /build/
 
-RUN (cd /build/css; make clean; make)
-RUN (cd /build/frontend; trunk build --release index.html)
-RUN (cd /build/backend; cargo build --target=x86_64-unknown-linux-musl --release)
+RUN (cd /build && make release)
 
 FROM scratch as runner
 

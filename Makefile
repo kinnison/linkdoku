@@ -35,8 +35,8 @@ run:
 	@cd backend; env RUST_BACKTRACE=1 RUST_LOG=info cargo run --target=x86_64-unknown-linux-musl -- --config linkdoku-config-dev.yaml
 
 release:
-	@reset
-	@cd css; make
+	@reset || true
+	@cd css; cargo run
 	@touch components/src/lib.rs
 	@touch frontend-core/src/lib.rs
 	@cd frontend; trunk build --release index.html
