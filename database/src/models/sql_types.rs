@@ -33,7 +33,9 @@ where
 }
 
 impl FromSql<VisibilityType, Pg> for Visibility {
-    fn from_sql(bytes: diesel::backend::RawValue<'_, Pg>) -> diesel::deserialize::Result<Self> {
+    fn from_sql(
+        bytes: <diesel::pg::Pg as diesel::backend::Backend>::RawValue<'_>,
+    ) -> diesel::deserialize::Result<Self> {
         match bytes.as_bytes() {
             b"restricted" => Ok(Self::Restricted),
             b"public" => Ok(Self::Public),

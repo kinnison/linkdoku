@@ -9,11 +9,11 @@ edition = "2021"
 async-trait = "0.1.60"
 axum = { version = "0.6.1", default-features = false }
 diesel = { version = "2.0.2", features = ["postgres_backend", "time"] }
-diesel-async = { version = "0.2.0", features = ["postgres", "bb8"] }
+diesel-async = { version = "0.3.1", features = ["postgres", "bb8"] }
 diesel_migrations = { optional = true, version = "2.0.0", features = [
     "postgres",
 ] }
-diesel_async_migrations = { git = "https://github.com/niroco/diesel_async_migrations", tag = "v0.9.0", optional = true }
+diesel_async_migrations = { git = "https://github.com/niroco/diesel_async_migrations", tag = "v0.10.0", optional = true }
 md5 = "0.7.0"
 serde = { version = "1.0.151", features = ["derive"] }
 serde_json = "1"
