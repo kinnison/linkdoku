@@ -15,3 +15,14 @@ members = [
     "yew-paginator",
     "tutorials",
 ]
+
+# Tweak the wasm-bindgen package until a fix for 
+# https://github.com/rust-lang/rust/issues/111888
+# has made it to stable.default-members
+#
+# Alternatively, it may be enough to wait for
+# https://github.com/futursolo/stylist-rs/issues/120
+# to be fixed.
+
+[profile.dev.package.wasm-bindgen]
+debug-assertions = false
