@@ -8,7 +8,7 @@ use std::{
 
 use common::APIResult;
 use serde::{de::DeserializeOwned, Serialize};
-use state::Container;
+use state::TypeMap;
 use tracing::trace;
 use yew::{prelude::*, suspense::*};
 
@@ -80,7 +80,7 @@ impl<T: Cacheable> AsRef<APIResult<T>> for Cached<T> {
 
 pub struct ObjectCache {
     next_listener: AtomicUsize,
-    content: Container!(),
+    content: TypeMap![],
 }
 
 type CacheMap<T> = RefCell<HashMap<String, Rc<APIResult<T>>>>;
