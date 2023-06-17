@@ -28,7 +28,7 @@ reallyclean:
 
 run:
 	@reset
-	@cd css; make
+	@cd css; cargo run
 	@touch components/src/lib.rs
 	@touch frontend-core/src/lib.rs
 	@cd frontend; trunk build index.html
