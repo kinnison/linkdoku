@@ -1,43 +1,50 @@
 .DEFAULT: help
 
+Q=@
+
 help:
-	@echo "You can run:"
-	@echo " - 'make base-builder' to get the base-builder in place"
-	@echo " - 'make build' to build it for scaleway"
-	@echo " - 'make push' to just push to scaleway"
+	$(Q)echo "You can run:"
+	$(Q)echo " - 'make base-builder' to get the base-builder in place"
+	$(Q)echo " - 'make build' to build it for scaleway"
+	$(Q)echo " - 'make push' to just push to scaleway"
 
 SCALEWAY_TAG := rg.fr-par.scw.cloud/funcscwlinkdokutestoawqzyvy/linkdoku:beta
 
 base-builder:
-	@docker build -t linkdoku:base-builder --target base-builder .
+	$(Q)docker build -t linkdoku:base-builder --target base-builder .
 
 build:
-	@docker build -t $(SCALEWAY_TAG) .
+	$(Q)docker build -t $(SCALEWAY_TAG) .
 
 push:
-	@docker push $(SCALEWAY_TAG)
+	$(Q)docker push $(SCALEWAY_TAG)
 
 clean:
-	@docker rmi $(SCALEWAY_TAG)
-	@docker system prune
+	$(Q)docker rmi $(SCALEWAY_TAG)
+	$(Q)docker system prune
 
 reallyclean:
-	@docker rmi linkdoku:base-builder
-	@docker rmi $(SCALEWAY_TAG)
-	@docker system prune
+	$(Q)docker rmi linkdoku:base-builder
+	$(Q)docker rmi $(SCALEWAY_TAG)
+	$(Q)docker system prune
 
 run:
-	@reset
-	@cd css; cargo run
-	@touch components/src/lib.rs
-	@touch frontend-core/src/lib.rs
-	@cd frontend; trunk build index.html
-	@cd backend; env RUST_BACKTRACE=1 RUST_LOG=info cargo run --target=x86_64-unknown-linux-musl -- --config linkdoku-config-dev.yaml
+	$(Q)reset
+	$(Q)cd css; cargo run
+	$(Q)touch components/src/lib.rs
+	$(Q)touch frontend-core/src/lib.rs
+	$(Q)cd frontend; trunk build index.html
+	$(Q)cd backend; env RUST_BACKTRACE=1 RUST_LOG=info cargo run --target=x86_64-unknown-linux-musl -- --config linkdoku-config-dev.yaml
 
 release:
-	@reset || true
-	@cd css; cargo run
-	@touch components/src/lib.rs
-	@touch frontend-core/src/lib.rs
-	@cd frontend; trunk build --release index.html
-	@cd backend; cargo build --release --target=x86_64-unknown-linux-musl
+	$(Q)reset || true
+	$(Q)cd css; cargo run
+	$(Q)touch components/src/lib.rs
+	$(Q)touch frontend-core/src/lib.rs
+	$(Q)cd frontend; trunk -v build --release index.html
+	$(Q)cd backend; cargo build --release --target=x86_64-unknown-linux-musl
+
+install: release
+	$(Q)mkdir -p $(DESTDIR)/bin
+	$(Q)cp target/x86_64-unknown-linux-musl/release/backend $(DESTDIR)/bin/linkdoku
+
